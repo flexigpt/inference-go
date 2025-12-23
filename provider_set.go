@@ -1,0 +1,194 @@
+package inference
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+	"sync"
+
+	"github.com/ppipada/inference-go/spec"
+)
+
+type ProviderSetAPI struct {
+	mu sync.RWMutex
+
+	providers map[spec.ProviderName]CompletionProvider
+	debug     bool
+}
+
+// NewProviderSetAPI creates a new ProviderSet with the specified default provider.
+func NewProviderSetAPI(
+	debug bool,
+) (*ProviderSetAPI, error) {
+	return &ProviderSetAPI{
+		providers: map[spec.ProviderName]CompletionProvider{},
+		debug:     debug,
+	}, nil
+}
+
+type AddProviderConfig struct {
+	SDKType                  spec.ProviderSDKType `json:"sdkType"`
+	Origin                   string               `json:"origin"`
+	ChatCompletionPathPrefix string               `json:"chatCompletionPathPrefix"`
+	APIKeyHeaderKey          string               `json:"apiKeyHeaderKey"`
+	DefaultHeaders           map[string]string    `json:"defaultHeaders"`
+}
+
+func (ps *ProviderSetAPI) AddProvider(
+	ctx context.Context,
+	provider spec.ProviderName,
+	config *AddProviderConfig,
+) (*spec.ProviderParam, error) {
+	if config == nil || provider == "" || config.Origin == "" {
+		return nil, errors.New("invalid params")
+	}
+
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
+
+	_, exists := ps.providers[provider]
+	if exists {
+		return nil, errors.New(
+			"invalid provider: cannot add a provider with same name as an existing provider, delete first",
+		)
+	}
+	if ok := isProviderSDKTypeSupported(config.SDKType); !ok {
+		return nil, errors.New("unsupported provider api type")
+	}
+
+	providerInfo := spec.ProviderParam{
+		Name:                     provider,
+		SDKType:                  config.SDKType,
+		APIKey:                   "",
+		Origin:                   config.Origin,
+		ChatCompletionPathPrefix: config.ChatCompletionPathPrefix,
+		APIKeyHeaderKey:          config.APIKeyHeaderKey,
+		DefaultHeaders:           config.DefaultHeaders,
+	}
+
+	cp, err := getProviderAPI(providerInfo, ps.debug)
+	if err != nil {
+		return nil, err
+	}
+	ps.providers[provider] = cp
+
+	slog.Info("add provider", "name", provider)
+	return cp.GetProviderInfo(ctx), nil
+}
+
+func (ps *ProviderSetAPI) DeleteProvider(
+	ctx context.Context,
+	provider spec.ProviderName,
+) error {
+	if provider == "" {
+		return errors.New("got empty provider input")
+	}
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
+	_, exists := ps.providers[provider]
+
+	if !exists {
+		return errors.New(
+			"invalid provider: provider does not exist",
+		)
+	}
+	delete(ps.providers, provider)
+	slog.Info("deleteProvider", "name", provider)
+	return nil
+}
+
+type SetProviderAPIKeyRequestBody struct {
+	APIKey string `json:"apiKey" required:"true"`
+}
+
+type SetProviderAPIKeyResponse struct{}
+
+// SetProviderAPIKey sets the key for a given provider.
+func (ps *ProviderSetAPI) SetProviderAPIKey(
+	ctx context.Context,
+	provider spec.ProviderName,
+	apiKey string,
+) error {
+	p, exists := ps.providers[provider]
+	if !exists {
+		return errors.New("invalid provider")
+	}
+	if apiKey == "" {
+		// Clear the stored key as well as de-initialize the client.
+		if info := p.GetProviderInfo(ctx); info != nil {
+			info.APIKey = ""
+		}
+		return p.DeInitLLM(ctx)
+
+	}
+	err := p.SetProviderAPIKey(
+		ctx,
+		apiKey,
+	)
+	if err != nil {
+		return err
+	}
+	err = p.InitLLM(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// FetchCompletion processes a completion request for a given provider.
+func (ps *ProviderSetAPI) FetchCompletion(
+	ctx context.Context,
+	provider spec.ProviderName,
+	fetchCompletionRequest *FetchCompletionRequest,
+	onStreamTextData func(textData string) error,
+	onStreamThinkingData func(thinkingData string) error,
+) (*FetchCompletionResponse, error) {
+	if provider == "" || fetchCompletionRequest == nil || len(fetchCompletionRequest.Inputs) == 0 ||
+		fetchCompletionRequest.ModelParam.Name == "" {
+		return nil, errors.New("got empty fetch completion input")
+	}
+
+	ps.mu.RLock()
+	p, exists := ps.providers[provider]
+	ps.mu.RUnlock()
+
+	if !exists {
+		return nil, errors.New("invalid provider")
+	}
+
+	resp, err := p.FetchCompletion(
+		ctx,
+		fetchCompletionRequest,
+		onStreamTextData,
+		onStreamThinkingData,
+	)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("error in fetch completion"))
+	}
+
+	return resp, nil
+}
+
+func isProviderSDKTypeSupported(t spec.ProviderSDKType) bool {
+	if t == spec.ProviderSDKTypeAnthropic ||
+		t == spec.ProviderSDKTypeOpenAIChatCompletions ||
+		t == spec.ProviderSDKTypeOpenAIResponses {
+		return true
+	}
+	return false
+}
+
+func getProviderAPI(p spec.ProviderParam, debug bool) (CompletionProvider, error) {
+	switch p.SDKType {
+	case spec.ProviderSDKTypeAnthropic:
+		return NewAnthropicMessagesAPI(p, debug)
+
+	case spec.ProviderSDKTypeOpenAIChatCompletions:
+		return NewOpenAIChatCompletionsAPI(p, debug)
+
+	case spec.ProviderSDKTypeOpenAIResponses:
+		return NewOpenAIResponsesAPI(p, debug)
+	}
+
+	return nil, errors.New("invalid provider api type")
+}
