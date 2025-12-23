@@ -158,9 +158,9 @@ func captureRequestDetails(req *http.Request, cfg DebugConfig) *APIRequestDetail
 		bodyBytes, err := io.ReadAll(req.Body)
 		if err == nil && len(bodyBytes) > 0 {
 			data = sanitizeBodyForDebug(bodyBytes, true, cfg)
+			// Reset body so it can be read by the underlying transport & SDK.
+			req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 		}
-		// Reset body so it can be read by the underlying transport & SDK.
-		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	} else if !cfg.CaptureRequestBody && req.Body != nil {
 		// Indicate that body exists but was intentionally not captured.
 		data = "[omitted: request body not captured by debug configuration]"

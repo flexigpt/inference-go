@@ -1,4 +1,4 @@
-package streamutil
+package sdkutil
 
 import (
 	"strings"

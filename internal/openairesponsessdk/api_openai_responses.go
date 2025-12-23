@@ -1,4 +1,4 @@
-package inference
+package openairesponsessdk
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 	openaiSharedConstant "github.com/openai/openai-go/v3/shared/constant"
 
 	"github.com/ppipada/inference-go/internal/debugclient"
-	"github.com/ppipada/inference-go/internal/streamutil"
+	"github.com/ppipada/inference-go/internal/sdkutil"
 	"github.com/ppipada/inference-go/spec"
 )
 
@@ -135,10 +135,10 @@ func (api *OpenAIResponsesAPI) SetProviderAPIKey(
 
 func (api *OpenAIResponsesAPI) FetchCompletion(
 	ctx context.Context,
-	req *FetchCompletionRequest,
+	req *spec.FetchCompletionRequest,
 	onStreamTextData func(textData string) error,
 	onStreamThinkingData func(thinkingData string) error,
-) (*FetchCompletionResponse, error) {
+) (*spec.FetchCompletionResponse, error) {
 	if api.client == nil {
 		return nil, errors.New("openai responses api LLM: client not initialized")
 	}
@@ -219,12 +219,12 @@ func (api *OpenAIResponsesAPI) doNonStreaming(
 	params responses.ResponseNewParams,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*FetchCompletionResponse, error) {
-	resp := &FetchCompletionResponse{}
+) (*spec.FetchCompletionResponse, error) {
+	resp := &spec.FetchCompletionResponse{}
 
 	oaiResp, err := api.client.Responses.New(ctx, params, option.WithRequestTimeout(timeout))
 	isNilResp := oaiResp == nil || len(oaiResp.Output) == 0
-	attachDebugResp(ctx, resp, err, isNilResp, oaiResp)
+	sdkutil.AttachDebugResp(ctx, resp, err, isNilResp, oaiResp)
 	resp.Usage = usageFromOpenAIResponse(oaiResp)
 
 	if err != nil {
@@ -243,18 +243,18 @@ func (api *OpenAIResponsesAPI) doStreaming(
 	onStreamTextData, onStreamThinkingData func(string) error,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*FetchCompletionResponse, error) {
-	resp := &FetchCompletionResponse{}
+) (*spec.FetchCompletionResponse, error) {
+	resp := &spec.FetchCompletionResponse{}
 
-	writeTextData, flushTextData := streamutil.NewBufferedStreamer(
+	writeTextData, flushTextData := sdkutil.NewBufferedStreamer(
 		onStreamTextData,
-		streamutil.FlushInterval,
-		streamutil.FlushChunkSize,
+		sdkutil.FlushInterval,
+		sdkutil.FlushChunkSize,
 	)
-	writeThinkingData, flushThinkingData := streamutil.NewBufferedStreamer(
+	writeThinkingData, flushThinkingData := sdkutil.NewBufferedStreamer(
 		onStreamThinkingData,
-		streamutil.FlushInterval,
-		streamutil.FlushChunkSize,
+		sdkutil.FlushInterval,
+		sdkutil.FlushChunkSize,
 	)
 
 	var respFull responses.Response
@@ -264,6 +264,7 @@ func (api *OpenAIResponsesAPI) doStreaming(
 		params,
 		option.WithRequestTimeout(timeout),
 	)
+	defer func() { _ = stream.Close() }()
 
 	var streamWriteErr error
 	for stream.Next() {
@@ -321,7 +322,7 @@ func (api *OpenAIResponsesAPI) doStreaming(
 
 	streamErr := errors.Join(stream.Err(), streamWriteErr)
 	isNilResp := len(respFull.Output) == 0
-	attachDebugResp(ctx, resp, streamErr, isNilResp, &respFull)
+	sdkutil.AttachDebugResp(ctx, resp, streamErr, isNilResp, &respFull)
 
 	resp.Usage = usageFromOpenAIResponse(&respFull)
 	if streamErr != nil {
@@ -342,7 +343,7 @@ func toOpenAIResponsesInput(
 	var out responses.ResponseInputParam
 
 	for _, in := range inputs {
-		if IsInputUnionEmpty(in) {
+		if sdkutil.IsInputUnionEmpty(in) {
 			continue
 		}
 
@@ -994,7 +995,7 @@ func toolChoicesToOpenAIResponseTools(
 		// Nothing to return.
 		return []responses.ToolUnionParam{}, nil, nil
 	}
-	ordered, nameMap := buildToolChoiceNameMapping(toolChoices)
+	ordered, nameMap := sdkutil.BuildToolChoiceNameMapping(toolChoices)
 	out := make([]responses.ToolUnionParam, 0, len(ordered))
 	webSearchAdded := false
 
@@ -1011,7 +1012,7 @@ func toolChoicesToOpenAIResponseTools(
 				Name:        name,
 				Parameters:  tc.Arguments,
 				Type:        openaiSharedConstant.Function("function"),
-				Description: param.NewOpt(toolDescription(tc)),
+				Description: param.NewOpt(sdkutil.ToolDescription(tc)),
 			}
 
 			out = append(out, responses.ToolUnionParam{OfFunction: &fn})

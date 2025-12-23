@@ -6,13 +6,16 @@ import (
 	"log/slog"
 	"sync"
 
+	"github.com/ppipada/inference-go/internal/anthropicsdk"
+	"github.com/ppipada/inference-go/internal/openaichatsdk"
+	"github.com/ppipada/inference-go/internal/openairesponsessdk"
 	"github.com/ppipada/inference-go/spec"
 )
 
 type ProviderSetAPI struct {
 	mu sync.RWMutex
 
-	providers map[spec.ProviderName]CompletionProvider
+	providers map[spec.ProviderName]spec.CompletionProvider
 	debug     bool
 }
 
@@ -21,7 +24,7 @@ func NewProviderSetAPI(
 	debug bool,
 ) (*ProviderSetAPI, error) {
 	return &ProviderSetAPI{
-		providers: map[spec.ProviderName]CompletionProvider{},
+		providers: map[spec.ProviderName]spec.CompletionProvider{},
 		debug:     debug,
 	}, nil
 }
@@ -84,15 +87,16 @@ func (ps *ProviderSetAPI) DeleteProvider(
 		return errors.New("got empty provider input")
 	}
 	ps.mu.Lock()
-	defer ps.mu.Unlock()
-	_, exists := ps.providers[provider]
-
+	p, exists := ps.providers[provider]
 	if !exists {
-		return errors.New(
-			"invalid provider: provider does not exist",
-		)
+		ps.mu.Unlock()
+		return errors.New("invalid provider: provider does not exist")
 	}
 	delete(ps.providers, provider)
+	ps.mu.Unlock()
+
+	// Best-effort cleanup outside the lock.
+	_ = p.DeInitLLM(ctx)
 	slog.Info("deleteProvider", "name", provider)
 	return nil
 }
@@ -109,10 +113,13 @@ func (ps *ProviderSetAPI) SetProviderAPIKey(
 	provider spec.ProviderName,
 	apiKey string,
 ) error {
+	ps.mu.RLock()
 	p, exists := ps.providers[provider]
+	ps.mu.RUnlock()
 	if !exists {
 		return errors.New("invalid provider")
 	}
+
 	if apiKey == "" {
 		// Clear the stored key as well as de-initialize the client.
 		if info := p.GetProviderInfo(ctx); info != nil {
@@ -139,10 +146,10 @@ func (ps *ProviderSetAPI) SetProviderAPIKey(
 func (ps *ProviderSetAPI) FetchCompletion(
 	ctx context.Context,
 	provider spec.ProviderName,
-	fetchCompletionRequest *FetchCompletionRequest,
+	fetchCompletionRequest *spec.FetchCompletionRequest,
 	onStreamTextData func(textData string) error,
 	onStreamThinkingData func(thinkingData string) error,
-) (*FetchCompletionResponse, error) {
+) (*spec.FetchCompletionResponse, error) {
 	if provider == "" || fetchCompletionRequest == nil || len(fetchCompletionRequest.Inputs) == 0 ||
 		fetchCompletionRequest.ModelParam.Name == "" {
 		return nil, errors.New("got empty fetch completion input")
@@ -178,16 +185,16 @@ func isProviderSDKTypeSupported(t spec.ProviderSDKType) bool {
 	return false
 }
 
-func getProviderAPI(p spec.ProviderParam, debug bool) (CompletionProvider, error) {
+func getProviderAPI(p spec.ProviderParam, debug bool) (spec.CompletionProvider, error) {
 	switch p.SDKType {
 	case spec.ProviderSDKTypeAnthropic:
-		return NewAnthropicMessagesAPI(p, debug)
+		return anthropicsdk.NewAnthropicMessagesAPI(p, debug)
 
 	case spec.ProviderSDKTypeOpenAIChatCompletions:
-		return NewOpenAIChatCompletionsAPI(p, debug)
+		return openaichatsdk.NewOpenAIChatCompletionsAPI(p, debug)
 
 	case spec.ProviderSDKTypeOpenAIResponses:
-		return NewOpenAIResponsesAPI(p, debug)
+		return openairesponsessdk.NewOpenAIResponsesAPI(p, debug)
 	}
 
 	return nil, errors.New("invalid provider api type")

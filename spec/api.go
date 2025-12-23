@@ -1,28 +1,26 @@
-package inference
+package spec
 
 import (
 	"context"
-
-	"github.com/ppipada/inference-go/spec"
 )
 
 type FetchCompletionResponse struct {
-	Outputs      []spec.OutputUnion `json:"outputs,omitempty"`
-	Usage        *spec.Usage        `json:"usage,omitempty"`
-	Error        *spec.Error        `json:"error,omitempty"`
-	DebugDetails map[string]any     `json:"debugDetails,omitempty"`
+	Outputs      []OutputUnion  `json:"outputs,omitempty"`
+	Usage        *Usage         `json:"usage,omitempty"`
+	Error        *Error         `json:"error,omitempty"`
+	DebugDetails map[string]any `json:"debugDetails,omitempty"`
 }
 
 type FetchCompletionRequest struct {
-	ModelParam  spec.ModelParam   `json:"modelParam"`
-	Inputs      []spec.InputUnion `json:"inputs"`
-	ToolChoices []spec.ToolChoice `json:"toolChoices,omitempty"`
+	ModelParam  ModelParam   `json:"modelParam"`
+	Inputs      []InputUnion `json:"inputs"`
+	ToolChoices []ToolChoice `json:"toolChoices,omitempty"`
 }
 
 type CompletionProvider interface {
 	InitLLM(ctx context.Context) error
 	DeInitLLM(ctx context.Context) error
-	GetProviderInfo(ctx context.Context) *spec.ProviderParam
+	GetProviderInfo(ctx context.Context) *ProviderParam
 	IsConfigured(ctx context.Context) bool
 	SetProviderAPIKey(ctx context.Context, apiKey string) error
 	FetchCompletion(

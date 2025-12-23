@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"sync"
 )
 
 type loggingReadCloser struct {
@@ -14,6 +15,7 @@ type loggingReadCloser struct {
 	debugResp *DebugHTTPResponse
 	cfg       DebugConfig
 
+	mu        sync.Mutex
 	finalized bool // finalized ensures we only compute & attach Data once, even if both, Read hits EOF and Close is called.
 }
 
@@ -41,10 +43,12 @@ func (lc *loggingReadCloser) Close() error {
 // finalize attaches the buffered response body to debugResp.ResponseDetails.Data
 // exactly once, and applies sanitization/redaction.
 func (lc *loggingReadCloser) finalize() {
+	lc.mu.Lock()
 	if lc.finalized {
 		return
 	}
 	lc.finalized = true
+	lc.mu.Unlock()
 
 	if lc.debugResp == nil || lc.debugResp.ResponseDetails == nil {
 		return

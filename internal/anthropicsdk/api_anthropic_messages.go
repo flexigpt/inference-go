@@ -1,4 +1,4 @@
-package inference
+package anthropicsdk
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	anthropicSharedConstant "github.com/anthropics/anthropic-sdk-go/shared/constant"
 
 	"github.com/ppipada/inference-go/internal/debugclient"
-	"github.com/ppipada/inference-go/internal/streamutil"
+	"github.com/ppipada/inference-go/internal/sdkutil"
 	"github.com/ppipada/inference-go/spec"
 )
 
@@ -134,10 +134,10 @@ func (api *AnthropicMessagesAPI) SetProviderAPIKey(ctx context.Context, apiKey s
 
 func (api *AnthropicMessagesAPI) FetchCompletion(
 	ctx context.Context,
-	req *FetchCompletionRequest,
+	req *spec.FetchCompletionRequest,
 	onStreamTextData func(textData string) error,
 	onStreamThinkingData func(thinkingData string) error,
-) (*FetchCompletionResponse, error) {
+) (*spec.FetchCompletionResponse, error) {
 	if api.client == nil {
 		return nil, errors.New("anthropic messages api LLM: client not initialized")
 	}
@@ -194,7 +194,9 @@ func (api *AnthropicMessagesAPI) FetchCompletion(
 				params.Thinking = anthropic.ThinkingConfigParamOfEnabled(int64(budget))
 			}
 		}
-	} else if t := req.ModelParam.Temperature; t != nil {
+	}
+
+	if t := req.ModelParam.Temperature; t != nil {
 		params.Temperature = anthropic.Float(*t)
 	}
 
@@ -228,12 +230,12 @@ func (api *AnthropicMessagesAPI) doNonStreaming(
 	params anthropic.MessageNewParams,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*FetchCompletionResponse, error) {
-	resp := &FetchCompletionResponse{}
+) (*spec.FetchCompletionResponse, error) {
+	resp := &spec.FetchCompletionResponse{}
 
 	msg, err := api.client.Messages.New(ctx, params, option.WithRequestTimeout(timeout))
 	isNilResp := msg == nil || len(msg.Content) == 0
-	attachDebugResp(ctx, resp, err, isNilResp, msg)
+	sdkutil.AttachDebugResp(ctx, resp, err, isNilResp, msg)
 	resp.Usage = usageFromAnthropicMessage(msg)
 	if err != nil {
 		resp.Error = &spec.Error{Message: err.Error()}
@@ -252,17 +254,17 @@ func (api *AnthropicMessagesAPI) doStreaming(
 	onStreamTextData, onStreamThinkingData func(string) error,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*FetchCompletionResponse, error) {
-	resp := &FetchCompletionResponse{}
-	writeTextData, flushTextData := streamutil.NewBufferedStreamer(
+) (*spec.FetchCompletionResponse, error) {
+	resp := &spec.FetchCompletionResponse{}
+	writeTextData, flushTextData := sdkutil.NewBufferedStreamer(
 		onStreamTextData,
-		streamutil.FlushInterval,
-		streamutil.FlushChunkSize,
+		sdkutil.FlushInterval,
+		sdkutil.FlushChunkSize,
 	)
-	writeThinkingData, flushThinkingData := streamutil.NewBufferedStreamer(
+	writeThinkingData, flushThinkingData := sdkutil.NewBufferedStreamer(
 		onStreamThinkingData,
-		streamutil.FlushInterval,
-		streamutil.FlushChunkSize,
+		sdkutil.FlushInterval,
+		sdkutil.FlushChunkSize,
 	)
 
 	stream := api.client.Messages.NewStreaming(
@@ -270,6 +272,7 @@ func (api *AnthropicMessagesAPI) doStreaming(
 		params,
 		option.WithRequestTimeout(timeout),
 	)
+	defer func() { _ = stream.Close() }()
 
 	var (
 		respFull            anthropic.Message
@@ -319,7 +322,7 @@ func (api *AnthropicMessagesAPI) doStreaming(
 
 	streamErr := errors.Join(stream.Err(), streamAccumulateErr, streamWriteErr)
 	isNilResp := len(respFull.Content) == 0
-	attachDebugResp(ctx, resp, streamErr, isNilResp, &respFull)
+	sdkutil.AttachDebugResp(ctx, resp, streamErr, isNilResp, &respFull)
 	resp.Usage = usageFromAnthropicMessage(&respFull)
 	if streamErr != nil {
 		resp.Error = &spec.Error{Message: streamErr.Error()}
@@ -389,7 +392,7 @@ func toAnthropicMessagesInput(
 	}
 
 	for _, in := range inputs {
-		if IsInputUnionEmpty(in) {
+		if sdkutil.IsInputUnionEmpty(in) {
 			continue
 		}
 
@@ -844,7 +847,7 @@ func toolChoicesToAnthropicTools(
 		return []anthropic.ToolUnionParam{}, nil, nil
 	}
 
-	ordered, nameMap := buildToolChoiceNameMapping(toolChoices)
+	ordered, nameMap := sdkutil.BuildToolChoiceNameMapping(toolChoices)
 	out := make([]anthropic.ToolUnionParam, 0, len(ordered))
 	webSearchAdded := false
 
@@ -903,7 +906,7 @@ func toolChoicesToAnthropicTools(
 
 			toolUnion := anthropic.ToolUnionParamOfTool(inputSchema, name)
 			if variant := toolUnion.OfTool; variant != nil {
-				if desc := toolDescription(tc); desc != "" {
+				if desc := sdkutil.ToolDescription(tc); desc != "" {
 					variant.Description = anthropic.String(desc)
 				}
 			}
@@ -985,7 +988,7 @@ func outputsFromAnthropicMessage(
 			}
 			textItem := spec.ContentItemText{
 				Text:      v.Text,
-				Citations: anthropicCitationsToSpec(content.Citations),
+				Citations: anthropicCitationsToSpec(v.Citations),
 			}
 			assistantMsg.Contents = []spec.InputOutputContentItemUnion{{
 				Kind:     spec.ContentItemKindText,
@@ -1005,8 +1008,8 @@ func outputsFromAnthropicMessage(
 				ID:        msg.ID,
 				Role:      spec.RoleAssistant,
 				Status:    msgStatus,
-				Signature: content.Signature,
-				Thinking:  []string{content.Thinking},
+				Signature: v.Signature,
+				Thinking:  []string{v.Thinking},
 			}
 			outs = append(
 				outs,
@@ -1021,7 +1024,7 @@ func outputsFromAnthropicMessage(
 				ID:               msg.ID,
 				Role:             spec.RoleAssistant,
 				Status:           msgStatus,
-				RedactedThinking: []string{content.Data},
+				RedactedThinking: []string{v.Data},
 			}
 			outs = append(
 				outs,

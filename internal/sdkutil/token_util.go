@@ -1,4 +1,4 @@
-package tokenutil
+package sdkutil
 
 import (
 	"log/slog"

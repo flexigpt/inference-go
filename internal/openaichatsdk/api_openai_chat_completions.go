@@ -1,4 +1,4 @@
-package inference
+package openaichatsdk
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 	openaiSharedConstant "github.com/openai/openai-go/v3/shared/constant"
 
 	"github.com/ppipada/inference-go/internal/debugclient"
-	"github.com/ppipada/inference-go/internal/streamutil"
+	"github.com/ppipada/inference-go/internal/sdkutil"
 	"github.com/ppipada/inference-go/spec"
 )
 
@@ -136,10 +136,10 @@ func (api *OpenAIChatCompletionsAPI) SetProviderAPIKey(
 
 func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 	ctx context.Context,
-	req *FetchCompletionRequest,
+	req *spec.FetchCompletionRequest,
 	onStreamTextData func(textData string) error,
 	onStreamThinkingData func(thinkingData string) error,
-) (*FetchCompletionResponse, error) {
+) (*spec.FetchCompletionResponse, error) {
 	if api.client == nil {
 		return nil, errors.New("openai chat completions api LLM: client not initialized")
 	}
@@ -217,13 +217,13 @@ func (api *OpenAIChatCompletionsAPI) doNonStreaming(
 	params openai.ChatCompletionNewParams,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*FetchCompletionResponse, error) {
-	resp := &FetchCompletionResponse{}
+) (*spec.FetchCompletionResponse, error) {
+	resp := &spec.FetchCompletionResponse{}
 
 	oaiResp, err := api.client.Chat.Completions.New(ctx, params, option.WithRequestTimeout(timeout))
 
 	isNilResp := oaiResp == nil || len(oaiResp.Choices) == 0
-	attachDebugResp(ctx, resp, err, isNilResp, oaiResp)
+	sdkutil.AttachDebugResp(ctx, resp, err, isNilResp, oaiResp)
 	resp.Usage = usageFromOpenAIChatCompletion(oaiResp)
 	if err != nil {
 		resp.Error = &spec.Error{Message: err.Error()}
@@ -242,14 +242,14 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 	onStreamTextData, _ func(string) error, // Chat Completions has no thinking stream.
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*FetchCompletionResponse, error) {
-	resp := &FetchCompletionResponse{}
+) (*spec.FetchCompletionResponse, error) {
+	resp := &spec.FetchCompletionResponse{}
 
 	// No thinking data available in openai chat completions API, hence no thinking writer.
-	writeText, flushText := streamutil.NewBufferedStreamer(
+	writeText, flushText := sdkutil.NewBufferedStreamer(
 		onStreamTextData,
-		streamutil.FlushInterval,
-		streamutil.FlushChunkSize,
+		sdkutil.FlushInterval,
+		sdkutil.FlushChunkSize,
 	)
 
 	stream := api.client.Chat.Completions.NewStreaming(
@@ -257,6 +257,8 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 		params,
 		option.WithRequestTimeout(timeout),
 	)
+	defer func() { _ = stream.Close() }()
+
 	acc := openai.ChatCompletionAccumulator{}
 	var streamWriteErr error
 	for stream.Next() {
@@ -291,7 +293,7 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 	streamErr := errors.Join(stream.Err(), streamWriteErr)
 	isNilResp := len(acc.Choices) == 0
 
-	attachDebugResp(ctx, resp, streamErr, isNilResp, &acc.ChatCompletion)
+	sdkutil.AttachDebugResp(ctx, resp, streamErr, isNilResp, &acc.ChatCompletion)
 	resp.Usage = usageFromOpenAIChatCompletion(&acc.ChatCompletion)
 	if streamErr != nil {
 		resp.Error = &spec.Error{Message: streamErr.Error()}
@@ -319,7 +321,7 @@ func toOpenAIChatMessages(
 	}
 
 	for _, in := range inputs {
-		if IsInputUnionEmpty(in) {
+		if sdkutil.IsInputUnionEmpty(in) {
 			continue
 		}
 
@@ -603,7 +605,7 @@ func toolChoicesToOpenAIChatTools(
 		return []openai.ChatCompletionToolUnionParam{}, nil, nil
 	}
 
-	ordered, nameMap := buildToolChoiceNameMapping(toolChoices)
+	ordered, nameMap := sdkutil.BuildToolChoiceNameMapping(toolChoices)
 	out := make([]openai.ChatCompletionToolUnionParam, 0, len(ordered))
 
 	for _, tw := range ordered {
@@ -621,7 +623,7 @@ func toolChoicesToOpenAIChatTools(
 				Name:       name,
 				Parameters: tc.Arguments,
 			}
-			if desc := toolDescription(tc); desc != "" {
+			if desc := sdkutil.ToolDescription(tc); desc != "" {
 				fn.Description = openai.String(desc)
 			}
 			out = append(out, openai.ChatCompletionFunctionTool(fn))
