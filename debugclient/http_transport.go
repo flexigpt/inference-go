@@ -39,7 +39,8 @@ func (t *logTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	ctx := req.Context()
 	state, _ := httpDebugStateFromContext(ctx)
 	if state == nil {
-		// Best-effort container (only visible to logs in this RoundTrip).
+		// Best-effort container (only visible to logs in this RoundTrip if
+		// the caller didn't attach one).
 		state = &HTTPDebugState{}
 	}
 
@@ -64,9 +65,9 @@ func (t *logTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Capture error details if an error occurred.
 	if err != nil {
 		state.ErrorDetails = &APIErrorDetails{
-			Message:  err.Error(),
-			Request:  reqDetails,
-			Response: respDetails,
+			Message:         err.Error(),
+			RequestDetails:  reqDetails,
+			ResponseDetails: respDetails,
 		}
 	}
 
@@ -173,7 +174,7 @@ func captureResponseDetails(
 }
 
 // generateCurlCommand builds a (mostly) copy-pasteable curl command from
-// apiRequestDetails. It uses the already-redacted Data and Headers.
+// APIRequestDetails. It uses the already-redacted Data and Headers.
 func generateCurlCommand(config *APIRequestDetails) string {
 	if config == nil || config.URL == nil || config.Method == nil {
 		return ""

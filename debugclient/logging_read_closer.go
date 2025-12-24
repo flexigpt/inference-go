@@ -16,7 +16,7 @@ type loggingReadCloser struct {
 	cfg   DebugConfig
 
 	mu        sync.Mutex
-	finalized bool // ensure we attach Data once, even if both Read(EOF) and Close() happen.
+	finalized bool // ensures we only attach Data once, even if both Read(EOF) and Close() happen.
 }
 
 func (lc *loggingReadCloser) Read(p []byte) (int, error) {
@@ -37,8 +37,8 @@ func (lc *loggingReadCloser) Close() error {
 	return err
 }
 
-// finalize attaches the buffered response body to state.response.Data exactly
-// once, and applies sanitization/redaction.
+// finalize attaches the buffered response body to state.ResponseDetails.Data
+// exactly once, and applies sanitization/redaction.
 func (lc *loggingReadCloser) finalize() {
 	lc.mu.Lock()
 	if lc.finalized {

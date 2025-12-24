@@ -38,26 +38,27 @@ type DebugConfig struct {
 
 // HTTPCompletionDebugger implements spec.CompletionDebugger using the HTTP
 // instrumentation in this package. It produces an opaque debug payload
-// suitable for attachment to FetchCompletionResponse.DebugDetails.
+// (HTTPDebugState) suitable for attachment to FetchCompletionResponse.DebugDetails.
 type HTTPCompletionDebugger struct {
-	cfg DebugConfig
+	config DebugConfig
 }
 
 // NewHTTPCompletionDebugger constructs a CompletionDebugger that instruments
-// HTTP traffic using an internal RoundTripper and produces a scrubbed debug blob from HTTP-level data and the raw
-// provider response.
+// HTTP traffic using an internal RoundTripper and produces a scrubbed debug
+// blob from HTTP-level data and the raw provider response.
+//
 // Config may be nil; in that case DebugConfig{} (defaults) is used.
-func NewHTTPCompletionDebugger(cfg *DebugConfig) spec.CompletionDebugger {
+func NewHTTPCompletionDebugger(config *DebugConfig) spec.CompletionDebugger {
 	var c DebugConfig
-	if cfg != nil {
-		c = *cfg
+	if config != nil {
+		c = *config
 	}
-	return &HTTPCompletionDebugger{cfg: c}
+	return &HTTPCompletionDebugger{config: c}
 }
 
 // HTTPClient implements spec.CompletionDebugger.HTTPClient.
 func (d *HTTPCompletionDebugger) HTTPClient(base *http.Client) *http.Client {
-	if d.cfg.Disable {
+	if d.config.Disable {
 		return base
 	}
 
@@ -72,7 +73,7 @@ func (d *HTTPCompletionDebugger) HTTPClient(base *http.Client) *http.Client {
 	clone := *base
 	clone.Transport = &logTransport{
 		base: rt,
-		cfg:  d.cfg,
+		cfg:  d.config,
 	}
 	return &clone
 }
@@ -88,19 +89,20 @@ func (d *HTTPCompletionDebugger) StartSpan(
 	ctx context.Context,
 	info *spec.CompletionSpanStart,
 ) (context.Context, spec.CompletionSpan) {
-	if d.cfg.Disable {
+	if d.config.Disable {
 		return ctx, nil
 	}
 
 	ctx = withHTTPDebugState(ctx)
 	span := &httpSpan{
-		cfg:  d.cfg,
+		cfg:  d.config,
 		ctx:  ctx,
 		info: info,
 	}
 	return ctx, span
 }
 
+// APIRequestDetails describes a single HTTP request captured by the debugger.
 type APIRequestDetails struct {
 	URL         *string        `json:"url,omitempty"`
 	Method      *string        `json:"method,omitempty"`
@@ -111,24 +113,29 @@ type APIRequestDetails struct {
 	CurlCommand *string        `json:"curlCommand,omitempty"`
 }
 
+// APIResponseDetails describes a single HTTP response captured by the debugger.
 type APIResponseDetails struct {
-	Data           any                `json:"data,omitempty"`
-	Status         int                `json:"status"`
-	Headers        map[string]any     `json:"headers"`
-	RequestDetails *APIRequestDetails `json:"requestDetails,omitempty"`
+	Data    any            `json:"data,omitempty"`
+	Status  int            `json:"status"`
+	Headers map[string]any `json:"headers,omitempty"`
 }
 
+// APIErrorDetails summarizes an HTTP-level error.
 type APIErrorDetails struct {
-	Message  string              `json:"message"`
-	Request  *APIRequestDetails  `json:"requestDetails,omitempty"`
-	Response *APIResponseDetails `json:"responseDetails,omitempty"`
+	Message         string              `json:"message"`
+	RequestDetails  *APIRequestDetails  `json:"requestDetails,omitempty"`
+	ResponseDetails *APIResponseDetails `json:"responseDetails,omitempty"`
 }
 
-// HTTPDebugState wraps HTTP debug info stored on the context.
+// HTTPDebugState is the full HTTP- and provider-level debug payload returned by HTTPCompletionDebugger.
 type HTTPDebugState struct {
-	RequestDetails  *APIRequestDetails  `json:"requestDetails"`
-	ResponseDetails *APIResponseDetails `json:"responseDetails"`
-	ErrorDetails    *APIErrorDetails    `json:"errorDetails"`
+	RequestDetails  *APIRequestDetails  `json:"requestDetails,omitempty"`
+	ResponseDetails *APIResponseDetails `json:"responseDetails,omitempty"`
+	ErrorDetails    *APIErrorDetails    `json:"errorDetails,omitempty"`
+
+	// ProviderResponse holds a scrubbed form of the raw provider SDK response
+	// (e.g. *responses.Response for OpenAI), if available.
+	ProviderResponse any `json:"providerResponse,omitempty"`
 }
 
 // End implements spec.CompletionSpan.End.
@@ -140,70 +147,35 @@ func (s *httpSpan) End(end *spec.CompletionSpanEnd) any {
 	}
 
 	state, _ := httpDebugStateFromContext(s.ctx)
-
-	debugMap := map[string]any{
-		"requestDetails":  map[string]any{},
-		"responseDetails": map[string]any{},
-		"errorDetails":    map[string]any{},
+	if state == nil {
+		state = &HTTPDebugState{}
 	}
 
-	// HTTP request/response from transport, if available.
-	if state != nil {
-		if state.RequestDetails != nil {
-			if m, err := structToMap(state.RequestDetails); err == nil {
-				debugMap["requestDetails"] = m
-			}
-		}
-		if state.ResponseDetails != nil {
-			if m, err := structToMap(state.ResponseDetails); err == nil {
-				debugMap["responseDetails"] = m
-			}
-		}
-	}
-
-	// Raw provider response (e.g. *responses.Response), scrubbed and attached
-	// under responseDetails.data.
+	// Attach scrubbed provider response, if any.
 	if end.ProviderResponse != nil {
 		if m, err := structToMap(end.ProviderResponse); err == nil {
 			strip := !s.cfg.DisableContentStripping
-			scrubbed := scrubAnyForDebug(m, strip)
-
-			if rd, ok := debugMap["responseDetails"].(map[string]any); ok {
-				rd["data"] = scrubbed
-			} else {
-				debugMap["responseDetails"] = map[string]any{
-					"data": scrubbed,
-				}
-			}
+			state.ProviderResponse = scrubAnyForDebug(m, strip)
 		}
 	}
 
 	// Compose error message from HTTP-level error + provider error.
 	var msgParts []string
-	if state != nil && state.ErrorDetails != nil {
-		if m := strings.TrimSpace(state.ErrorDetails.Message); m != "" {
-			msgParts = append(msgParts, m)
+	if state.ErrorDetails != nil {
+		if msg := strings.TrimSpace(state.ErrorDetails.Message); msg != "" {
+			msgParts = append(msgParts, msg)
 		}
 	}
 	if end.Err != nil {
 		msgParts = append(msgParts, end.Err.Error())
 	}
 
-	if len(msgParts) == 0 {
-		return debugMap
+	if len(msgParts) > 0 {
+		if state.ErrorDetails == nil {
+			state.ErrorDetails = &APIErrorDetails{}
+		}
+		state.ErrorDetails.Message = strings.Join(msgParts, "; ")
 	}
 
-	if state != nil && state.ErrorDetails != nil {
-		ed := *state.ErrorDetails
-		ed.Message = strings.Join(msgParts, "; ")
-		if m, err := structToMap(ed); err == nil {
-			debugMap["errorDetails"] = m
-		}
-	} else {
-		debugMap["errorDetails"] = map[string]any{
-			"message": strings.Join(msgParts, "; "),
-		}
-	}
-
-	return debugMap
+	return state
 }
