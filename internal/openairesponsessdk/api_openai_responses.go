@@ -22,10 +22,8 @@ import (
 // OpenAIResponsesAPI struct that implements the CompletionProvider interface.
 type OpenAIResponsesAPI struct {
 	ProviderParam *spec.ProviderParam
-
-	debugger spec.CompletionDebugger
-
-	client *openai.Client
+	debugger      spec.CompletionDebugger
+	client        *openai.Client
 }
 
 func NewOpenAIResponsesAPI(
@@ -83,7 +81,7 @@ func (api *OpenAIResponsesAPI) InitLLM(ctx context.Context) error {
 	}
 
 	if api.debugger != nil {
-		if httpClient := api.debugger.HTTPClient(); httpClient != nil {
+		if httpClient := api.debugger.HTTPClient(nil); httpClient != nil {
 			opts = append(opts, option.WithHTTPClient(httpClient))
 		}
 	}
@@ -208,14 +206,51 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 		timeout = time.Duration(req.ModelParam.Timeout) * time.Second
 	}
 
+	var span spec.CompletionSpan
 	if api.debugger != nil {
-		ctx = api.debugger.WrapContext(ctx)
+		ctx, span = api.debugger.StartSpan(ctx, &spec.CompletionSpanStart{
+			Provider: api.ProviderParam.Name,
+			Model:    req.ModelParam.Name,
+			Request:  req,
+			Options:  opts,
+		})
 	}
+
+	var (
+		normalizedResp *spec.FetchCompletionResponse
+		fullRawResp    *responses.Response
+		apiErr         error
+	)
 	useStream := req.ModelParam.Stream && opts != nil && opts.StreamHandler != nil
 	if useStream {
-		return api.doStreaming(ctx, req.ModelParam.Name, params, opts, timeout, toolChoiceNameMap)
+		normalizedResp, fullRawResp, apiErr = api.doStreaming(
+			ctx,
+			req.ModelParam.Name,
+			params,
+			opts,
+			timeout,
+			toolChoiceNameMap,
+		)
+	} else {
+		normalizedResp, fullRawResp, apiErr = api.doNonStreaming(ctx, params, timeout, toolChoiceNameMap)
 	}
-	return api.doNonStreaming(ctx, params, timeout, toolChoiceNameMap)
+
+	if span != nil {
+		end := spec.CompletionSpanEnd{
+			ProviderResponse: fullRawResp,
+			Response:         normalizedResp, // may be nil
+			Err:              apiErr,
+		}
+		if normalizedResp != nil {
+			if dd := span.End(&end); dd != nil && normalizedResp.DebugDetails == nil {
+				normalizedResp.DebugDetails = dd
+			}
+		} else {
+			_ = span.End(&end) // ignore return; nothing to attach to
+		}
+	}
+
+	return normalizedResp, apiErr
 }
 
 func (api *OpenAIResponsesAPI) doNonStreaming(
@@ -223,24 +258,20 @@ func (api *OpenAIResponsesAPI) doNonStreaming(
 	params responses.ResponseNewParams,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*spec.FetchCompletionResponse, error) {
+) (*spec.FetchCompletionResponse, *responses.Response, error) {
 	resp := &spec.FetchCompletionResponse{}
 
 	oaiResp, err := api.client.Responses.New(ctx, params, option.WithRequestTimeout(timeout))
-	isNilResp := oaiResp == nil || len(oaiResp.Output) == 0
-	if api.debugger != nil {
-		resp.DebugDetails = api.debugger.BuildDebugDetails(ctx, oaiResp, err, isNilResp)
-	}
 	resp.Usage = usageFromOpenAIResponse(oaiResp)
 
 	if err != nil {
 		resp.Error = &spec.Error{Message: err.Error()}
 		// Even on error, return any partial usage/debug we have.
-		return resp, err
+		return resp, oaiResp, err
 	}
 
 	resp.Outputs = outputsFromOpenAIResponse(oaiResp, toolChoiceNameMap)
-	return resp, nil
+	return resp, oaiResp, nil
 }
 
 func (api *OpenAIResponsesAPI) doStreaming(
@@ -250,7 +281,7 @@ func (api *OpenAIResponsesAPI) doStreaming(
 	opts *spec.FetchCompletionOptions,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*spec.FetchCompletionResponse, error) {
+) (*spec.FetchCompletionResponse, *responses.Response, error) {
 	resp := &spec.FetchCompletionResponse{}
 	streamCfg := sdkutil.ResolveStreamConfig(opts)
 
@@ -295,7 +326,7 @@ func (api *OpenAIResponsesAPI) doStreaming(
 		streamCfg.FlushChunkSize,
 	)
 
-	var respFull responses.Response
+	var oaiResp responses.Response
 
 	stream := api.client.Responses.NewStreaming(
 		ctx,
@@ -333,20 +364,20 @@ func (api *OpenAIResponsesAPI) doStreaming(
 		}
 
 		if chunk.Type == "response.completed" {
-			respFull = chunk.Response
+			oaiResp = chunk.Response
 			// Normal completion.
 			break
 		}
 
 		if chunk.Type == "response.failed" {
-			respFull = chunk.Response
-			streamWriteErr = fmt.Errorf("API failed, %s", respFull.Error.RawJSON())
+			oaiResp = chunk.Response
+			streamWriteErr = fmt.Errorf("API failed, %s", oaiResp.Error.RawJSON())
 			break
 		}
 
 		if chunk.Type == "response.incomplete" {
-			respFull = chunk.Response
-			streamWriteErr = fmt.Errorf("API finished as incomplete, %s", respFull.IncompleteDetails.Reason)
+			oaiResp = chunk.Response
+			streamWriteErr = fmt.Errorf("API finished as incomplete, %s", oaiResp.IncompleteDetails.Reason)
 			break
 		}
 
@@ -359,22 +390,17 @@ func (api *OpenAIResponsesAPI) doStreaming(
 	}
 
 	streamErr := errors.Join(stream.Err(), streamWriteErr)
-	isNilResp := len(respFull.Output) == 0
 
-	if api.debugger != nil {
-		resp.DebugDetails = api.debugger.BuildDebugDetails(ctx, &respFull, streamErr, isNilResp)
-	}
-
-	resp.Usage = usageFromOpenAIResponse(&respFull)
+	resp.Usage = usageFromOpenAIResponse(&oaiResp)
 	if streamErr != nil {
 		resp.Error = &spec.Error{Message: streamErr.Error()}
 	}
 
-	if len(respFull.Output) > 0 {
-		resp.Outputs = outputsFromOpenAIResponse(&respFull, toolChoiceNameMap)
+	if len(oaiResp.Output) > 0 {
+		resp.Outputs = outputsFromOpenAIResponse(&oaiResp, toolChoiceNameMap)
 	}
 
-	return resp, streamErr
+	return resp, &oaiResp, streamErr
 }
 
 func toOpenAIResponsesInput(

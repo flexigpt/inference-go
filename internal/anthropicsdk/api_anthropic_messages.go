@@ -89,7 +89,7 @@ func (api *AnthropicMessagesAPI) InitLLM(ctx context.Context) error {
 	}
 
 	if api.debugger != nil {
-		if httpClient := api.debugger.HTTPClient(); httpClient != nil {
+		if httpClient := api.debugger.HTTPClient(nil); httpClient != nil {
 			opts = append(opts, option.WithHTTPClient(httpClient))
 		}
 	}
@@ -217,16 +217,51 @@ func (api *AnthropicMessagesAPI) FetchCompletion(
 		}
 	}
 
+	var span spec.CompletionSpan
 	if api.debugger != nil {
-		ctx = api.debugger.WrapContext(ctx)
+		ctx, span = api.debugger.StartSpan(ctx, &spec.CompletionSpanStart{
+			Provider: api.ProviderParam.Name,
+			Model:    req.ModelParam.Name,
+			Request:  req,
+			Options:  opts,
+		})
 	}
 
+	var (
+		normalizedResp *spec.FetchCompletionResponse
+		fullRawResp    *anthropic.Message
+		apiErr         error
+	)
 	useStream := req.ModelParam.Stream && opts != nil && opts.StreamHandler != nil
 	if useStream {
-		return api.doStreaming(ctx, req.ModelParam.Name, params, opts, timeout, toolChoiceNameMap)
+		normalizedResp, fullRawResp, apiErr = api.doStreaming(
+			ctx,
+			req.ModelParam.Name,
+			params,
+			opts,
+			timeout,
+			toolChoiceNameMap,
+		)
+	} else {
+		normalizedResp, fullRawResp, apiErr = api.doNonStreaming(ctx, params, timeout, toolChoiceNameMap)
 	}
 
-	return api.doNonStreaming(ctx, params, timeout, toolChoiceNameMap)
+	if span != nil {
+		end := spec.CompletionSpanEnd{
+			ProviderResponse: fullRawResp,
+			Response:         normalizedResp, // may be nil
+			Err:              apiErr,
+		}
+		if normalizedResp != nil {
+			if dd := span.End(&end); dd != nil && normalizedResp.DebugDetails == nil {
+				normalizedResp.DebugDetails = dd
+			}
+		} else {
+			_ = span.End(&end) // ignore return; nothing to attach to
+		}
+	}
+
+	return normalizedResp, apiErr
 }
 
 func (api *AnthropicMessagesAPI) doNonStreaming(
@@ -234,24 +269,18 @@ func (api *AnthropicMessagesAPI) doNonStreaming(
 	params anthropic.MessageNewParams,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*spec.FetchCompletionResponse, error) {
+) (*spec.FetchCompletionResponse, *anthropic.Message, error) {
 	resp := &spec.FetchCompletionResponse{}
 
-	msg, err := api.client.Messages.New(ctx, params, option.WithRequestTimeout(timeout))
-	isNilResp := msg == nil || len(msg.Content) == 0
-	if api.debugger != nil {
-		resp.DebugDetails = api.debugger.BuildDebugDetails(ctx, msg, err, isNilResp)
-	}
-	resp.Usage = usageFromAnthropicMessage(msg)
+	anthropicMsg, err := api.client.Messages.New(ctx, params, option.WithRequestTimeout(timeout))
+
+	resp.Usage = usageFromAnthropicMessage(anthropicMsg)
 	if err != nil {
 		resp.Error = &spec.Error{Message: err.Error()}
-		return resp, err
+		return resp, anthropicMsg, err
 	}
-	if !isNilResp {
-		resp.Outputs = outputsFromAnthropicMessage(msg, toolChoiceNameMap)
-	}
-
-	return resp, nil
+	resp.Outputs = outputsFromAnthropicMessage(anthropicMsg, toolChoiceNameMap)
+	return resp, anthropicMsg, nil
 }
 
 func (api *AnthropicMessagesAPI) doStreaming(
@@ -261,7 +290,7 @@ func (api *AnthropicMessagesAPI) doStreaming(
 	opts *spec.FetchCompletionOptions,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*spec.FetchCompletionResponse, error) {
+) (*spec.FetchCompletionResponse, *anthropic.Message, error) {
 	resp := &spec.FetchCompletionResponse{}
 	streamCfg := sdkutil.ResolveStreamConfig(opts)
 
@@ -362,20 +391,12 @@ func (api *AnthropicMessagesAPI) doStreaming(
 	}
 
 	streamErr := errors.Join(stream.Err(), streamAccumulateErr, streamWriteErr)
-	isNilResp := len(respFull.Content) == 0
-	if api.debugger != nil {
-		resp.DebugDetails = api.debugger.BuildDebugDetails(ctx, &respFull, streamErr, isNilResp)
-	}
 	resp.Usage = usageFromAnthropicMessage(&respFull)
 	if streamErr != nil {
 		resp.Error = &spec.Error{Message: streamErr.Error()}
 	}
-
-	if !isNilResp {
-		resp.Outputs = outputsFromAnthropicMessage(&respFull, toolChoiceNameMap)
-	}
-
-	return resp, streamErr
+	resp.Outputs = outputsFromAnthropicMessage(&respFull, toolChoiceNameMap)
+	return resp, &respFull, streamErr
 }
 
 func handleContentBlockStartEvent(

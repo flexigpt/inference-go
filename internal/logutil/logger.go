@@ -21,13 +21,6 @@ func init() {
 // Slog-compatible top-level functions.
 //
 
-// Default returns the current process-wide logger, analogous to slog.Default.
-func Default() *slog.Logger {
-	mu.RLock()
-	defer mu.RUnlock()
-	return globalLogger
-}
-
 // SetDefault sets the process-wide logger, analogous to slog.SetDefault.
 // For compatibility with slog, passing nil panics.
 func SetDefault(logger *slog.Logger) {
@@ -97,4 +90,11 @@ func LogAttrs(ctx context.Context, level slog.Level, msg string, attrs ...slog.A
 // Signature is identical to slog.With.
 func With(args ...any) *slog.Logger {
 	return Default().With(args...)
+}
+
+// Default returns the current process-wide logger, analogous to slog.Default.
+func Default() *slog.Logger {
+	mu.RLock()
+	defer mu.RUnlock()
+	return globalLogger
 }

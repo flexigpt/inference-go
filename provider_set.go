@@ -8,18 +8,13 @@ import (
 	"sync"
 
 	"github.com/ppipada/inference-go/internal/anthropicsdk"
-	"github.com/ppipada/inference-go/internal/debugclient"
+
 	"github.com/ppipada/inference-go/internal/logutil"
 	"github.com/ppipada/inference-go/internal/openaichatsdk"
 	"github.com/ppipada/inference-go/internal/openairesponsessdk"
 	"github.com/ppipada/inference-go/internal/sdkutil"
 	"github.com/ppipada/inference-go/spec"
 )
-
-// LoggerBuilder returns the slog.Logger to be used by this ProviderSet. The
-// builder is evaluated during NewProviderSetAPI; passing nil or returning nil
-// results in a no-op logger being installed via logutil.SetLogger.
-type LoggerBuilder func() *slog.Logger
 
 // DebugClientBuilder constructs a CompletionDebugger for a given provider. A
 // nil builder or a nil returned debugger disable debugging for that provider.
@@ -29,18 +24,16 @@ type ProviderSetAPI struct {
 	mu sync.RWMutex
 
 	providers          map[spec.ProviderName]spec.CompletionProvider
-	loggerBuilder      LoggerBuilder
+	logger             *slog.Logger
 	debugClientBuilder DebugClientBuilder
 }
 
 // ProviderSetOption configures optional behavior for ProviderSetAPI.
 type ProviderSetOption func(*ProviderSetAPI)
 
-// WithLoggerBuilder installs a process-wide logger for this SDK. The builder
-// is evaluated during NewProviderSetAPI; passing nil results in a no-op logger.
-func WithLoggerBuilder(builder LoggerBuilder) ProviderSetOption {
+func WithLogger(logger *slog.Logger) ProviderSetOption {
 	return func(ps *ProviderSetAPI) {
-		ps.loggerBuilder = builder
+		ps.logger = logger
 	}
 }
 
@@ -50,47 +43,6 @@ func WithLoggerBuilder(builder LoggerBuilder) ProviderSetOption {
 func WithDebugClientBuilder(builder DebugClientBuilder) ProviderSetOption {
 	return func(ps *ProviderSetAPI) {
 		ps.debugClientBuilder = builder
-	}
-}
-
-// DebugOptions provides a high-level way to configure the built-in HTTP
-// debugger based on internal/debugclient. This is a convenience on top of
-// WithDebugClientBuilder; callers that need full control can provide their
-// own builder instead.
-type DebugOptions struct {
-	Enabled             bool
-	CaptureRequestBody  bool
-	CaptureResponseBody bool
-	StripContent        bool
-	LogToLogger         bool
-}
-
-// WithHTTPDebugOptions installs a DebugClientBuilder that uses the internal
-// HTTP debugger with the provided options.
-func WithHTTPDebugOptions(opts DebugOptions) ProviderSetOption {
-	return func(ps *ProviderSetAPI) {
-		if !opts.Enabled {
-			ps.debugClientBuilder = nil
-			return
-		}
-		cfg := debugclient.DefaultDebugConfig
-		cfg.Enabled = true
-		if opts.CaptureRequestBody {
-			cfg.CaptureRequestBody = true
-		}
-		if opts.CaptureResponseBody {
-			cfg.CaptureResponseBody = true
-		}
-		if opts.StripContent {
-			cfg.StripContent = true
-		}
-		if opts.LogToLogger {
-			cfg.LogToSlog = true
-		}
-
-		ps.debugClientBuilder = func(p spec.ProviderParam) spec.CompletionDebugger {
-			return debugclient.NewHTTPCompletionDebugger(cfg)
-		}
 	}
 }
 
@@ -110,8 +62,8 @@ func NewProviderSetAPI(
 		}
 	}
 
-	if ps.loggerBuilder != nil {
-		logutil.SetDefault(ps.loggerBuilder())
+	if ps.logger != nil {
+		logutil.SetDefault(ps.logger)
 	} else {
 		logutil.SetDefault(nil)
 	}

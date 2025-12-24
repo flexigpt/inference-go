@@ -54,25 +54,6 @@ type FetchCompletionOptions struct {
 	StreamConfig  *StreamConfig `json:"streamConfig,omitempty"`
 }
 
-// CompletionDebugger abstracts debugging/observability concerns for a single
-// provider. Implementations may collect HTTP-level data, raw model responses,
-// tracing information, etc. The inference layer treats the DebugDetails as
-// opaque and never inspects its shape.
-type CompletionDebugger interface {
-	// WrapContext is called at the beginning of FetchCompletion. It may attach
-	// any request-scoped state needed for later debug collection.
-	WrapContext(ctx context.Context) context.Context
-
-	// HTTPClient returns an HTTP client instrumented for debugging. If nil is
-	// returned, the provider SDK's default client will be used.
-	HTTPClient() *http.Client
-
-	// BuildDebugDetails is called once, after the upstream SDK call completes (successfully or with error).
-	// FullResponse is the raw SDK response object if available, otherwise nil.
-	// IsNilResp indicates whether fullResponse was considered empty/invalid by the provider.
-	BuildDebugDetails(ctx context.Context, fullResponse any, err error, isNilResp bool) any
-}
-
 type FetchCompletionResponse struct {
 	Outputs      []OutputUnion `json:"outputs,omitempty"`
 	Usage        *Usage        `json:"usage,omitempty"`
@@ -84,6 +65,68 @@ type FetchCompletionRequest struct {
 	ModelParam  ModelParam   `json:"modelParam"`
 	Inputs      []InputUnion `json:"inputs"`
 	ToolChoices []ToolChoice `json:"toolChoices,omitempty"`
+}
+
+type CompletionSpanStart struct {
+	Provider ProviderName
+	Model    ModelName
+
+	// Original request and options for this completion.
+	// These may be nil and MUST be treated as read-only.
+	Request *FetchCompletionRequest
+	Options *FetchCompletionOptions
+}
+
+type CompletionSpanEnd struct {
+	// Raw SDK response (e.g. *responses.Response for OpenAI). May be nil.
+	ProviderResponse any
+
+	// Error from the provider/stream if any.
+	Err error
+
+	// Normalized response object that the caller is about to return.
+	// May be nil. MUST be treated as read-only.
+	Response *FetchCompletionResponse
+}
+
+// CompletionSpan is the per-request handle. Only provider code sees this; external callers never construct it.
+type CompletionSpan interface {
+	// End is called exactly once, just before FetchCompletion returns.
+	//
+	// It can:
+	//   - pull any per-request state from the context,
+	//   - inspect raw/normalized responses and errors,
+	//   - return arbitrary data to attach to Response.DebugDetails.
+	//
+	// Returning nil means "no debug details for this call".
+	End(info *CompletionSpanEnd) any
+}
+
+// CompletionDebugger is the long-lived "client" object for a provider.
+//
+// Provider code (e.g., OpenAIResponsesAPI) owns one CompletionDebugger.
+// Callers don't touch this directly.
+type CompletionDebugger interface {
+	// HTTPClient is called once when the provider initializes its SDK client.
+	//
+	// The debugger can:
+	//   - wrap base (change Transport),
+	//   - ignore base and create a new client,
+	//   - or return nil to say "use provider's default client".
+	HTTPClient(base *http.Client) *http.Client
+
+	// StartSpan is called at the beginning of FetchCompletion.
+	//
+	// It can:
+	//   - inspect the request to decide whether to debug,
+	//   - attach per-request state to the context (e.g., via context keys),
+	//   - return a span handle that will be ended when the call finishes.
+	//
+	// If span is nil, no debugging will be performed for this call.
+	StartSpan(
+		ctx context.Context,
+		info *CompletionSpanStart,
+	) (ctxWithSpan context.Context, span CompletionSpan)
 }
 
 type CompletionProvider interface {

@@ -1,6 +1,7 @@
 package debugclient
 
 import (
+	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -28,15 +29,6 @@ var sensitiveKeys = []string{
 	"x-api-key",
 }
 
-// scrubPlainText applies minimal redaction to a non-JSON body.
-func scrubPlainText(s string) any {
-	if looksLikeBase64(s) {
-		return fmt.Sprintf("[omitted: %d bytes base64 data]", len(s))
-	}
-	// For non-JSON plain text we don't have structure; just return as-is.
-	return s
-}
-
 type scrubber struct {
 	cfg       DebugConfig
 	isRequest bool
@@ -46,6 +38,48 @@ type scrubber struct {
 type scrubContext struct {
 	insideMessage bool
 	parentKey     string
+}
+
+// sanitizeBodyForDebug parses and redacts a JSON or text body according to
+// DebugConfig. It returns the sanitized representation as 'any' suitable for
+// apiRequestDetails.Data or apiResponseDetails.Data.
+func sanitizeBodyForDebug(raw []byte, isRequest bool, cfg DebugConfig) any {
+	if len(raw) == 0 {
+		return nil
+	}
+
+	// Try to parse as JSON (objects or arrays).
+	var decoded any
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		// Not JSON; treat as plain text.
+		s := string(raw)
+		if !cfg.DisableContentStripping {
+			return scrubPlainText(s)
+		}
+		return s
+	}
+
+	s := newScrubber(cfg, isRequest)
+	return s.scrub(decoded, 0, scrubContext{})
+}
+
+// scrubPlainText applies minimal redaction to a non-JSON body.
+func scrubPlainText(s string) any {
+	if looksLikeBase64(s) {
+		return fmt.Sprintf("[omitted: %d bytes base64 data]", len(s))
+	}
+	// For non-JSON plain text we don't have structure; just return as-is.
+	return s
+}
+
+// scrubAnyForDebug applies the same sanitization logic as sanitizeBodyForDebug
+// to an already-decoded value.
+//
+// StripContent governs whether LLM text/base64 content is stripped.
+func scrubAnyForDebug(v any, stripContent bool) any {
+	cfg := DebugConfig{DisableContentStripping: !stripContent}
+	s := newScrubber(cfg, false)
+	return s.scrub(v, 0, scrubContext{})
 }
 
 func newScrubber(cfg DebugConfig, isRequest bool) *scrubber {
@@ -90,13 +124,13 @@ func (s *scrubber) scrubMap(m map[string]any, depth int, ctx scrubContext) any {
 		}
 
 		// Strip message "content" for user/assistant messages.
-		if s.cfg.StripContent && insideMessage && lk == contentStr {
+		if !s.cfg.DisableContentStripping && insideMessage && lk == contentStr {
 			out[k] = s.scrubMessageContent(val, depth+1, childCtx)
 			continue
 		}
 
 		// Strip top-level LLM text fields like "input", "prompt", "query".
-		if s.cfg.StripContent && (lk == "input" || lk == "prompt" || lk == "query") {
+		if !s.cfg.DisableContentStripping && (lk == "input" || lk == "prompt" || lk == "query") {
 			out[k] = s.scrubTopLevelText(val, depth+1, childCtx)
 			continue
 		}
@@ -124,12 +158,12 @@ func (s *scrubber) scrubSlice(arr []any, depth int, ctx scrubContext) any {
 
 func (s *scrubber) scrubString(str string, ctx scrubContext) any {
 	// First, strip large/base64-like data.
-	if s.cfg.StripContent && looksLikeBase64(str) {
+	if !s.cfg.DisableContentStripping && looksLikeBase64(str) {
 		return fmt.Sprintf("[omitted: %d bytes base64 data]", len(str))
 	}
 
 	// If we are inside a message, and this is likely a text field, scrub it.
-	if s.cfg.StripContent && ctx.insideMessage {
+	if !s.cfg.DisableContentStripping && ctx.insideMessage {
 		lk := strings.ToLower(ctx.parentKey)
 		if lk == textStr || lk == contentStr || lk == deltaStr {
 			return ommitedTextContentStr
@@ -145,7 +179,7 @@ func (s *scrubber) scrubString(str string, ctx scrubContext) any {
 func (s *scrubber) scrubMessageContent(val any, depth int, ctx scrubContext) any {
 	const placeholder = ommitedTextContentStr
 
-	if !s.cfg.StripContent {
+	if s.cfg.DisableContentStripping {
 		return s.scrub(val, depth, ctx)
 	}
 
@@ -195,7 +229,7 @@ func (s *scrubber) scrubContentSegment(seg map[string]any, depth int) any {
 		}
 
 		// Textual segments: drop text/content.
-		if s.cfg.StripContent && (segType == "input_text" || segType == "output_text" ||
+		if !s.cfg.DisableContentStripping && (segType == "input_text" || segType == "output_text" ||
 			segType == textStr || segType == "message") {
 			if lk == textStr || lk == contentStr {
 				out[k] = ommitedTextContentStr

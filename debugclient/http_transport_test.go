@@ -17,46 +17,14 @@ func TestContainsSensitiveKey(t *testing.T) {
 		key  string
 		want bool
 	}{
-		{
-			name: "EmptyKeyIsNotSensitive.",
-			key:  "",
-			want: false,
-		},
-		{
-			name: "AuthorizationIsSensitive.",
-			key:  "Authorization",
-			want: true,
-		},
-		{
-			name: "ProxyAuthorizationIsSensitive.",
-			key:  "Proxy-Authorization",
-			want: true,
-		},
-		{
-			name: "ApiKeyIsSensitive.",
-			key:  "apiKey",
-			want: true,
-		},
-		{
-			name: "XApiKeyIsSensitive.",
-			key:  "X-API-KEY",
-			want: true,
-		},
-		{
-			name: "SubstringKeyIsSensitive_Monkey.",
-			key:  "monkey",
-			want: false,
-		},
-		{
-			name: "SubstringKeyIsSensitive_TurKey.",
-			key:  "turKey",
-			want: false,
-		},
-		{
-			name: "UnrelatedKeyIsNotSensitive.",
-			key:  "NotSensitive",
-			want: false,
-		},
+		{"EmptyKeyIsNotSensitive.", "", false},
+		{"AuthorizationIsSensitive.", "Authorization", true},
+		{"ProxyAuthorizationIsSensitive.", "Proxy-Authorization", true},
+		{"ApiKeyIsSensitive.", "apiKey", true},
+		{"XApiKeyIsSensitive.", "X-API-KEY", true},
+		{"SubstringKeyIsSensitive_Monkey.", "monkey", false},
+		{"SubstringKeyIsSensitive_TurKey.", "turKey", false},
+		{"UnrelatedKeyIsNotSensitive.", "NotSensitive", false},
 	}
 
 	for _, tc := range tests {
@@ -189,25 +157,25 @@ func TestSanitizeBodyForDebug_PlainText(t *testing.T) {
 			name: "PlainTextWithoutStripReturnsAsIs.",
 			raw:  "hello world",
 			cfg: DebugConfig{
-				StripContent: false,
+				DisableContentStripping: true,
 			},
 			want:        "hello world",
-			description: "No JSON, no strip => return raw string.",
+			description: "No JSON, content stripping disabled => return raw string.",
 		},
 		{
 			name: "PlainTextWithStripReturnsAsIsIfNotBase64.",
 			raw:  "not base64",
 			cfg: DebugConfig{
-				StripContent: true,
+				DisableContentStripping: false,
 			},
 			want:        "not base64",
-			description: "StripContent=true but not base64-like => keep text.",
+			description: "Content stripping enabled but not base64-like => keep text.",
 		},
 		{
 			name: "LongBase64WithStripIsOmitted.",
 			raw:  longBase64,
 			cfg: DebugConfig{
-				StripContent: true,
+				DisableContentStripping: false,
 			},
 			want: fmt.Sprintf(
 				"[omitted: %d bytes base64 data]",
@@ -234,7 +202,7 @@ func TestSanitizeBodyForDebug_PlainText(t *testing.T) {
 }
 
 // TestSanitizeBodyForDebug_JSON_SensitiveKeys verifies that sensitive keys are
-// masked in JSON bodies, regardless of StripContent.
+// masked in JSON bodies, regardless of content stripping.
 func TestSanitizeBodyForDebug_JSON_SensitiveKeys(t *testing.T) {
 	t.Parallel()
 
@@ -251,16 +219,12 @@ func TestSanitizeBodyForDebug_JSON_SensitiveKeys(t *testing.T) {
 		cfg  DebugConfig
 	}{
 		{
-			name: "StripContentFalseStillRedactsSensitiveKeys.",
-			cfg: DebugConfig{
-				StripContent: false,
-			},
+			name: "StrippingDisabledStillRedactsSensitiveKeys.",
+			cfg:  DebugConfig{DisableContentStripping: true},
 		},
 		{
-			name: "StripContentTrueAlsoRedactsSensitiveKeys.",
-			cfg: DebugConfig{
-				StripContent: true,
-			},
+			name: "StrippingEnabledAlsoRedactsSensitiveKeys.",
+			cfg:  DebugConfig{DisableContentStripping: false},
 		},
 	}
 
@@ -290,7 +254,7 @@ func TestSanitizeBodyForDebug_JSON_SensitiveKeys(t *testing.T) {
 }
 
 // TestSanitizeBodyForDebug_JSON_MessageContent verifies that user/assistant
-// message content is scrubbed only when StripContent is true.
+// message content is scrubbed only when content stripping is enabled.
 func TestSanitizeBodyForDebug_JSON_MessageContent(t *testing.T) {
 	t.Parallel()
 
@@ -308,22 +272,22 @@ func TestSanitizeBodyForDebug_JSON_MessageContent(t *testing.T) {
 		description string
 	}{
 		{
-			name: "StripContentFalseKeepsMessageText.",
+			name: "StrippingDisabledKeepsMessageText.",
 			cfg: DebugConfig{
-				StripContent: false,
+				DisableContentStripping: true,
 			},
 			wantContent: "Hello world",
 			wantExtra:   "ok",
-			description: "Message content is not scrubbed when StripContent=false.",
+			description: "Message content is not scrubbed when stripping is disabled.",
 		},
 		{
-			name: "StripContentTrueScrubsMessageText.",
+			name: "StrippingEnabledScrubsMessageText.",
 			cfg: DebugConfig{
-				StripContent: true,
+				DisableContentStripping: false,
 			},
 			wantContent: ommitedTextContentStr,
 			wantExtra:   "ok",
-			description: "Message content is scrubbed when StripContent=true.",
+			description: "Message content is scrubbed when stripping is enabled.",
 		},
 	}
 
@@ -388,7 +352,7 @@ func TestSanitizeBodyForDebug_JSON_StructuredContent(t *testing.T) {
 	}
 
 	cfg := DebugConfig{
-		StripContent: true,
+		DisableContentStripping: false,
 	}
 
 	got := sanitizeBodyForDebug(raw, false, cfg)
@@ -493,7 +457,7 @@ func TestScrubber_Cycles(t *testing.T) {
 			t.Parallel()
 
 			orig := tc.in()
-			s := newScrubber(DebugConfig{StripContent: true}, true)
+			s := newScrubber(DebugConfig{DisableContentStripping: false}, true)
 			gotAny := s.scrub(orig, 0, scrubContext{})
 			got, ok := gotAny.(map[string]any)
 			if !ok {
@@ -532,7 +496,7 @@ func TestScrubber_Immutability(t *testing.T) {
 			t.Parallel()
 
 			orig := tc.in()
-			s := newScrubber(DebugConfig{StripContent: true}, true)
+			s := newScrubber(DebugConfig{DisableContentStripping: false}, true)
 			cleanAny := s.scrub(orig, 0, scrubContext{})
 			clean, ok := cleanAny.(map[string]any)
 			if !ok {
@@ -595,8 +559,7 @@ func TestGenerateCurlCommand_Basic(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			cfg := DebugConfig{}
-			curl := generateCurlCommand(tc.detail, cfg)
+			curl := generateCurlCommand(tc.detail)
 
 			if !strings.HasPrefix(curl, "curl") {
 				t.Fatalf("curl command must start with 'curl', got: %q.", curl)

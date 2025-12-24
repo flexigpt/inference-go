@@ -19,7 +19,7 @@ func DecodeAndPrintJSON(s string) {
 	}
 }
 
-// PrintJSON logs a value as JSON at info level (unchanged helper).
+// PrintJSON logs a value as JSON at info level.
 func PrintJSON(v any) {
 	p, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
@@ -75,7 +75,7 @@ func pointerOf(x any) uintptr {
 
 // shellQuote quotes a string for POSIX shells using single quotes.
 func shellQuote(s string) string {
-	//  Pattern ' -> '\''.
+	// Pattern ' -> '\''.
 	return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'"
 }
 

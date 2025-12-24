@@ -83,7 +83,7 @@ func (api *OpenAIChatCompletionsAPI) InitLLM(ctx context.Context) error {
 	}
 
 	if api.debugger != nil {
-		if httpClient := api.debugger.HTTPClient(); httpClient != nil {
+		if httpClient := api.debugger.HTTPClient(nil); httpClient != nil {
 			opts = append(opts, option.WithHTTPClient(httpClient))
 		}
 	}
@@ -204,15 +204,52 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 	if req.ModelParam.Timeout > 0 {
 		timeout = time.Duration(req.ModelParam.Timeout) * time.Second
 	}
+
+	var span spec.CompletionSpan
 	if api.debugger != nil {
-		ctx = api.debugger.WrapContext(ctx)
+		ctx, span = api.debugger.StartSpan(ctx, &spec.CompletionSpanStart{
+			Provider: api.ProviderParam.Name,
+			Model:    req.ModelParam.Name,
+			Request:  req,
+			Options:  opts,
+		})
 	}
 
+	var (
+		normalizedResp *spec.FetchCompletionResponse
+		fullRawResp    *openai.ChatCompletion
+		apiErr         error
+	)
 	useStream := req.ModelParam.Stream && opts != nil && opts.StreamHandler != nil
 	if useStream {
-		return api.doStreaming(ctx, req.ModelParam.Name, params, opts, timeout, toolChoiceNameMap)
+		normalizedResp, fullRawResp, apiErr = api.doStreaming(
+			ctx,
+			req.ModelParam.Name,
+			params,
+			opts,
+			timeout,
+			toolChoiceNameMap,
+		)
+	} else {
+		normalizedResp, fullRawResp, apiErr = api.doNonStreaming(ctx, params, timeout, toolChoiceNameMap)
 	}
-	return api.doNonStreaming(ctx, params, timeout, toolChoiceNameMap)
+
+	if span != nil {
+		end := spec.CompletionSpanEnd{
+			ProviderResponse: fullRawResp,
+			Response:         normalizedResp, // may be nil
+			Err:              apiErr,
+		}
+		if normalizedResp != nil {
+			if dd := span.End(&end); dd != nil && normalizedResp.DebugDetails == nil {
+				normalizedResp.DebugDetails = dd
+			}
+		} else {
+			_ = span.End(&end) // ignore return; nothing to attach to
+		}
+	}
+
+	return normalizedResp, apiErr
 }
 
 func (api *OpenAIChatCompletionsAPI) doNonStreaming(
@@ -220,25 +257,20 @@ func (api *OpenAIChatCompletionsAPI) doNonStreaming(
 	params openai.ChatCompletionNewParams,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*spec.FetchCompletionResponse, error) {
+) (*spec.FetchCompletionResponse, *openai.ChatCompletion, error) {
 	resp := &spec.FetchCompletionResponse{}
 
 	oaiResp, err := api.client.Chat.Completions.New(ctx, params, option.WithRequestTimeout(timeout))
 
-	isNilResp := oaiResp == nil || len(oaiResp.Choices) == 0
-	if api.debugger != nil {
-		resp.DebugDetails = api.debugger.BuildDebugDetails(ctx, oaiResp, err, isNilResp)
-	}
 	resp.Usage = usageFromOpenAIChatCompletion(oaiResp)
 	if err != nil {
 		resp.Error = &spec.Error{Message: err.Error()}
-		return resp, err
+		return resp, oaiResp, err
 	}
 
-	if !isNilResp {
-		resp.Outputs = outputsFromOpenAIChatCompletion(oaiResp, toolChoiceNameMap)
-	}
-	return resp, nil
+	resp.Outputs = outputsFromOpenAIChatCompletion(oaiResp, toolChoiceNameMap)
+
+	return resp, oaiResp, nil
 }
 
 func (api *OpenAIChatCompletionsAPI) doStreaming(
@@ -248,7 +280,7 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 	opts *spec.FetchCompletionOptions,
 	timeout time.Duration,
 	toolChoiceNameMap map[string]spec.ToolChoice,
-) (*spec.FetchCompletionResponse, error) {
+) (*spec.FetchCompletionResponse, *openai.ChatCompletion, error) {
 	resp := &spec.FetchCompletionResponse{}
 	streamCfg := sdkutil.ResolveStreamConfig(opts)
 	// No thinking data available in openai chat completions API, hence no thinking writer.
@@ -313,22 +345,13 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 	}
 
 	streamErr := errors.Join(stream.Err(), streamWriteErr)
-	isNilResp := len(acc.Choices) == 0
-
-	if api.debugger != nil {
-		resp.DebugDetails = api.debugger.BuildDebugDetails(ctx, &acc.ChatCompletion, streamErr, isNilResp)
-	}
 
 	resp.Usage = usageFromOpenAIChatCompletion(&acc.ChatCompletion)
 	if streamErr != nil {
 		resp.Error = &spec.Error{Message: streamErr.Error()}
 	}
-
-	if !isNilResp {
-		resp.Outputs = outputsFromOpenAIChatCompletion(&acc.ChatCompletion, toolChoiceNameMap)
-	}
-
-	return resp, streamErr
+	resp.Outputs = outputsFromOpenAIChatCompletion(&acc.ChatCompletion, toolChoiceNameMap)
+	return resp, &acc.ChatCompletion, streamErr
 }
 
 func toOpenAIChatMessages(
