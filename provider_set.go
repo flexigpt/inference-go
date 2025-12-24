@@ -1,3 +1,14 @@
+// Package inference provides a single, normalized interface for getting
+// language model completions from multiple providers.
+//
+// The main entry point is ProviderSetAPI, which lets you:
+//
+//   - register one or more providers (Anthropic, OpenAI Chat Completions,
+//     OpenAI Responses, ...),
+//   - configure and rotate API keys,
+//   - send normalized completion requests and receive normalized outputs,
+//   - optionally stream partial text / reasoning and capture HTTP‑level
+//     debug information.
 package inference
 
 import (
@@ -83,9 +94,9 @@ func (ps *ProviderSetAPI) AddProvider(
 	ctx context.Context,
 	provider spec.ProviderName,
 	config *AddProviderConfig,
-) (*spec.ProviderParam, error) {
+) (spec.ProviderParam, error) {
 	if config == nil || provider == "" || config.Origin == "" {
-		return nil, errors.New("invalid params")
+		return spec.ProviderParam{}, errors.New("invalid params")
 	}
 
 	ps.mu.Lock()
@@ -93,12 +104,12 @@ func (ps *ProviderSetAPI) AddProvider(
 
 	_, exists := ps.providers[provider]
 	if exists {
-		return nil, errors.New(
+		return spec.ProviderParam{}, errors.New(
 			"invalid provider: cannot add a provider with same name as an existing provider, delete first",
 		)
 	}
 	if ok := isProviderSDKTypeSupported(config.SDKType); !ok {
-		return nil, errors.New("unsupported provider api type")
+		return spec.ProviderParam{}, errors.New("unsupported provider api type")
 	}
 
 	providerInfo := spec.ProviderParam{
@@ -118,13 +129,13 @@ func (ps *ProviderSetAPI) AddProvider(
 
 	cp, err := getProviderAPI(providerInfo, dbg)
 	if err != nil {
-		return nil, err
+		return spec.ProviderParam{}, err
 	}
 	ps.providers[provider] = cp
 
 	logutil.Info("add provider", "name", provider)
 
-	return cp.GetProviderInfo(ctx), nil
+	return *cp.GetProviderInfo(ctx), nil
 }
 
 func (ps *ProviderSetAPI) DeleteProvider(

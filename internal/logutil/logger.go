@@ -21,18 +21,6 @@ func init() {
 // Slog-compatible top-level functions.
 //
 
-// SetDefault sets the process-wide logger, analogous to slog.SetDefault.
-// For compatibility with slog, passing nil panics.
-func SetDefault(logger *slog.Logger) {
-	mu.Lock()
-	defer mu.Unlock()
-
-	if logger == nil {
-		logger = slog.New(slog.DiscardHandler)
-	}
-	globalLogger = logger
-}
-
 // Debug logs at LevelDebug using the process-wide logger.
 func Debug(msg string, args ...any) {
 	Default().Debug(msg, args...)
@@ -97,4 +85,15 @@ func Default() *slog.Logger {
 	mu.RLock()
 	defer mu.RUnlock()
 	return globalLogger
+}
+
+// SetDefault sets the process-wide logger, analogous to slog.SetDefault.
+func SetDefault(logger *slog.Logger) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if logger == nil {
+		logger = slog.New(slog.DiscardHandler)
+	}
+	globalLogger = logger
 }
