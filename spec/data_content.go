@@ -33,9 +33,7 @@ const (
 )
 
 type ContentItemText struct {
-	Text string `json:"text"`
-
-	// Any additional references to this text item.
+	Text      string     `json:"text"`
 	Citations []Citation `json:"citations,omitempty"`
 }
 
@@ -57,8 +55,7 @@ type ContentItemImage struct {
 	ImageName string      `json:"imageName,omitzero"`
 	ImageMIME string      `json:"imageMIME,omitzero"`
 	ImageURL  string      `json:"imageURL,omitzero"`
-	// Base64 encoded data.
-	ImageData string `json:"imageData,omitzero"`
+	ImageData string      `json:"imageData,omitzero"`
 }
 
 type ContentItemFile struct {
@@ -66,7 +63,7 @@ type ContentItemFile struct {
 	FileName string `json:"fileName,omitzero"`
 	FileMIME string `json:"fileMIME,omitzero"`
 	FileURL  string `json:"fileURL,omitzero"`
-	// Base64 encoded data.
+
 	FileData          string          `json:"fileData,omitzero"`
 	AdditionalContext string          `json:"additionalContext,omitzero"`
 	CitationConfig    *CitationConfig `json:"citationConfig"`
@@ -75,7 +72,6 @@ type ContentItemFile struct {
 type InputOutputContentItemUnion struct {
 	Kind ContentItemKind `json:"kind"`
 
-	// Only one can be non nil.
 	TextItem    *ContentItemText    `json:"textItem,omitempty"`
 	RefusalItem *ContentItemRefusal `json:"refusalItem,omitempty"`
 	ImageItem   *ContentItemImage   `json:"imageItem,omitempty"`
@@ -92,7 +88,6 @@ type InputOutputContent struct {
 }
 
 type ReasoningContent struct {
-	// An unique identifier for this content.
 	ID           string        `json:"id"`
 	Role         RoleEnum      `json:"role"`
 	Status       Status        `json:"status,omitzero"`
@@ -102,58 +97,5 @@ type ReasoningContent struct {
 	Summary          []string `json:"summary,omitempty"`
 	Thinking         []string `json:"thinking,omitempty"`
 	RedactedThinking []string `json:"redactedThinking,omitempty"`
-
-	// The encrypted content of the reasoning item.
-	// In case of openai responses api, it is generated if `reasoning.encrypted_content` is specified in the `include`.
 	EncryptedContent []string `json:"encryptedContent,omitempty"`
-}
-
-type InputKind string
-
-const (
-	InputKindInputMessage        InputKind = "inputMessage"
-	InputKindOutputMessage       InputKind = "outputMessage"
-	InputKindReasoningMessage    InputKind = "reasoningMessage"
-	InputKindFunctionToolCall    InputKind = "functionToolCall"
-	InputKindFunctionToolOutput  InputKind = "functionToolOutput"
-	InputKindCustomToolCall      InputKind = "customToolCall"
-	InputKindCustomToolOutput    InputKind = "customToolOutput"
-	InputKindWebSearchToolCall   InputKind = "webSearchToolCall"
-	InputKindWebSearchToolOutput InputKind = "webSearchToolOutput"
-)
-
-type InputUnion struct {
-	Kind InputKind `json:"kind"`
-
-	InputMessage        *InputOutputContent `json:"inputMessage,omitempty"`
-	OutputMessage       *InputOutputContent `json:"outputMessage,omitempty"`
-	ReasoningMessage    *ReasoningContent   `json:"reasoningMessage,omitempty"`
-	FunctionToolCall    *ToolCall           `json:"functionToolCall,omitempty"`
-	FunctionToolOutput  *ToolOutput         `json:"functionToolOutput,omitempty"`
-	CustomToolCall      *ToolCall           `json:"customToolCall,omitempty"`
-	CustomToolOutput    *ToolOutput         `json:"customToolOutput,omitempty"`
-	WebSearchToolCall   *ToolCall           `json:"webSearchToolCall,omitempty"`
-	WebSearchToolOutput *ToolOutput         `json:"webSearchToolOutput,omitempty"`
-}
-
-type OutputKind string
-
-const (
-	OutputKindOutputMessage       OutputKind = "outputMessage"
-	OutputKindReasoningMessage    OutputKind = "reasoningMessage"
-	OutputKindFunctionToolCall    OutputKind = "functionToolCall"
-	OutputKindCustomToolCall      OutputKind = "customToolCall"
-	OutputKindWebSearchToolCall   OutputKind = "webSearchToolCall"
-	OutputKindWebSearchToolOutput OutputKind = "webSearchToolOutput"
-)
-
-type OutputUnion struct {
-	Kind OutputKind `json:"kind"`
-
-	OutputMessage       *InputOutputContent `json:"outputMessage,omitempty"`
-	ReasoningMessage    *ReasoningContent   `json:"reasoningMessage,omitempty"`
-	FunctionToolCall    *ToolCall           `json:"functionToolCall,omitempty"`
-	CustomToolCall      *ToolCall           `json:"customToolCall,omitempty"`
-	WebSearchToolCall   *ToolCall           `json:"webSearchToolCall,omitempty"`
-	WebSearchToolOutput *ToolOutput         `json:"webSearchToolOutput,omitempty"`
 }

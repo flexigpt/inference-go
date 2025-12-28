@@ -11,27 +11,18 @@ const (
 const DefaultWebSearchToolName string = "webSearchToolChoice"
 
 type WebSearchToolChoiceItemUserLocation struct {
-	// The city of the user.
-	City string `json:"city,omitzero"`
-	// The two letter [ISO country code](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) of the user.
-	Country string `json:"country,omitzero"`
-	// The region of the user.
-	Region string `json:"region,omitzero"`
-	// The [IANA timezone](https://nodatime.org/TimeZones) of the user.
+	City     string `json:"city,omitzero"`
+	Country  string `json:"country,omitzero"`
+	Region   string `json:"region,omitzero"`
 	Timezone string `json:"timezone,omitzero"`
 }
 
 type WebSearchToolChoiceItem struct {
-	// Maximum number of times the tool can be used in the API request.
-	MaxUses int64 `json:"max_uses,omitzero"`
-	// One of `low`, `medium`, or `high`. `medium` is the default.
-	SearchContextSize string `json:"searchContextSize,omitzero"`
-	// If provided, only these domains will be included in results. Cannot be used alongside `blocked_domains`.
-	AllowedDomains []string `json:"allowed_domains,omitzero"`
-	// If provided, these domains will never appear in results. Cannot be used alongside `allowed_domains`.
-	BlockedDomains []string `json:"blocked_domains,omitzero"`
-	// Parameters for the user's location. Used to provide more relevant search results.
-	UserLocation *WebSearchToolChoiceItemUserLocation `json:"user_location,omitempty"`
+	MaxUses           int64                                `json:"max_uses,omitzero"`
+	SearchContextSize string                               `json:"searchContextSize,omitzero"`
+	AllowedDomains    []string                             `json:"allowed_domains,omitzero"`
+	BlockedDomains    []string                             `json:"blocked_domains,omitzero"`
+	UserLocation      *WebSearchToolChoiceItemUserLocation `json:"user_location,omitempty"`
 }
 
 type ToolChoice struct {
@@ -43,9 +34,6 @@ type ToolChoice struct {
 	Name        string `json:"name"`
 	Description string `json:"description,omitzero"`
 
-	// Only one below can be non nil.
-	// Function/Custom tools can have arguments of any shape. Respective properties are passed to relevant sdk params.
-	// Expected to be a map conversion of JSON Schema object in most cases.
 	Arguments          map[string]any           `json:"arguments,omitempty"`
 	WebSearchArguments *WebSearchToolChoiceItem `json:"webSearchArguments,omitempty"`
 }
@@ -65,8 +53,7 @@ type WebSearchToolCallSearchSource struct {
 type WebSearchToolCallSearch struct {
 	Query   string                          `json:"query"`
 	Sources []WebSearchToolCallSearchSource `json:"sources,omitempty"`
-	// Can be opaque map in some cases.
-	Input map[string]any `json:"input,omitempty"`
+	Input   map[string]any                  `json:"input,omitempty"`
 }
 
 type WebSearchToolCallOpenPage struct {
@@ -81,7 +68,6 @@ type WebSearchToolCallFind struct {
 type WebSearchToolCallItemUnion struct {
 	Kind WebSearchToolCallKind `json:"kind"`
 
-	// Only one can be non nil.
 	SearchItem   *WebSearchToolCallSearch   `json:"searchItem,omitempty"`
 	OpenPageItem *WebSearchToolCallOpenPage `json:"openPageItem,omitempty"`
 	FindItem     *WebSearchToolCallFind     `json:"findItem,omitempty"`
@@ -90,7 +76,6 @@ type WebSearchToolCallItemUnion struct {
 type ToolCall struct {
 	Type ToolType `json:"type"`
 
-	// The ID of the toolchoice will be mapped using the name output from the call and populated here.
 	ChoiceID     string        `json:"choiceID"`
 	ID           string        `json:"id"`
 	Role         RoleEnum      `json:"role"`
@@ -125,7 +110,6 @@ type WebSearchToolOutputError struct {
 type WebSearchToolOutputItemUnion struct {
 	Kind WebSearchToolOutputKind `json:"kind"`
 
-	// Only one can be non nil.
 	SearchItem *WebSearchToolOutputSearch `json:"searchItem,omitempty"`
 	ErrorItem  *WebSearchToolOutputError  `json:"errorItem,omitempty"`
 }
@@ -133,7 +117,6 @@ type WebSearchToolOutputItemUnion struct {
 type ToolOutputItemUnion struct {
 	Kind ContentItemKind `json:"kind"`
 
-	// Only one can be non nil.
 	TextItem  *ContentItemText  `json:"textItem,omitempty"`
 	ImageItem *ContentItemImage `json:"imageItem,omitempty"`
 	FileItem  *ContentItemFile  `json:"fileItem,omitempty"`
@@ -143,7 +126,7 @@ type ToolOutput struct {
 	Type ToolType `json:"type"`
 
 	ChoiceID     string        `json:"choiceID"`
-	ID           string        `json:"id"` // This ID and CallID should be linked from ToolCall.
+	ID           string        `json:"id"`
 	Role         RoleEnum      `json:"role"`
 	Status       Status        `json:"status,omitzero"`
 	CacheControl *CacheControl `json:"cacheControl,omitempty"`
