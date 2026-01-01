@@ -156,6 +156,10 @@ func (s *httpSpan) End(end *spec.CompletionSpanEnd) any {
 		if m, err := structToMap(end.ProviderResponse); err == nil {
 			strip := !s.cfg.DisableContentStripping
 			state.ProviderResponse = scrubAnyForDebug(m, strip)
+			// Dont send response details data if actual response was available.
+			if state.ResponseDetails != nil {
+				state.ResponseDetails.Data = nil
+			}
 		}
 	}
 

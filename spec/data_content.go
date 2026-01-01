@@ -14,6 +14,7 @@ const (
 type Status string
 
 const (
+	StatusNone       Status = ""
 	StatusInProgress Status = "inProgress"
 	StatusCompleted  Status = "completed"
 	StatusIncomplete Status = "incomplete"
