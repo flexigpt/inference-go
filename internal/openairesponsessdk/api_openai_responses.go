@@ -154,7 +154,7 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 		return nil, err
 	}
 
-	// logutil.LogJSON(inputItems)
+	// Log: logutil.LogJSON(inputItems).
 
 	params := responses.ResponseNewParams{
 		Model:   shared.ChatModel(req.ModelParam.Name),
