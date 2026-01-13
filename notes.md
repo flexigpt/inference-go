@@ -1,68 +1,5 @@
 # Notes
 
-## Support Matrix Notes: Anthropic
-
-- Input params
-
-  - Supported: Max tokens, model, stream, temperature, thinking
-  - Not supported:
-    - metadata : userid - to detect safety issues.
-    - service tiers
-    - stop sequences array
-    - topK, topP
-
-- OutputParams
-
-  - Supported: input output tokens usage
-  - Not supported: All things not handled are passed as opaque Details.
-    - id, model, stop reason, stop sequence, cache tokens, service tier
-
-- Input output content (i.e messages and system prompt):
-
-  - Text:
-    - Support: Text input, URL citations i.e web search result.
-    - Don't support citations: char location, page location, content block location, search result location.
-      - The usecase for a few is known, but need to distinguish which one is useful for actual stateless api operation, vs which is strictly for stateful flows.
-  - Image: all supported.
-  - Document source:
-    - Support: pdf, url pdf and text file.
-    - Don't support: Content block source
-      - There is a content block as a option inside the possible document blocks
-      - It allows to send text and and image as document param.
-      - Not sure why this duplication from the top level param is present and when is this supposed to be used vs top level.
-  - Thinking, redacted thinking: all supported.
-
-  - Tool use: all supported including Server tool use of websearch.
-  - Tool result:
-
-    - Support: Text, image, document, Web search tool result.
-    - Don't support: Similar to above, search result block and content block source inside document source is not supported in the result type.
-
-  - SearchResultBlock - Fully not supported in input or output.
-    - Need to see where it is useful in stateless flows.
-
-- Tool choice:
-
-  - [ ] Deferred
-
-    - [ ] Remote MCP connector: decide when to do mcp integrations.
-
-  - [ ] Deferred/Think through
-
-    - [ ] Bash tool: Similar to OpenAIs shell tool. Both recommend handing things in a "session".
-    - [ ] Text editor: This is near to patch apply tool in behavior but has some text like commands string replace and view etc.
-    - [ ] Web fetch: it is page fetch for content or pdf. For normal usecase the current local url fetch and send will be better in terms of state management and better processing and errors. This may be useful when doing web search integration. think about it when doing that.
-
-  - [ ] Don't
-
-    - [ ] Computer use: Same as openai.
-    - [ ] Code execution: Same as openai code interpreter with some free hours of usage.
-    - [ ] Programmatic tool calling: this is a convoluted looping of code execution and local tool calls. No usecase known yet.
-      - [ ] Simple mental model: Let Claude write a little Python script once, and run that script in a loop while it calls your tools, instead of asking Claude to think and call tools over and over.
-      - [ ] May be useful only to save tokens when there is a looped tool call need.
-    - [ ] Memory tool: This seems interesting on first pass. it is similar to text editor in flow, but allows to accumulate context locally on client. Would be interesting to see how to do context management in local app ourselves and how this tool helps with that?
-    - [ ] Tool search tool: This is a server side tool that allows claude to hold a tool library on its server and then search through it to get appropriate tool and then invoke it. It is very efficient in terms of token usage and can be checked on how to implement it locally.
-
 ## Support Matrix Notes: OpenAI Responses
 
 - Input params
@@ -134,6 +71,69 @@
     - [ ] Computer use: Clicks and image captures of screenshots from computer. Not sure about the utility of it yet.
     - [ ] Code interpreter: about executing python in openai's own sandbox. not sure about the utility of it yet.
     - [ ] Local shell tool: outdated, and available only on codex mini.
+
+## Support Matrix Notes: Anthropic
+
+- Input params
+
+  - Supported: Max tokens, model, stream, temperature, thinking
+  - Not supported:
+    - metadata : userid - to detect safety issues.
+    - service tiers
+    - stop sequences array
+    - topK, topP
+
+- OutputParams
+
+  - Supported: input output tokens usage
+  - Not supported: All things not handled are passed as opaque Details.
+    - id, model, stop reason, stop sequence, cache tokens, service tier
+
+- Input output content (i.e messages and system prompt):
+
+  - Text:
+    - Support: Text input, URL citations i.e web search result.
+    - Don't support citations: char location, page location, content block location, search result location.
+      - The usecase for a few is known, but need to distinguish which one is useful for actual stateless api operation, vs which is strictly for stateful flows.
+  - Image: all supported.
+  - Document source:
+    - Support: pdf, url pdf and text file.
+    - Don't support: Content block source
+      - There is a content block as a option inside the possible document blocks
+      - It allows to send text and and image as document param.
+      - Not sure why this duplication from the top level param is present and when is this supposed to be used vs top level.
+  - Thinking, redacted thinking: all supported.
+
+  - Tool use: all supported including Server tool use of websearch.
+  - Tool result:
+
+    - Support: Text, image, document, Web search tool result.
+    - Don't support: Similar to above, search result block and content block source inside document source is not supported in the result type.
+
+  - SearchResultBlock - Fully not supported in input or output.
+    - Need to see where it is useful in stateless flows.
+
+- Tool choice:
+
+  - [ ] Deferred
+
+    - [ ] Remote MCP connector: decide when to do mcp integrations.
+
+  - [ ] Deferred/Think through
+
+    - [ ] Bash tool: Similar to OpenAIs shell tool. Both recommend handing things in a "session".
+    - [ ] Text editor: This is near to patch apply tool in behavior but has some text like commands string replace and view etc.
+
+  - [ ] Don't
+
+    - [ ] Computer use: Same as openai.
+    - [ ] Code execution: Same as openai code interpreter with some free hours of usage.
+    - [ ] Programmatic tool calling: this is a convoluted looping of code execution and local tool calls. No usecase known yet.
+      - [ ] Simple mental model: Let Claude write a little Python script once, and run that script in a loop while it calls your tools, instead of asking Claude to think and call tools over and over.
+      - [ ] May be useful only to save tokens when there is a looped tool call need.
+    - [ ] Memory tool: This seems interesting on first pass. it is similar to text editor in flow, but allows to accumulate context locally on client. Would be interesting to see how to do context management in local app ourselves and how this tool helps with that?
+    - [ ] Tool search tool: This is a server side tool that allows claude to hold a tool library on its server and then search through it to get appropriate tool and then invoke it. It is very efficient in terms of token usage and can be checked on how to implement it locally.
+    - [x] Web fetch: it is page fetch for content or pdf. For normal usecase the current local url fetch and send is better in terms of state management and better processing and errors.
 
 ## Nitpicks
 
