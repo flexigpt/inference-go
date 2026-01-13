@@ -43,25 +43,25 @@
 
 - Tool choice:
 
-  - [x] Deferred
+  - [ ] Deferred
 
-    - [x] Remote MCP connector: decide when to do mcp integrations.
+    - [ ] Remote MCP connector: decide when to do mcp integrations.
 
-  - [x] Deferred/Think through
+  - [ ] Deferred/Think through
 
-    - [x] Bash tool: Similar to OpenAIs shell tool. Both recommend handing things in a "session".
-    - [x] Text editor: This is near to patch apply tool in behavior but has some text like commands string replace and view etc.
-    - [x] Web fetch: it is page fetch for content or pdf. For normal usecase the current local url fetch and send will be better in terms of state management and better processing and errors. This may be useful when doing web search integration. think about it when doing that.
+    - [ ] Bash tool: Similar to OpenAIs shell tool. Both recommend handing things in a "session".
+    - [ ] Text editor: This is near to patch apply tool in behavior but has some text like commands string replace and view etc.
+    - [ ] Web fetch: it is page fetch for content or pdf. For normal usecase the current local url fetch and send will be better in terms of state management and better processing and errors. This may be useful when doing web search integration. think about it when doing that.
 
-  - [x] Don't
+  - [ ] Don't
 
-    - [x] Computer use: Same as openai.
-    - [x] Code execution: Same as openai code interpreter with some free hours of usage.
-    - [x] Programmatic tool calling: this is a convoluted looping of code execution and local tool calls. No usecase known yet.
-      - [x] Simple mental model: Let Claude write a little Python script once, and run that script in a loop while it calls your tools, instead of asking Claude to think and call tools over and over.
-      - [x] May be useful only to save tokens when there is a looped tool call need.
-    - [x] Memory tool: This seems interesting on first pass. it is similar to text editor in flow, but allows to accumulate context locally on client. Would be interesting to see how to do context management in local app ourselves and how this tool helps with that?
-    - [x] Tool search tool: This is a server side tool that allows claude to hold a tool library on its server and then search through it to get appropriate tool and then invoke it. It is very efficient in terms of token usage and can be checked on how to implement it locally.
+    - [ ] Computer use: Same as openai.
+    - [ ] Code execution: Same as openai code interpreter with some free hours of usage.
+    - [ ] Programmatic tool calling: this is a convoluted looping of code execution and local tool calls. No usecase known yet.
+      - [ ] Simple mental model: Let Claude write a little Python script once, and run that script in a loop while it calls your tools, instead of asking Claude to think and call tools over and over.
+      - [ ] May be useful only to save tokens when there is a looped tool call need.
+    - [ ] Memory tool: This seems interesting on first pass. it is similar to text editor in flow, but allows to accumulate context locally on client. Would be interesting to see how to do context management in local app ourselves and how this tool helps with that?
+    - [ ] Tool search tool: This is a server side tool that allows claude to hold a tool library on its server and then search through it to get appropriate tool and then invoke it. It is very efficient in terms of token usage and can be checked on how to implement it locally.
 
 ## Support Matrix Notes: OpenAI Responses
 
@@ -116,24 +116,24 @@
 
 - Tool choice:
 
-  - [x] Deferred
+  - [ ] Deferred
 
-    - [x] File search: it is about using files uplaoded to openai vector stores. may look at it when we do vector stores thing.
-    - [x] Remote MCP: decide when to do mcp integrations.
-    - [x] Remote Connectors: decide when to do mcp integrations. This is better as it would give concrete access to remote data sources.
+    - [ ] File search: it is about using files uplaoded to openai vector stores. may look at it when we do vector stores thing.
+    - [ ] Remote MCP: decide when to do mcp integrations.
+    - [ ] Remote Connectors: decide when to do mcp integrations. This is better as it would give concrete access to remote data sources.
     - [ ] Image generation.
 
-  - [x] Deferred/Think through
+  - [ ] Deferred/Think through
 
-    - [x] Shell tool: this is a fixed schema for a host driven shell tool implementation. Better to have a much more controlled and safe and tunable in app shell calls and execute tool and flow. arbitrary shell commands in loop can be quite dangerous overall.
-    - [x] Apply path tool: this is a fixed schema for a host driven patch generation and apply tool. it allows models to generate patches (mostly will be some internal schema conformance thing) and we have to apply them locally.
-    - [x] The utility of these tools is mostly that you dont have to give input schema for this in function calling. This may be useful over host driven similar tools only if there is some cost saving associated with it.
+    - [ ] Shell tool: this is a fixed schema for a host driven shell tool implementation. Better to have a much more controlled and safe and tunable in app shell calls and execute tool and flow. arbitrary shell commands in loop can be quite dangerous overall.
+    - [ ] Apply path tool: this is a fixed schema for a host driven patch generation and apply tool. it allows models to generate patches (mostly will be some internal schema conformance thing) and we have to apply them locally.
+    - [ ] The utility of these tools is mostly that you dont have to give input schema for this in function calling. This may be useful over host driven similar tools only if there is some cost saving associated with it.
 
-  - [x] Don't
+  - [ ] Don't
 
-    - [x] Computer use: Clicks and image captures of screenshots from computer. Not sure about the utility of it yet.
-    - [x] Code interpreter: about executing python in openai's own sandbox. not sure about the utility of it yet.
-    - [x] Local shell tool: outdated, and available only on codex mini.
+    - [ ] Computer use: Clicks and image captures of screenshots from computer. Not sure about the utility of it yet.
+    - [ ] Code interpreter: about executing python in openai's own sandbox. not sure about the utility of it yet.
+    - [ ] Local shell tool: outdated, and available only on codex mini.
 
 ## Nitpicks
 
