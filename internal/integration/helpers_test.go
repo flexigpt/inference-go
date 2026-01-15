@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/ppipada/inference-go"
-	"github.com/ppipada/inference-go/debugclient"
-	"github.com/ppipada/inference-go/spec"
+	"github.com/flexigpt/inference-go"
+	"github.com/flexigpt/inference-go/debugclient"
+	"github.com/flexigpt/inference-go/spec"
 )
 
 // newProviderSetWithDebug constructs a ProviderSetAPI with:

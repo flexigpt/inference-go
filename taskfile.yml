@@ -31,7 +31,7 @@ tasks:
 
   godepgraph:
     cmds:
-      - godepgraph -s -o github.com/ppipada/inference-go,command-line-arguments provider_set.go | dot -Tpng -o godepgraph.png
+      - godepgraph -s -o github.com/flexigpt/inference-go,command-line-arguments provider_set.go | dot -Tpng -o godepgraph.png
 
   tagstats:
     cmds:

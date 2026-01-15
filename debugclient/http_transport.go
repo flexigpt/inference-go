@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/ppipada/inference-go/internal/logutil"
+	"github.com/flexigpt/inference-go/internal/logutil"
 )
 
 type contextKey string

@@ -12,9 +12,9 @@ import (
 	"github.com/anthropics/anthropic-sdk-go/option"
 	anthropicSharedConstant "github.com/anthropics/anthropic-sdk-go/shared/constant"
 
-	"github.com/ppipada/inference-go/internal/logutil"
-	"github.com/ppipada/inference-go/internal/sdkutil"
-	"github.com/ppipada/inference-go/spec"
+	"github.com/flexigpt/inference-go/internal/logutil"
+	"github.com/flexigpt/inference-go/internal/sdkutil"
+	"github.com/flexigpt/inference-go/spec"
 )
 
 // AnthropicMessagesAPI implements CompletionProvider for Anthropics' Messages API.

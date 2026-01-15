@@ -1,4 +1,4 @@
-module github.com/ppipada/inference-go
+module github.com/flexigpt/inference-go
 
 go 1.25.3
 

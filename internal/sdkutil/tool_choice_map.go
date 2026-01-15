@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ppipada/inference-go/spec"
+	"github.com/flexigpt/inference-go/spec"
 )
 
 // toolName is a pair of an internal tool choice and the function name

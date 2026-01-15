@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ppipada/inference-go"
-	"github.com/ppipada/inference-go/spec"
+	"github.com/flexigpt/inference-go"
+	"github.com/flexigpt/inference-go/spec"
 )
 
 // Example_openAIResponses_toolsAndAttachments demonstrates a more advanced

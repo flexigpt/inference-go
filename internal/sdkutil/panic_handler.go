@@ -3,7 +3,7 @@ package sdkutil
 import (
 	"runtime/debug"
 
-	"github.com/ppipada/inference-go/internal/logutil"
+	"github.com/flexigpt/inference-go/internal/logutil"
 )
 
 // Recover logs a panic (if any) at error level and prevents it from bringing

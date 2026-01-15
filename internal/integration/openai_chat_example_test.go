@@ -8,8 +8,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/ppipada/inference-go"
-	"github.com/ppipada/inference-go/spec"
+	"github.com/flexigpt/inference-go"
+	"github.com/flexigpt/inference-go/spec"
 )
 
 // Example_openAIChat_basicConversation demonstrates a minimal non-streaming

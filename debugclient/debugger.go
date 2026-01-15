@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ppipada/inference-go/internal/sdkutil"
-	"github.com/ppipada/inference-go/spec"
+	"github.com/flexigpt/inference-go/internal/sdkutil"
+	"github.com/flexigpt/inference-go/spec"
 )
 
 // DebugConfig controls how HTTP debug information is captured and redacted.

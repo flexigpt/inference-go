@@ -1,6 +1,6 @@
 package sdkutil
 
-import "github.com/ppipada/inference-go/spec"
+import "github.com/flexigpt/inference-go/spec"
 
 // IsInputUnionEmpty reports whether an InputUnion has nothing "worth sending".
 // Metadata-only messages (e.g. only IDs/roles with no actual content) are

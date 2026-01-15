@@ -14,9 +14,9 @@ import (
 	"github.com/openai/openai-go/v3/shared"
 	openaiSharedConstant "github.com/openai/openai-go/v3/shared/constant"
 
-	"github.com/ppipada/inference-go/internal/logutil"
-	"github.com/ppipada/inference-go/internal/sdkutil"
-	"github.com/ppipada/inference-go/spec"
+	"github.com/flexigpt/inference-go/internal/logutil"
+	"github.com/flexigpt/inference-go/internal/sdkutil"
+	"github.com/flexigpt/inference-go/spec"
 )
 
 // OpenAIResponsesAPI struct that implements the CompletionProvider interface.

@@ -18,13 +18,13 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/ppipada/inference-go/internal/anthropicsdk"
+	"github.com/flexigpt/inference-go/internal/anthropicsdk"
 
-	"github.com/ppipada/inference-go/internal/logutil"
-	"github.com/ppipada/inference-go/internal/openaichatsdk"
-	"github.com/ppipada/inference-go/internal/openairesponsessdk"
-	"github.com/ppipada/inference-go/internal/sdkutil"
-	"github.com/ppipada/inference-go/spec"
+	"github.com/flexigpt/inference-go/internal/logutil"
+	"github.com/flexigpt/inference-go/internal/openaichatsdk"
+	"github.com/flexigpt/inference-go/internal/openairesponsessdk"
+	"github.com/flexigpt/inference-go/internal/sdkutil"
+	"github.com/flexigpt/inference-go/spec"
 )
 
 // DebugClientBuilder constructs a CompletionDebugger for a given provider. A

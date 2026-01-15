@@ -4,8 +4,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ppipada/inference-go/internal/logutil"
-	"github.com/ppipada/inference-go/spec"
+	"github.com/flexigpt/inference-go/internal/logutil"
+	"github.com/flexigpt/inference-go/spec"
 )
 
 func FilterMessagesByTokenCount(
