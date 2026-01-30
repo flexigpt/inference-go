@@ -18,8 +18,23 @@ permissions:
 
 jobs:
   go:
-    name: Go - test
-    runs-on: ubuntu-24.04
+    name: Go - test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            coverage: true
+          - os: windows-2022
+            coverage: false
+          - os: macos-15
+            coverage: false
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout code
@@ -32,10 +47,25 @@ jobs:
 
       - name: test
         run: |
-          go test -covermode=atomic -coverpkg=./... -coverprofile=coverage.out -tags=integration ./...
+          go test -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
           go tool cover -func=coverage.out
 
       - name: check test coverage
+        uses: vladopajic/go-test-coverage@v2
+        with:
+          config: ./.testcoverage.yml
+
+      - name: test
+        run: |
+          if [[ "${{ matrix.coverage }}" == "true" ]]; then
+            go test -covermode=atomic -coverpkg=./... -coverprofile=coverage.out -tags=integration ./...
+            go tool cover -func=coverage.out
+          else
+            go test -tags=integration ./...
+          fi
+
+      - name: check test coverage
+        if: matrix.coverage == true
         uses: vladopajic/go-test-coverage@v2
         with:
           config: ./.testcoverage.yml
