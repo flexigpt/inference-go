@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"maps"
 	"strings"
 	"sync"
@@ -213,6 +214,18 @@ func (api *AnthropicMessagesAPI) FetchCompletion(
 		timeout = time.Duration(req.ModelParam.Timeout) * time.Second
 	}
 
+	// Optional: provider-side stop sequences.
+	if len(req.ModelParam.StopSequences) > 0 {
+		params.StopSequences = req.ModelParam.StopSequences
+	}
+
+	// Optional: output format (Anthropic supports jsonSchema only).
+	if req.ModelParam.OutputParam != nil {
+		if err := applyAnthropicOutputParam(&params, req.ModelParam.OutputParam); err != nil {
+			return nil, err
+		}
+	}
+
 	var toolChoiceNameMap map[string]spec.ToolChoice
 	if len(req.ToolChoices) > 0 {
 		toolDefs, nameMap, err := toolChoicesToAnthropicTools(req.ToolChoices)
@@ -222,6 +235,12 @@ func (api *AnthropicMessagesAPI) FetchCompletion(
 		if len(toolDefs) > 0 {
 			params.Tools = toolDefs
 			toolChoiceNameMap = nameMap
+			// Optional: tool policy. Must be applied after tool defs are built.
+			if req.ToolPolicy != nil {
+				if err := applyAnthropicToolPolicy(&params, req.ToolPolicy, toolChoiceNameMap); err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 
@@ -452,6 +471,97 @@ func handleContentBlockDeltaEvent(
 		// Unknown or future delta variant.
 	}
 	return nil
+}
+
+func applyAnthropicOutputParam(params *anthropic.MessageNewParams, op *spec.OutputParam) error {
+	if params == nil || op == nil || op.Format == nil {
+		// Do not send anything if caller didn't request an output format.
+		return nil
+	}
+
+	switch op.Format.Kind {
+	case spec.OutputFormatKindText:
+		// Anthropic defaults to text; do not set output_config at all.
+		return nil
+
+	case spec.OutputFormatKindJSONSchema:
+		if op.Format.JSONSchemaParam == nil || len(op.Format.JSONSchemaParam.Schema) == 0 {
+			return errors.New("anthropic: outputParam.format=jsonSchema requires jsonSchemaParam.schema")
+		}
+
+		// Anthropic's Messages API uses:
+		// output_config: { format: { type: "json_schema", schema: { ... } } }.
+		params.OutputConfig = anthropic.OutputConfigParam{
+			Format: anthropic.JSONOutputFormatParam{
+				Schema: op.Format.JSONSchemaParam.Schema,
+			},
+		}
+		return nil
+
+	default:
+		return fmt.Errorf("anthropic: unknown output format kind %q", op.Format.Kind)
+	}
+}
+
+func applyAnthropicToolPolicy(
+	params *anthropic.MessageNewParams,
+	policy *spec.ToolPolicy,
+	toolChoiceNameMap map[string]spec.ToolChoice,
+) error {
+	if params == nil || policy == nil || len(toolChoiceNameMap) == 0 {
+		return nil
+	}
+
+	disableParallel := policy.DisableParallel
+
+	switch policy.Mode {
+	case spec.ToolPolicyModeAuto:
+		params.ToolChoice = anthropic.ToolChoiceUnionParam{
+			OfAuto: &anthropic.ToolChoiceAutoParam{DisableParallelToolUse: anthropic.Bool(disableParallel)},
+		}
+		return nil
+
+	case spec.ToolPolicyModeAny:
+		// Requires tools to exist.
+		if len(params.Tools) == 0 {
+			return errors.New("anthropic: toolPolicy=any requires toolChoices/tools to be provided")
+		}
+		params.ToolChoice = anthropic.ToolChoiceUnionParam{
+			OfAny: &anthropic.ToolChoiceAnyParam{
+				DisableParallelToolUse: anthropic.Bool(disableParallel),
+			},
+		}
+		return nil
+
+	case spec.ToolPolicyModeNone:
+		params.ToolChoice = anthropic.ToolChoiceUnionParam{
+			OfAny: &anthropic.ToolChoiceAnyParam{},
+		}
+
+		return nil
+
+	case spec.ToolPolicyModeTool:
+		if len(params.Tools) == 0 {
+			return errors.New("anthropic: toolPolicy=tool requires toolChoices/tools to be provided")
+		}
+		resolvedTools, err := sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
+		if err != nil || len(resolvedTools) == 0 {
+			return errors.New(
+				"anthropic: toolPolicy=tool requires allowedTools with a resolvable toolChoiceName/toolChoiceID",
+			)
+		}
+
+		params.ToolChoice = anthropic.ToolChoiceUnionParam{
+			OfTool: &anthropic.ToolChoiceToolParam{
+				Name:                   resolvedTools[0].Name,
+				DisableParallelToolUse: anthropic.Bool(disableParallel),
+			},
+		}
+		return nil
+
+	default:
+		return fmt.Errorf("anthropic: unknown toolPolicy.mode %q", policy.Mode)
+	}
 }
 
 // toAnthropicMessagesInput converts a sequence of generic InputUnion items into

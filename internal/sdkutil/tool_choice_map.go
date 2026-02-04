@@ -1,6 +1,7 @@
 package sdkutil
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -69,6 +70,49 @@ func BuildToolChoiceNameMapping(
 	}
 
 	return toolNames, toolNameMap
+}
+
+type ResolvedAllowedTool struct {
+	Type spec.ToolType
+	Name string
+}
+
+func ResolveAllowedTools(
+	allowed []spec.AllowedTool,
+	toolChoiceNameMap map[string]spec.ToolChoice,
+) ([]ResolvedAllowedTool, error) {
+	if len(toolChoiceNameMap) == 0 {
+		return nil, errors.New("got empty toolChoiceNameMap")
+	}
+	if len(allowed) == 0 {
+		return nil, errors.New("got empty allowed tool choices")
+	}
+
+	resolvedTools := make([]ResolvedAllowedTool, 0, len(allowed))
+	for _, a := range allowed {
+		n := strings.TrimSpace(a.ToolChoiceName)
+		id := strings.TrimSpace(a.ToolChoiceID)
+		if n == "" || id == "" {
+			// No name or id in input, invalid choice.
+			continue
+		}
+		for name, tc := range toolChoiceNameMap {
+			if tc.ID == id {
+				if tc.Type != spec.ToolTypeFunction && tc.Type != spec.ToolTypeCustom {
+					// Found a tool with same id but has non supported tooltype for resolution.
+					break
+				}
+				resolvedTools = append(resolvedTools, ResolvedAllowedTool{
+					Type: tc.Type,
+					Name: name,
+				})
+			}
+		}
+	}
+	if len(resolvedTools) > 0 {
+		return resolvedTools, nil
+	}
+	return nil, errors.New("no eligible allowed tool found")
 }
 
 func sanitizeToolNameComponent(s string) string {

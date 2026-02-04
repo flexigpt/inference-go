@@ -35,6 +35,7 @@ type ReasoningParam struct {
 	Level  ReasoningLevel `json:"level"`
 	Tokens int            `json:"tokens"`
 	// SummaryStyle - what kind of summary should be emitted for the reasoning performed by the model.
+	// SummaryStyle is supported by OpenAI responses only.
 	SummaryStyle *ReasoningSummaryStyle `json:"summaryStyle,omitempty"`
 }
 
@@ -78,7 +79,8 @@ type OutputFormat struct {
 }
 
 type OutputParam struct {
-	Format    *OutputFormat    `json:"format,omitempty"`
+	Format *OutputFormat `json:"format,omitempty"`
+	// Verbosity is supported by OpenAI, not supported by Anthropic.
 	Verbosity *OutputVerbosity `json:"verbosity,omitempty"`
 }
 

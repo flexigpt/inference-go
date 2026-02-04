@@ -220,13 +220,35 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 			spec.ReasoningLevelMedium,
 			spec.ReasoningLevelHigh,
 			spec.ReasoningLevelXHigh:
-			params.Reasoning = shared.ReasoningParam{
-				Effort:  shared.ReasoningEffort(string(rp.Level)),
-				Summary: shared.ReasoningSummaryAuto,
+			r := shared.ReasoningParam{Effort: shared.ReasoningEffort(string(rp.Level))}
+
+			if rp.SummaryStyle != nil {
+				switch *rp.SummaryStyle {
+				case spec.ReasoningSummaryStyleAuto:
+					r.Summary = shared.ReasoningSummaryAuto
+				case spec.ReasoningSummaryStyleConcise:
+					r.Summary = shared.ReasoningSummaryConcise
+				case spec.ReasoningSummaryStyleDetailed:
+					r.Summary = shared.ReasoningSummaryDetailed
+				default:
+					r.Summary = shared.ReasoningSummaryAuto
+				}
 			}
+			params.Reasoning = r
+
 		default:
 			return nil, fmt.Errorf("invalid reasoning level %q for singleWithLevels", rp.Level)
 		}
+	}
+
+	timeout := spec.DefaultAPITimeout
+	if req.ModelParam.Timeout > 0 {
+		timeout = time.Duration(req.ModelParam.Timeout) * time.Second
+	}
+
+	// Optional: output format + verbosity (Responses uses top-level "text").
+	if err := applyOpenAIResponsesOutputParam(&params, req.ModelParam.OutputParam); err != nil {
+		return nil, err
 	}
 
 	var toolChoiceNameMap map[string]spec.ToolChoice
@@ -238,12 +260,13 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 		if len(toolDefs) > 0 {
 			params.Tools = toolDefs
 			toolChoiceNameMap = nameMap
+			// Optional: tool policy (tool_choice).
+			if req.ToolPolicy != nil {
+				if err := applyOpenAIResponsesToolPolicy(&params, req.ToolPolicy, toolChoiceNameMap); err != nil {
+					return nil, err
+				}
+			}
 		}
-	}
-
-	timeout := spec.DefaultAPITimeout
-	if req.ModelParam.Timeout > 0 {
-		timeout = time.Duration(req.ModelParam.Timeout) * time.Second
 	}
 
 	var span spec.CompletionSpan
@@ -446,6 +469,125 @@ func (api *OpenAIResponsesAPI) doStreaming(
 	}
 
 	return resp, &oaiResp, streamErr
+}
+
+func applyOpenAIResponsesOutputParam(params *responses.ResponseNewParams, op *spec.OutputParam) error {
+	if params == nil || op == nil {
+		return nil
+	}
+
+	// Only populate params.Text when at least one sub-field is explicitly provided.
+	var text responses.ResponseTextConfigParam
+	textSet := false
+
+	if op.Verbosity != nil {
+		switch *op.Verbosity {
+		case spec.OutputVerbosityHigh, spec.OutputVerbosityMedium, spec.OutputVerbosityLow:
+			text.Verbosity = responses.ResponseTextConfigVerbosity(*op.Verbosity)
+			textSet = true
+		default:
+			// No valid verbosity specified.
+		}
+	}
+
+	if op.Format != nil {
+		switch op.Format.Kind {
+		case spec.OutputFormatKindText:
+			text.Format = responses.ResponseFormatTextConfigUnionParam{
+				OfText: &shared.ResponseFormatTextParam{
+					Type: "text",
+				},
+			}
+			textSet = true
+		case spec.OutputFormatKindJSONSchema:
+
+			js := op.Format.JSONSchemaParam
+			if js == nil || len(js.Schema) == 0 || strings.TrimSpace(js.Name) == "" {
+				return errors.New(
+					"openai responses: jsonSchema output requires jsonSchemaParam.name and jsonSchemaParam.schema",
+				)
+			}
+
+			text.Format = responses.ResponseFormatTextConfigUnionParam{
+				OfJSONSchema: &responses.ResponseFormatTextJSONSchemaConfigParam{
+					Name:        js.Name,
+					Description: param.NewOpt(js.Description),
+					Schema:      js.Schema,
+					Strict:      param.NewOpt(js.Strict),
+				},
+			}
+			textSet = true
+		default:
+			return fmt.Errorf("openai responses: unknown output format kind %q", op.Format.Kind)
+		}
+	}
+
+	if textSet {
+		params.Text = text
+	}
+	return nil
+}
+
+func applyOpenAIResponsesToolPolicy(
+	params *responses.ResponseNewParams,
+	policy *spec.ToolPolicy,
+	toolChoiceNameMap map[string]spec.ToolChoice,
+) error {
+	if params == nil || policy == nil || len(toolChoiceNameMap) == 0 {
+		return nil
+	}
+	// Only set parallel_tool_calls when user explicitly requests disabling parallelism.
+	if policy.DisableParallel {
+		params.ParallelToolCalls = openai.Bool(false)
+	}
+
+	switch policy.Mode {
+	case spec.ToolPolicyModeAuto:
+		params.ToolChoice = responses.ResponseNewParamsToolChoiceUnion{
+			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsAuto),
+		}
+		return nil
+	case spec.ToolPolicyModeNone:
+		params.ToolChoice = responses.ResponseNewParamsToolChoiceUnion{
+			OfToolChoiceMode: param.NewOpt(responses.ToolChoiceOptionsNone),
+		}
+		return nil
+	case spec.ToolPolicyModeAny, spec.ToolPolicyModeTool:
+		if len(params.Tools) == 0 {
+			return errors.New("openai responses: toolPolicy=any requires toolChoices/tools to be provided")
+		}
+		resolvedTools, err := sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
+		if err != nil || len(resolvedTools) == 0 {
+			return errors.New(
+				"openai responses: toolPolicy=tool requires allowedTools with a resolvable toolChoiceName/toolChoiceID",
+			)
+		}
+
+		allowedChoices := make([]map[string]any, 0, len(resolvedTools))
+		for _, t := range resolvedTools {
+			c := map[string]any{
+				"type": string(t.Type),
+				"name": t.Name,
+			}
+			allowedChoices = append(allowedChoices, c)
+		}
+		if policy.Mode == spec.ToolPolicyModeTool {
+			allowedChoices = allowedChoices[:1]
+		}
+
+		// For Any in responses, we need to set all the available tool choices into required call.
+		params.ToolChoice = responses.ResponseNewParamsToolChoiceUnion{
+			OfAllowedTools: &responses.ToolChoiceAllowedParam{
+				Mode:  responses.ToolChoiceAllowedModeRequired,
+				Tools: allowedChoices,
+			},
+		}
+
+		return nil
+
+	default:
+		return fmt.Errorf("openai responses: unknown toolPolicy.mode %q", policy.Mode)
+	}
 }
 
 func toOpenAIResponsesInput(

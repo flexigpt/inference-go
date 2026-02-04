@@ -219,6 +219,27 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 
 		}
 	}
+	timeout := spec.DefaultAPITimeout
+	if req.ModelParam.Timeout > 0 {
+		timeout = time.Duration(req.ModelParam.Timeout) * time.Second
+	}
+	// Optional: stop sequences (Chat Completions supports up to 4).
+	if len(req.ModelParam.StopSequences) > 0 {
+		if len(req.ModelParam.StopSequences) > 4 {
+			return nil, fmt.Errorf(
+				"openai chat.completions: stopSequences supports up to 4 items (got %d)",
+				len(req.ModelParam.StopSequences),
+			)
+		}
+		// Note: some reasoning models reject stop; we only set it if caller explicitly requested it.
+		params.Stop = openai.ChatCompletionNewParamsStopUnion{OfStringArray: req.ModelParam.StopSequences}
+	}
+
+	// Optional: output format + verbosity.
+	if err := applyOpenAIChatOutputParam(&params, req.ModelParam.OutputParam); err != nil {
+		return nil, err
+	}
+
 	var toolChoiceNameMap map[string]spec.ToolChoice
 	if len(req.ToolChoices) > 0 {
 		toolDefs, nameMap, err := toolChoicesToOpenAIChatTools(req.ToolChoices)
@@ -233,11 +254,13 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 		if ws := firstWebSearchToolChoice(req.ToolChoices); ws != nil && ws.WebSearchArguments != nil {
 			applyOpenAIChatWebSearchOptions(&params, ws.WebSearchArguments)
 		}
-	}
 
-	timeout := spec.DefaultAPITimeout
-	if req.ModelParam.Timeout > 0 {
-		timeout = time.Duration(req.ModelParam.Timeout) * time.Second
+		// Optional: tool policy (tool_choice / parallel_tool_calls).
+		if req.ToolPolicy != nil {
+			if err := applyOpenAIChatToolPolicy(&params, req.ToolPolicy, toolChoiceNameMap); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	var span spec.CompletionSpan
@@ -392,6 +415,121 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 	}
 	resp.Outputs = outputsFromOpenAIChatCompletion(&acc.ChatCompletion, toolChoiceNameMap)
 	return resp, &acc.ChatCompletion, streamErr
+}
+
+func applyOpenAIChatOutputParam(params *openai.ChatCompletionNewParams, op *spec.OutputParam) error {
+	if params == nil || op == nil {
+		return nil
+	}
+
+	if op.Verbosity != nil {
+		// Only set when explicitly provided.
+		switch *op.Verbosity {
+		case spec.OutputVerbosityHigh, spec.OutputVerbosityMedium, spec.OutputVerbosityLow:
+			params.Verbosity = openai.ChatCompletionNewParamsVerbosity(*op.Verbosity)
+		default:
+			// No valid verbosity specified.
+		}
+	}
+
+	if op.Format == nil {
+		return nil
+	}
+
+	switch op.Format.Kind {
+	case spec.OutputFormatKindText:
+		params.ResponseFormat = openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfText: &shared.ResponseFormatTextParam{
+				Type: "text",
+			},
+		}
+		return nil
+
+	case spec.OutputFormatKindJSONSchema:
+		js := op.Format.JSONSchemaParam
+		if js == nil || len(js.Schema) == 0 || strings.TrimSpace(js.Name) == "" {
+			return errors.New(
+				"openai chat.completions: jsonSchema output requires jsonSchemaParam.name and jsonSchemaParam.schema",
+			)
+		}
+		params.ResponseFormat = openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfJSONSchema: &shared.ResponseFormatJSONSchemaParam{
+				JSONSchema: shared.ResponseFormatJSONSchemaJSONSchemaParam{
+					Name:        js.Name,
+					Description: param.NewOpt(js.Description),
+					Schema:      js.Schema,
+					Strict:      param.NewOpt(js.Strict),
+				},
+			},
+		}
+		return nil
+
+	default:
+		return fmt.Errorf("openai chat.completions: unknown output format kind %q", op.Format.Kind)
+	}
+}
+
+func applyOpenAIChatToolPolicy(
+	params *openai.ChatCompletionNewParams,
+	policy *spec.ToolPolicy,
+	toolChoiceNameMap map[string]spec.ToolChoice,
+) error {
+	if params == nil || policy == nil || len(toolChoiceNameMap) == 0 {
+		return nil
+	}
+
+	// Only set parallel_tool_calls when user explicitly requests disabling parallelism.
+	if policy.DisableParallel {
+		params.ParallelToolCalls = openai.Bool(false)
+	}
+
+	switch policy.Mode {
+	case spec.ToolPolicyModeAuto:
+		params.ToolChoice = openai.ChatCompletionToolChoiceOptionUnionParam{OfAuto: param.NewOpt("auto")}
+		return nil
+
+	case spec.ToolPolicyModeNone:
+		// "None" is not present in SDK union. Need to empty the available tool choices to simulate none.
+		params.Tools = []openai.ChatCompletionToolUnionParam{}
+		return nil
+
+	case spec.ToolPolicyModeAny, spec.ToolPolicyModeTool:
+		if len(params.Tools) == 0 {
+			return errors.New("openai chat.completions: toolPolicy=any/tool requires toolChoices/tools to be provided")
+		}
+		resolvedTools, err := sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
+		if err != nil || len(resolvedTools) == 0 {
+			return errors.New(
+				"openai chat.completions: toolPolicy=any/tool requires allowedTools with a resolvable toolChoiceName/toolChoiceID",
+			)
+		}
+
+		allowedChoices := make([]map[string]any, 0, len(resolvedTools))
+		for _, t := range resolvedTools {
+			c := map[string]any{
+				"type":         string(t.Type),
+				string(t.Type): map[string]string{"name": t.Name},
+			}
+			allowedChoices = append(allowedChoices, c)
+		}
+		if policy.Mode == spec.ToolPolicyModeTool {
+			allowedChoices = allowedChoices[:1]
+		}
+		// For Any in chat completions, we need to set all the available tool choices into required call.
+		params.ToolChoice = openai.ChatCompletionToolChoiceOptionUnionParam{
+			OfAllowedTools: &openai.ChatCompletionAllowedToolChoiceParam{
+				AllowedTools: openai.ChatCompletionAllowedToolsParam{
+					Mode:  openai.ChatCompletionAllowedToolsModeRequired,
+					Tools: allowedChoices,
+				},
+			},
+		}
+
+		return nil
+
+	default:
+		return fmt.Errorf("openai chat.completions: unknown toolPolicy.mode %q", policy.Mode)
+	}
 }
 
 func toOpenAIChatMessages(
