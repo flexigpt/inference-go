@@ -153,6 +153,10 @@
   - Notes
     - Capability-gate if target Responses spec/version lacks `text.format`
 
+- Text generated verbosity control:
+  - `Verbosity *string`
+  - In OpenAI responses
+
 - Tool selection policy (separate from tool definitions)
   - Spec change
     - Add `FetchCompletionRequest.ToolPolicy *spec.ToolPolicy`
@@ -179,9 +183,8 @@
 
 - Reasoning verbosity and summary control
   - Spec change: extend `ReasoningParam` with fields that map to Responses when available, e.g.
-    - `Verbosity *string`
     - `Summary *bool` or `SummaryStyle *string`
-  - OpenAI Responses: `reasoning.verbosity` and summary-related config only if exposed in target API
+  - OpenAI Responses: summary-related config only
   - Anthropic: no direct equivalent, no-op
   - OpenAI Chat: no direct equivalent beyond `reasoning_effort`, no-op
 

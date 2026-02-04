@@ -1,5 +1,40 @@
 package spec
 
+const DefaultWebSearchToolName string = "webSearchToolChoice"
+
+type ToolPolicyMode string
+
+const (
+	ToolPolicyModeAuto ToolPolicyMode = "auto"
+	ToolPolicyModeAny  ToolPolicyMode = "any"
+	ToolPolicyModeTool ToolPolicyMode = "tool"
+	ToolPolicyModeNone ToolPolicyMode = "none"
+)
+
+// AllowedTool are lists of tools that the model is allowed to call from the choices provided.
+// OpenAI supports specifying multiple tools in allowed tools with mode any/tool ("required" in API).
+// Anthropic supports specifying only one tool via mode "tool".
+type AllowedTool struct {
+	ToolChoiceID   string `json:"toolChoiceID"`
+	ToolChoiceName string `json:"toolChoiceName"`
+}
+
+// ToolPolicy controls tool selection independent of the tool definitions (ToolChoices).
+type ToolPolicy struct {
+	// Mode selects the tool policy:
+	//   - auto: model may decide.
+	//   - any: model must use a tool (OpenAI maps to "required")
+	//   - tool: Force a specific tool by name/ID.
+	//           Anthropic directly supports. OpenAI supports this as "required" + one tool in allowed tools.
+	//   - none: prohibit tool use.
+	Mode ToolPolicyMode `json:"mode"`
+
+	AllowedTools []AllowedTool `json:"allowedTools,omitempty"`
+
+	// DisableParallel requests that the model emit at most one tool call.
+	DisableParallel bool `json:"disableParallel,omitempty"`
+}
+
 type ToolType string
 
 const (
@@ -7,8 +42,6 @@ const (
 	ToolTypeCustom    ToolType = "custom"
 	ToolTypeWebSearch ToolType = "webSearch"
 )
-
-const DefaultWebSearchToolName string = "webSearchToolChoice"
 
 type WebSearchToolChoiceItemUserLocation struct {
 	City     string `json:"city,omitzero"`

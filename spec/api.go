@@ -97,8 +97,11 @@ type FetchCompletionResponse struct {
 }
 
 type FetchCompletionRequest struct {
-	ModelParam  ModelParam   `json:"modelParam"`
-	Inputs      []InputUnion `json:"inputs"`
+	ModelParam ModelParam   `json:"modelParam"`
+	Inputs     []InputUnion `json:"inputs"`
+
+	// ToolPolicy - optional control on how (or whether) the model may use the provided ToolChoices.
+	ToolPolicy  *ToolPolicy  `json:"toolPolicy,omitempty"`
 	ToolChoices []ToolChoice `json:"toolChoices,omitempty"`
 }
 
