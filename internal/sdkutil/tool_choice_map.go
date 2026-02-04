@@ -59,7 +59,19 @@ func BuildToolChoiceNameMapping(
 		} else {
 			count++
 			used[base] = count
-			name = fmt.Sprintf("%s_%d", base, count)
+			suffix := fmt.Sprintf("_%d", count)
+			// Ensure final name <= 64.
+			maxBaseLen := 64 - len(suffix)
+			adj := base
+			if maxBaseLen < 1 {
+				// Extremely defensive; shouldn't happen with our suffix format.
+				adj = "tool"
+				maxBaseLen = 64 - len(suffix)
+			}
+			if len(adj) > maxBaseLen {
+				adj = adj[:maxBaseLen]
+			}
+			name = adj + suffix
 		}
 
 		toolNames = append(toolNames, toolName{
@@ -92,21 +104,37 @@ func ResolveAllowedTools(
 	for _, a := range allowed {
 		n := strings.TrimSpace(a.ToolChoiceName)
 		id := strings.TrimSpace(a.ToolChoiceID)
-		if n == "" || id == "" {
+		if n == "" && id == "" {
 			// No name or id in input, invalid choice.
 			continue
 		}
-		for name, tc := range toolChoiceNameMap {
-			if tc.ID == id {
-				if tc.Type != spec.ToolTypeFunction && tc.Type != spec.ToolTypeCustom {
-					// Found a tool with same id but has non supported tooltype for resolution.
-					break
-				}
-				resolvedTools = append(resolvedTools, ResolvedAllowedTool{
-					Type: tc.Type,
-					Name: name,
-				})
+		// Find matching tool by ID and/or by name.
+		// Note: toolChoiceNameMap key is the *provider/API* tool name; tc.Name is the original ToolChoice.Name.
+		found := false
+		for apiName, tc := range toolChoiceNameMap {
+			if id != "" && tc.ID != id {
+				continue
 			}
+			if n != "" {
+				// Accept either original tool name or the derived provider name.
+				if !strings.EqualFold(tc.Name, n) && !strings.EqualFold(apiName, n) {
+					continue
+				}
+			}
+			if tc.Type != spec.ToolTypeFunction && tc.Type != spec.ToolTypeCustom {
+				// Skip unsupported tool types for "allowed tools" resolution.
+				continue
+			}
+			resolvedTools = append(resolvedTools, ResolvedAllowedTool{
+				Type: tc.Type,
+				Name: apiName,
+			})
+			found = true
+			break
+		}
+		if !found {
+			// Keep scanning other allowed entries; final error if none resolved.
+			continue
 		}
 	}
 	if len(resolvedTools) > 0 {

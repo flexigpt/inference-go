@@ -31,7 +31,7 @@ func NewOpenAIChatCompletionsAPI(
 	pi spec.ProviderParam,
 	debugger spec.CompletionDebugger,
 ) (*OpenAIChatCompletionsAPI, error) {
-	if pi.Name == "" || pi.Origin == "" {
+	if pi.Name == "" {
 		return nil, errors.New("openai chat completions api LLM: invalid args")
 	}
 	return &OpenAIChatCompletionsAPI{
@@ -506,9 +506,12 @@ func applyOpenAIChatToolPolicy(
 
 		allowedChoices := make([]map[string]any, 0, len(resolvedTools))
 		for _, t := range resolvedTools {
+			// We register tools as function tools in toolChoicesToOpenAIChatTools
+			// (even when the original ToolChoice.Type is "custom"), so tool_choice
+			// must reference "function".
 			c := map[string]any{
-				"type":         string(t.Type),
-				string(t.Type): map[string]string{"name": t.Name},
+				"type":     "function",
+				"function": map[string]string{"name": t.Name},
 			}
 			allowedChoices = append(allowedChoices, c)
 		}
@@ -990,32 +993,37 @@ func outputsFromOpenAIChatCompletion(
 					continue
 				}
 				name := tc.Function.Name
-				var choiceID string
+
 				if toolChoiceNameMap != nil {
-					if tcDef, ok := toolChoiceNameMap[name]; ok {
-						choiceID = tcDef.ID
+					tcDef, ok := toolChoiceNameMap[name]
+					if !ok || tcDef.ID == "" {
+						continue
 					}
-				}
-				if choiceID == "" {
+					toolType := tcDef.Type
+					kind := spec.OutputKindFunctionToolCall
+					if toolType == spec.ToolTypeCustom {
+						kind = spec.OutputKindCustomToolCall
+					}
+					call := spec.ToolCall{
+						ChoiceID:  tcDef.ID,
+						Type:      toolType,
+						Role:      spec.RoleAssistant,
+						ID:        tc.ID,
+						CallID:    tc.ID,
+						Name:      tc.Function.Name,
+						Arguments: tc.Function.Arguments,
+						Status:    status,
+					}
+					out := spec.OutputUnion{Kind: kind}
+					if kind == spec.OutputKindCustomToolCall {
+						out.CustomToolCall = &call
+					} else {
+						out.FunctionToolCall = &call
+					}
+					outs = append(outs, out)
 					continue
 				}
-				call := spec.ToolCall{
-					ChoiceID:  choiceID,
-					Type:      spec.ToolTypeFunction,
-					Role:      spec.RoleAssistant,
-					ID:        tc.ID,
-					CallID:    tc.ID,
-					Name:      tc.Function.Name,
-					Arguments: tc.Function.Arguments,
-					Status:    status,
-				}
-				outs = append(
-					outs,
-					spec.OutputUnion{
-						Kind:             spec.OutputKindFunctionToolCall,
-						FunctionToolCall: &call,
-					},
-				)
+				continue
 
 			case string(openaiSharedConstant.Custom("").Default()):
 				if tc.ID == "" || strings.TrimSpace(tc.Custom.Name) == "" {

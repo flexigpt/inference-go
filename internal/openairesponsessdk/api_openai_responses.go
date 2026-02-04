@@ -32,7 +32,7 @@ func NewOpenAIResponsesAPI(
 	pi spec.ProviderParam,
 	debugger spec.CompletionDebugger,
 ) (*OpenAIResponsesAPI, error) {
-	if pi.Name == "" || pi.Origin == "" {
+	if pi.Name == "" {
 		return nil, errors.New("openai responses api LLM: invalid args")
 	}
 	return &OpenAIResponsesAPI{
@@ -439,13 +439,18 @@ func (api *OpenAIResponsesAPI) doStreaming(
 
 		if chunk.Type == "response.failed" {
 			oaiResp = chunk.Response
-			streamWriteErr = fmt.Errorf("API failed, %s", oaiResp.Error.RawJSON())
+			errJSON := oaiResp.Error.RawJSON()
+			if errJSON == "" {
+				errJSON = "unknown error"
+			}
+			streamWriteErr = fmt.Errorf("API failed, %s", errJSON)
 			break
 		}
 
 		if chunk.Type == "response.incomplete" {
 			oaiResp = chunk.Response
-			streamWriteErr = fmt.Errorf("API finished as incomplete, %s", oaiResp.IncompleteDetails.Reason)
+			reason := oaiResp.IncompleteDetails.Reason
+			streamWriteErr = fmt.Errorf("API finished as incomplete, %s", reason)
 			break
 		}
 
@@ -566,7 +571,9 @@ func applyOpenAIResponsesToolPolicy(
 		allowedChoices := make([]map[string]any, 0, len(resolvedTools))
 		for _, t := range resolvedTools {
 			c := map[string]any{
-				"type": string(t.Type),
+				// We register tools as function tools (even for spec.ToolTypeCustom),
+				// so tool_choice must reference "function".
+				"type": "function",
 				"name": t.Name,
 			}
 			allowedChoices = append(allowedChoices, c)

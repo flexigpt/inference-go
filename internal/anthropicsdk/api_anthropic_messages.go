@@ -32,7 +32,7 @@ func NewAnthropicMessagesAPI(
 	pi spec.ProviderParam,
 	debugger spec.CompletionDebugger,
 ) (*AnthropicMessagesAPI, error) {
-	if pi.Name == "" || pi.Origin == "" {
+	if pi.Name == "" {
 		return nil, errors.New("anthropic messages api LLM: invalid args")
 	}
 	return &AnthropicMessagesAPI{
@@ -521,6 +521,15 @@ func applyAnthropicToolPolicy(
 		}
 		return nil
 
+	case spec.ToolPolicyModeNone:
+		params.ToolChoice = anthropic.ToolChoiceUnionParam{
+			OfNone: &anthropic.ToolChoiceNoneParam{
+				Type: "none",
+			},
+		}
+
+		return nil
+
 	case spec.ToolPolicyModeAny:
 		// Requires tools to exist.
 		if len(params.Tools) == 0 {
@@ -531,13 +540,6 @@ func applyAnthropicToolPolicy(
 				DisableParallelToolUse: anthropic.Bool(disableParallel),
 			},
 		}
-		return nil
-
-	case spec.ToolPolicyModeNone:
-		params.ToolChoice = anthropic.ToolChoiceUnionParam{
-			OfAny: &anthropic.ToolChoiceAnyParam{},
-		}
-
 		return nil
 
 	case spec.ToolPolicyModeTool:
