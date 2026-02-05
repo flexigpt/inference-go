@@ -294,7 +294,11 @@
   - Remote MCP connector
   - Programmatic tool calling (looped code execution plus tool calls)
   - Memory tool
+    - This turns conversations to RAG resources.
+    - Interesting concept, to be explored later.
   - Tool search tool (server-side tool library and search)
+    - This is better done as small snippet of tools added to the system prompt or a "discovery tool" that returns some subset of name/description locally.
+    - Also "filter" of forming "bundles" should be orchestrator responsibility and a tool doing that may not add much value and most probably may lead to increased token consumption in stateless apis context.
   - Web fetch tool
     - Not doing because local URL fetch and send is better for stateless control, processing, and error handling
   - Note: server tool use block with websearch input typed as `any` is odd; keep an eye on schema stability and validation strategy.

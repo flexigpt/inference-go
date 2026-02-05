@@ -233,6 +233,8 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 				default:
 					r.Summary = shared.ReasoningSummaryAuto
 				}
+			} else {
+				r.Summary = shared.ReasoningSummaryAuto
 			}
 			params.Reasoning = r
 
