@@ -51,11 +51,11 @@ type WebSearchToolChoiceItemUserLocation struct {
 }
 
 type WebSearchToolChoiceItem struct {
-	MaxUses           int64                                `json:"max_uses,omitzero"`
+	MaxUses           int64                                `json:"maxUses,omitzero"`
 	SearchContextSize string                               `json:"searchContextSize,omitzero"`
-	AllowedDomains    []string                             `json:"allowed_domains,omitzero"`
-	BlockedDomains    []string                             `json:"blocked_domains,omitzero"`
-	UserLocation      *WebSearchToolChoiceItemUserLocation `json:"user_location,omitempty"`
+	AllowedDomains    []string                             `json:"allowedDomains,omitzero"`
+	BlockedDomains    []string                             `json:"blockedDomains,omitzero"`
+	UserLocation      *WebSearchToolChoiceItemUserLocation `json:"userLocation,omitempty"`
 }
 
 type ToolChoice struct {
@@ -133,7 +133,7 @@ type WebSearchToolOutputSearch struct {
 	Title            string `json:"title,omitzero"`
 	EncryptedContent string `json:"encryptedContent,omitzero"`
 	RenderedContent  string `json:"renderedContent,omitzero"`
-	PageAge          string `json:"page_age,omitzero"`
+	PageAge          string `json:"pageAge,omitzero"`
 }
 
 type WebSearchToolOutputError struct {

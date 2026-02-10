@@ -73,7 +73,7 @@ type JSONSchemaParam struct {
 
 type OutputFormat struct {
 	// Can be text or JSONSchema. We don't support JSONObject as it is recommended to move to JSONSchema type.
-	Kind OutputFormatKind `json:"type"`
+	Kind OutputFormatKind `json:"kind"`
 
 	JSONSchemaParam *JSONSchemaParam `json:"jsonSchemaParam,omitempty"`
 }
