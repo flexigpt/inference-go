@@ -135,9 +135,8 @@ func sanitizeReasoningInputs(inputs []spec.InputUnion) []spec.InputUnion {
 		rc.RedactedThinking = nil
 		rc.EncryptedContent = []string{enc}
 
-		inCopy := in
-		inCopy.ReasoningMessage = &rc
-		out = append(out, inCopy)
+		in.ReasoningMessage = &rc
+		out = append(out, in)
 		keptReasoning++
 	}
 
