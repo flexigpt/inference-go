@@ -1,5 +1,3 @@
-//go:build !integration
-
 package integration
 
 import (
@@ -20,7 +18,7 @@ func Example_anthropic_basicConversation() {
 
 	ps, err := newProviderSetWithDebug()
 	if err != nil {
-		fmt.Println("error creating ProviderSetAPI:", err)
+		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return
 	}
 
@@ -32,23 +30,24 @@ func Example_anthropic_basicConversation() {
 		// DefaultHeaders are optional; the official SDK sets anthropic-version.
 	})
 	if err != nil {
-		fmt.Println("error adding Anthropic provider:", err)
+		fmt.Fprintln(os.Stderr, "error adding Anthropic provider:", err)
 		return
 	}
 
 	apiKey := os.Getenv("ANTHROPIC_API_KEY")
 	if apiKey == "" {
-		fmt.Println("ANTHROPIC_API_KEY not set; skipping live Anthropic call")
+		fmt.Fprintln(os.Stderr, "ANTHROPIC_API_KEY not set; skipping live Anthropic call")
+		fmt.Println("OK")
 		return
 	}
 	if err := ps.SetProviderAPIKey(ctx, "anthropic", apiKey); err != nil {
-		fmt.Println("error setting Anthropic API key:", err)
+		fmt.Fprintln(os.Stderr, "error setting Anthropic API key:", err)
 		return
 	}
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "claude-3-5-sonnet-20241022",
+			Name:            "claude-haiku-4-5-20251001",
 			Stream:          false,
 			MaxPromptLength: 4096,
 			MaxOutputLength: 256,
@@ -74,9 +73,9 @@ func Example_anthropic_basicConversation() {
 
 	resp, err := ps.FetchCompletion(ctx, "anthropic", req, nil)
 	if err != nil {
-		fmt.Println("FetchCompletion error:", err)
+		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {
-			fmt.Println("Provider error:", resp.Error.Message)
+			fmt.Fprintln(os.Stderr, "Provider error:", resp.Error.Message)
 		}
 		return
 	}
@@ -87,10 +86,10 @@ func Example_anthropic_basicConversation() {
 		}
 		for _, c := range out.OutputMessage.Contents {
 			if c.Kind == spec.ContentItemKindText && c.TextItem != nil {
-				fmt.Println("Anthropic assistant:", c.TextItem.Text)
+				fmt.Fprintln(os.Stderr, "Anthropic assistant:", c.TextItem.Text)
 			}
 		}
 	}
-
-	// Output:
+	fmt.Println("OK")
+	// Output: OK
 }

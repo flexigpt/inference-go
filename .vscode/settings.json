@@ -52,8 +52,7 @@
 		"transform": "camelcase"
 	},
 	"gopls": {
-		"build.directoryFilters": ["-docs", "-scripts"],
-		"build.buildFlags": ["-tags=integration"]
+		"build.directoryFilters": ["-docs", "-scripts"]
 	},
 
 	// --- Markdown ---

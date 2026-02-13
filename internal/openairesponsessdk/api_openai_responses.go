@@ -979,7 +979,7 @@ func webSearchToolCallToOpenAIResponses(
 		}
 
 		action.OfOpenPage = &responses.ResponseFunctionWebSearchActionOpenPageParam{
-			URL: wcall.OpenPageItem.URL,
+			URL: param.NewOpt(wcall.OpenPageItem.URL),
 		}
 
 	case spec.WebSearchToolCallKindFind:

@@ -1,5 +1,3 @@
-//go:build !integration
-
 // Package integration contains example-style tests that demonstrate how to
 // call the inference-go library against real providers.
 //

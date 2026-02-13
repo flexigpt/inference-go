@@ -5,6 +5,9 @@ version: "3"
 vars:
   GREETING: Hello, these are Inference Go tasks!
 
+dotenv:
+  - .env
+
 tasks:
   default:
     cmds:
@@ -14,11 +17,11 @@ tasks:
   installtools:
     cmds:
       # Install task, go, golangci-lint, cloc externally. E.g via asdf. the needed versions are pinned in .tool-versions file.
-      - go install golang.org/x/tools/gopls@v0.21.0
+      - go install golang.org/x/tools/gopls@v0.21.1
       - go install github.com/oligot/go-mod-upgrade@v0.12.0
       - go install github.com/kisielk/godepgraph@v1.0.0
       - go install github.com/ppipada/refdir@v0.7.0
-      - go install github.com/vladopajic/go-test-coverage/v2@v2.18.0
+      - go install github.com/vladopajic/go-test-coverage/v2@v2.18.3
 
   cloc:
     cmds:
@@ -56,7 +59,7 @@ tasks:
     cmds:
       # The count=1 is needed to disable test caching. this is so that coverage doesnt show stale data.
       # Issue: https://github.com/golang/go/issues/74873
-      - go test -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage.out -tags=integration ./...
+      - go test -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
       - go tool cover -func=coverage.out
       - go-test-coverage --config=./.testcoverage.yml
 

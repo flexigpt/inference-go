@@ -1,5 +1,3 @@
-//go:build !integration
-
 package integration
 
 import (
@@ -20,7 +18,7 @@ func Example_openAIResponses_basicConversation() {
 
 	ps, err := newProviderSetWithDebug()
 	if err != nil {
-		fmt.Println("error creating ProviderSetAPI:", err)
+		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return
 	}
 
@@ -32,23 +30,24 @@ func Example_openAIResponses_basicConversation() {
 		APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
 	})
 	if err != nil {
-		fmt.Println("error adding OpenAI Responses provider:", err)
+		fmt.Fprintln(os.Stderr, "error adding OpenAI Responses provider:", err)
 		return
 	}
 
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
-		fmt.Println("OPENAI_API_KEY not set; skipping live OpenAI Responses call")
+		fmt.Fprintln(os.Stderr, "OPENAI_API_KEY not set; skipping live OpenAI Responses call")
+		fmt.Println("OK")
 		return
 	}
 	if err := ps.SetProviderAPIKey(ctx, "openai-responses", apiKey); err != nil {
-		fmt.Println("error setting OpenAI API key:", err)
+		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
 	}
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gpt-4.2-mini",
+			Name:            "gpt-5-mini",
 			Stream:          false,
 			MaxPromptLength: 4096,
 			MaxOutputLength: 256,
@@ -78,9 +77,9 @@ func Example_openAIResponses_basicConversation() {
 
 	resp, err := ps.FetchCompletion(ctx, "openai-responses", req, nil)
 	if err != nil {
-		fmt.Println("FetchCompletion error:", err)
+		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {
-			fmt.Println("Provider error:", resp.Error.Message)
+			fmt.Fprintln(os.Stderr, "Provider error:", resp.Error.Message)
 		}
 		return
 	}
@@ -91,10 +90,11 @@ func Example_openAIResponses_basicConversation() {
 		}
 		for _, c := range out.OutputMessage.Contents {
 			if c.Kind == spec.ContentItemKindText && c.TextItem != nil {
-				fmt.Println("OpenAI Responses assistant:", c.TextItem.Text)
+				fmt.Fprintln(os.Stderr, "OpenAI Responses assistant:", c.TextItem.Text)
 			}
 		}
 	}
 
-	// Output:
+	fmt.Println("OK")
+	// Output: OK
 }

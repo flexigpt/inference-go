@@ -1,10 +1,7 @@
-//go:build !integration
-
 package integration
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"os"
 	"time"
@@ -29,7 +26,7 @@ func Example_openAIResponses_toolsAndAttachments() {
 
 	ps, err := newProviderSetWithDebug()
 	if err != nil {
-		fmt.Println("error creating ProviderSetAPI:", err)
+		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return
 	}
 
@@ -40,17 +37,18 @@ func Example_openAIResponses_toolsAndAttachments() {
 		APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
 	})
 	if err != nil {
-		fmt.Println("error adding OpenAI Responses provider:", err)
+		fmt.Fprintln(os.Stderr, "error adding OpenAI Responses provider:", err)
 		return
 	}
 
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
-		fmt.Println("OPENAI_API_KEY not set; skipping extended OpenAI Responses example")
+		fmt.Fprintln(os.Stderr, "OPENAI_API_KEY not set; skipping extended OpenAI Responses example")
+		fmt.Println("OK")
 		return
 	}
 	if err := ps.SetProviderAPIKey(ctx, "openai-responses-extended", apiKey); err != nil {
-		fmt.Println("error setting OpenAI API key:", err)
+		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
 	}
 
@@ -97,13 +95,12 @@ func Example_openAIResponses_toolsAndAttachments() {
 
 	toolChoices := []spec.ToolChoice{summarizeTool, webSearchTool}
 
-	// Placeholder image data (not a real image). In a real application,
-	// provide a valid base64-encoded image.
-	fakeImageData := base64.StdEncoding.EncodeToString([]byte("not-really-an-image"))
+	// Placeholder image data (not a real image). In a real application, provide a valid base64-encoded image.
+	// 1x1 transparent PNG.
+	fakeImageData := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
 
-	// Placeholder PDF URL. Replace with a real, publicly reachable URL if
-	// you want to run this example end-to-end.
-	pdfURL := "https://example.com/sample.pdf"
+	// Placeholder PDF URL.
+	pdfURL := "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
 
 	userMessage := spec.InputOutputContent{
 		Role: spec.RoleUser,
@@ -111,7 +108,7 @@ func Example_openAIResponses_toolsAndAttachments() {
 			{
 				Kind: spec.ContentItemKindText,
 				TextItem: &spec.ContentItemText{
-					Text: "Summarize the attached PDF and describe the image. Use tools where appropriate. Keep the final answer short.",
+					Text: "This is a test. Very briefly reply with attached PDF name and data and describe the image. Use tools where appropriate. Keep the final answer short.",
 				},
 			},
 			{
@@ -122,15 +119,16 @@ func Example_openAIResponses_toolsAndAttachments() {
 					ImageName: "example-image",
 					Detail:    spec.ImageDetailLow,
 					ImageURL:  "",
-					ID:        "",
+					ID:        "abc",
 				},
 			},
 			{
 				Kind: spec.ContentItemKindFile,
 				FileItem: &spec.ContentItemFile{
-					FileName: "example.pdf",
+					FileName: "dummy.pdf",
 					FileMIME: "application/pdf",
 					FileURL:  pdfURL,
+					ID:       "abc",
 				},
 			},
 		},
@@ -138,10 +136,10 @@ func Example_openAIResponses_toolsAndAttachments() {
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gpt-4.2-mini",
+			Name:            "gpt-5-mini",
 			Stream:          true,
 			MaxPromptLength: 8192,
-			MaxOutputLength: 512,
+			MaxOutputLength: 8192,
 			SystemPrompt: "You are a research assistant that first uses tools " +
 				"when needed, then answers succinctly.",
 			Reasoning: &spec.ReasoningParam{
@@ -164,13 +162,13 @@ func Example_openAIResponses_toolsAndAttachments() {
 			switch ev.Kind {
 			case spec.StreamContentKindText:
 				if ev.Text != nil {
-					fmt.Print(ev.Text.Text)
+					fmt.Fprintln(os.Stderr, ev.Text.Text)
 				}
 			case spec.StreamContentKindThinking:
 				if ev.Thinking != nil {
 					// In a real app you might log this separately; here we
 					// just prefix it.
-					fmt.Print("\n[thinking] ", ev.Thinking.Text, "\n")
+					fmt.Fprintf(os.Stderr, "\n[thinking] %s \n", ev.Thinking.Text)
 				}
 			}
 			return nil
@@ -182,42 +180,43 @@ func Example_openAIResponses_toolsAndAttachments() {
 
 	resp, err := ps.FetchCompletion(ctx, "openai-responses-extended", req, opts)
 	if err != nil {
-		fmt.Println("\nFetchCompletion error:", err)
+		fmt.Fprintln(os.Stderr, "\nFetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {
-			fmt.Println("Provider error:", resp.Error.Message)
+			fmt.Fprintln(os.Stderr, "Provider error:", resp.Error.Message)
 		}
 		return
 	}
 
-	fmt.Println("\n\n--- normalized outputs ---")
+	fmt.Fprintln(os.Stderr, "\n\n--- normalized outputs ---")
 	for _, out := range resp.Outputs {
 		switch out.Kind {
 		case spec.OutputKindFunctionToolCall:
 			if out.FunctionToolCall != nil {
-				fmt.Printf("Function tool call: %s(%s)\n",
+				fmt.Fprintf(os.Stderr, "Function tool call: %s(%s)\n",
 					out.FunctionToolCall.Name,
 					out.FunctionToolCall.Arguments,
 				)
 			}
 		case spec.OutputKindWebSearchToolCall:
 			if out.WebSearchToolCall != nil {
-				fmt.Printf("Web search call: %+v\n", out.WebSearchToolCall.WebSearchToolCallItems)
+				fmt.Fprintf(os.Stderr, "Web search call: %+v\n", out.WebSearchToolCall.WebSearchToolCallItems)
 			}
 		case spec.OutputKindOutputMessage:
 			if out.OutputMessage != nil {
 				for _, c := range out.OutputMessage.Contents {
 					if c.Kind == spec.ContentItemKindText && c.TextItem != nil {
-						fmt.Println("Final answer:", c.TextItem.Text)
+						fmt.Fprintln(os.Stderr, "Final answer:", c.TextItem.Text)
 					}
 				}
 			}
 		case spec.OutputKindReasoningMessage:
 			if out.ReasoningMessage != nil && len(out.ReasoningMessage.Summary) > 0 {
-				fmt.Println("Reasoning summary:", out.ReasoningMessage.Summary[0])
+				fmt.Fprintln(os.Stderr, "Reasoning summary:", out.ReasoningMessage.Summary[0])
 			}
 		default:
 		}
 	}
 
-	// Output:
+	fmt.Println("OK")
+	// Output: OK
 }

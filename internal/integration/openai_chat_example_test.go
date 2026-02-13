@@ -1,5 +1,3 @@
-//go:build !integration
-
 package integration
 
 import (
@@ -20,7 +18,7 @@ func Example_openAIChat_basicConversation() {
 
 	ps, err := newProviderSetWithDebug()
 	if err != nil {
-		fmt.Println("error creating ProviderSetAPI:", err)
+		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return
 	}
 
@@ -32,17 +30,18 @@ func Example_openAIChat_basicConversation() {
 		DefaultHeaders:           spec.OpenAIChatCompletionsDefaultHeaders,
 	})
 	if err != nil {
-		fmt.Println("error adding OpenAI Chat provider:", err)
+		fmt.Fprintln(os.Stderr, "error adding OpenAI Chat provider:", err)
 		return
 	}
 
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
-		fmt.Println("OPENAI_API_KEY not set; skipping live OpenAI Chat call")
+		fmt.Fprintln(os.Stderr, "OPENAI_API_KEY not set; skipping live OpenAI Chat call")
+		fmt.Println("OK")
 		return
 	}
 	if err := ps.SetProviderAPIKey(ctx, "openai-chat", apiKey); err != nil {
-		fmt.Println("error setting OpenAI API key:", err)
+		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
 	}
 
@@ -74,9 +73,9 @@ func Example_openAIChat_basicConversation() {
 
 	resp, err := ps.FetchCompletion(ctx, "openai-chat", req, nil)
 	if err != nil {
-		fmt.Println("FetchCompletion error:", err)
+		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {
-			fmt.Println("Provider error:", resp.Error.Message)
+			fmt.Fprintln(os.Stderr, "Provider error:", resp.Error.Message)
 		}
 		return
 	}
@@ -87,10 +86,11 @@ func Example_openAIChat_basicConversation() {
 		}
 		for _, c := range out.OutputMessage.Contents {
 			if c.Kind == spec.ContentItemKindText && c.TextItem != nil {
-				fmt.Println("OpenAI Chat assistant:", c.TextItem.Text)
+				fmt.Fprintln(os.Stderr, "OpenAI Chat assistant:", c.TextItem.Text)
 			}
 		}
 	}
 
-	// Output:
+	fmt.Println("OK")
+	// Output: OK
 }

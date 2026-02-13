@@ -1,5 +1,3 @@
-//go:build !integration
-
 package integration
 
 import (
@@ -18,7 +16,7 @@ import (
 //
 // The examples reuse this helper to keep them short.
 func newProviderSetWithDebug() (*inference.ProviderSetAPI, error) {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelDebug,
 	}))
 
