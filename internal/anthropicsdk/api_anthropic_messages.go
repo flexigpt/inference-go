@@ -474,33 +474,52 @@ func handleContentBlockDeltaEvent(
 }
 
 func applyAnthropicOutputParam(params *anthropic.MessageNewParams, op *spec.OutputParam) error {
-	if params == nil || op == nil || op.Format == nil {
-		// Do not send anything if caller didn't request an output format.
+	if params == nil || op == nil || op.Verbosity == nil || op.Format == nil {
+		// Do not send anything if caller didn't request.
 		return nil
 	}
-
-	switch op.Format.Kind {
-	case spec.OutputFormatKindText:
-		// Anthropic defaults to text; do not set output_config at all.
-		return nil
-
-	case spec.OutputFormatKindJSONSchema:
-		if op.Format.JSONSchemaParam == nil || len(op.Format.JSONSchemaParam.Schema) == 0 {
-			return errors.New("anthropic: outputParam.format=jsonSchema requires jsonSchemaParam.schema")
+	effort := ""
+	// Only set when explicitly provided.
+	if op.Verbosity != nil {
+		switch *op.Verbosity {
+		case spec.OutputVerbosityHigh, spec.OutputVerbosityMedium, spec.OutputVerbosityLow, spec.OutputVerbosityMax:
+			effort = string(*op.Verbosity)
+		default:
+			// No valid verbosity specified.
 		}
+	}
 
-		// Anthropic's Messages API uses:
-		// output_config: { format: { type: "json_schema", schema: { ... } } }.
-		params.OutputConfig = anthropic.OutputConfigParam{
-			Format: anthropic.JSONOutputFormatParam{
+	var format *anthropic.JSONOutputFormatParam = nil
+	if op.Format != nil {
+		switch op.Format.Kind {
+		case spec.OutputFormatKindText:
+			// Anthropic defaults to text; do not set output_config.format.
+
+		case spec.OutputFormatKindJSONSchema:
+			if op.Format.JSONSchemaParam == nil || len(op.Format.JSONSchemaParam.Schema) == 0 {
+				return errors.New("anthropic: outputParam.format=jsonSchema requires jsonSchemaParam.schema")
+			}
+			format = &anthropic.JSONOutputFormatParam{
 				Schema: op.Format.JSONSchemaParam.Schema,
-			},
+			}
+		default:
+			// No valid kind.
 		}
-		return nil
-
-	default:
-		return fmt.Errorf("anthropic: unknown output format kind %q", op.Format.Kind)
 	}
+
+	// Only set output_config when at least one sub-field is requested.
+	if format == nil && effort == "" {
+		return nil
+	}
+
+	if format != nil {
+		params.OutputConfig.Format = *format
+	}
+	if effort != "" {
+		// Explicit caller effort always wins (this runs after applyAnthropicThinkingPolicy).
+		params.OutputConfig.Effort = anthropic.OutputConfigEffort(effort)
+	}
+	return nil
 }
 
 func applyAnthropicToolPolicy(
@@ -774,7 +793,7 @@ func toolCallToAnthropicToolUseBlock(
 		return &anthropic.ContentBlockParamUnion{OfServerToolUse: &anthropic.ServerToolUseBlockParam{
 			ID:    toolCall.ID,
 			Input: wcall.SearchItem.Input,
-			Name:  anthropicSharedConstant.WebSearch("").Default(),
+			Name:  anthropic.ServerToolUseBlockParamNameWebSearch,
 		}}
 
 	}

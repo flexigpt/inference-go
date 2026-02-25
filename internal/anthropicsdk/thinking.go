@@ -236,22 +236,25 @@ func applyAnthropicThinkingPolicy(
 	}
 
 	// Derive the requested thinking config from ModelParam.Reasoning.
-	requestedEnabled, requestedBudget := requestedAnthropicThinking(mp)
-
-	// Apply explicit override rules.
+	requestedEnabled, requestedAdaptive, requestedBudget := requestedAnthropicThinking(mp)
 	effectiveEnabled := requestedEnabled
+	effectiveAdaptive := requestedAdaptive
 	effectiveBudget := requestedBudget
 
 	switch a.Override {
 	case thinkingOverrideForceDisabled:
 		effectiveEnabled = false
+		effectiveAdaptive = false
 		effectiveBudget = 0
 
 	case thinkingOverrideForceEnabled:
 		effectiveEnabled = true
+		// Keep adaptive iff it was explicitly requested by reasoning.type=singleWithLevels.
+		// If we are forcing thinking on (i.e. not user-requested), we do NOT invent adaptive mode.
 		if effectiveBudget <= 0 {
 			effectiveBudget = anthropicDefaultThinkingBudget
 		}
+
 	default:
 		// Ok.
 	}
@@ -267,15 +270,36 @@ func applyAnthropicThinkingPolicy(
 			string(mp.Name),
 		)
 		effectiveEnabled = true
+		// This is NOT a "reasoning.type=singleWithLevels" request; it's a compatibility fail-safe.
+		// Use non-adaptive enabled thinking.
+		// This may need to change when messages api explicitly switches to adaptive as default.
+		effectiveAdaptive = false
 		effectiveBudget = anthropicDefaultThinkingBudget
 	}
 
+	// Apply "effort" mapping ONLY when we are actually going to run adaptive thinking,
+	//    and ONLY when caller did not explicitly provide outputParam.verbosity.
+	//    (If caller provided verbosity, applyAnthropicOutputParam will set OutputConfig.Effort later.)
+	if effectiveEnabled && effectiveAdaptive {
+		maybeApplyAnthropicEffortFromReasoning(params, mp)
+	}
+
+	// Materialize final SDK params.
 	if effectiveEnabled {
 		if effectiveBudget <= 0 {
 			effectiveBudget = anthropicDefaultThinkingBudget
 		}
-		params.Thinking = anthropic.ThinkingConfigParamOfEnabled(effectiveBudget)
-		// Do not set temperature when thinking is enabled.
+		if effectiveAdaptive {
+			// Reasoning.type=singleWithLevels -> adaptive thinking.
+			a := anthropic.NewThinkingConfigAdaptiveParam()
+			params.Thinking = anthropic.ThinkingConfigParamUnion{
+				OfAdaptive: &a,
+			}
+		} else {
+			// Existing behavior: fixed-budget enabled thinking.
+			params.Thinking = anthropic.ThinkingConfigParamOfEnabled(effectiveBudget)
+		}
+		// Do not set temperature when thinking is enabled (Anthropic requirement).
 		return
 	}
 
@@ -285,34 +309,73 @@ func applyAnthropicThinkingPolicy(
 	}
 }
 
-func requestedAnthropicThinking(mp *spec.ModelParam) (enabled bool, budget int64) {
+func requestedAnthropicThinking(mp *spec.ModelParam) (enabled, adaptive bool, budget int64) {
 	if mp == nil || mp.Reasoning == nil {
-		return false, 0
+		return false, false, 0
 	}
 	rp := mp.Reasoning
 	switch rp.Type {
 	case spec.ReasoningTypeHybridWithTokens:
 		// Enforce minimum budget if requested.
-		return true, int64(max(rp.Tokens, int(anthropicDefaultThinkingBudget)))
+		return true, false, int64(max(rp.Tokens, int(anthropicDefaultThinkingBudget)))
 
 	case spec.ReasoningTypeSingleWithLevels:
 		// Map qualitative levels to token budgets; ignore rp.Tokens.
 		switch rp.Level {
 		case spec.ReasoningLevelNone:
-			return false, 0
+			return false, false, 0
 		case spec.ReasoningLevelMinimal, spec.ReasoningLevelLow:
-			return true, 1024
+			return true, true, 1024
 		case spec.ReasoningLevelMedium:
-			return true, 2048
+			return true, true, 2048
 		case spec.ReasoningLevelHigh:
-			return true, 8192
+			return true, true, 8192
 		case spec.ReasoningLevelXHigh:
-			return true, 16384
+			return true, true, 16384
 		default:
 			// Unknown => treat as not requested.
-			return false, 0
+			return false, false, 0
 		}
 	default:
-		return false, 0
+		return false, false, 0
+	}
+}
+
+// If reasoning.type=singleWithLevels and caller did NOT explicitly set outputParam.verbosity,
+// derive output_config.effort from the reasoning level (Anthropic only supports: low|medium|high|max).
+func maybeApplyAnthropicEffortFromReasoning(params *anthropic.MessageNewParams, mp *spec.ModelParam) {
+	if params == nil || mp == nil || mp.Reasoning == nil {
+		return
+	}
+	rp := mp.Reasoning
+	if rp.Type != spec.ReasoningTypeSingleWithLevels {
+		return
+	}
+
+	// Do not override explicitly provided effort/verbosity.
+	if mp.OutputParam != nil && mp.OutputParam.Verbosity != nil {
+		return
+	}
+
+	effort, ok := anthropicEffortFromReasoningLevel(rp.Level)
+	if !ok {
+		return
+	}
+	params.OutputConfig.Effort = effort
+}
+
+func anthropicEffortFromReasoningLevel(level spec.ReasoningLevel) (anthropic.OutputConfigEffort, bool) {
+	switch level {
+	case spec.ReasoningLevelMinimal, spec.ReasoningLevelLow:
+		return anthropic.OutputConfigEffort("low"), true
+	case spec.ReasoningLevelMedium:
+		return anthropic.OutputConfigEffort("medium"), true
+	case spec.ReasoningLevelHigh:
+		return anthropic.OutputConfigEffort("high"), true
+	case spec.ReasoningLevelXHigh:
+		return anthropic.OutputConfigEffort("max"), true
+	default:
+		// None / Unknown.
+		return "", false
 	}
 }

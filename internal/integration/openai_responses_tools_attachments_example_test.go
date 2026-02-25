@@ -10,6 +10,8 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const sendFile = true
+
 // Example_openAIResponses_toolsAndAttachments demonstrates a more advanced
 // Responses call that:
 //
@@ -21,7 +23,7 @@ import (
 // image/file payloads are placeholders; for a real run, replace them with
 // valid data or URLs.
 func Example_openAIResponses_toolsAndAttachments() {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
 	ps, err := newProviderSetWithDebug()
@@ -99,9 +101,6 @@ func Example_openAIResponses_toolsAndAttachments() {
 	// 1x1 transparent PNG.
 	fakeImageData := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
 
-	// Placeholder PDF URL.
-	pdfURL := "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-
 	userMessage := spec.InputOutputContent{
 		Role: spec.RoleUser,
 		Contents: []spec.InputOutputContentItemUnion{
@@ -122,18 +121,20 @@ func Example_openAIResponses_toolsAndAttachments() {
 					ID:        "abc",
 				},
 			},
-			{
-				Kind: spec.ContentItemKindFile,
-				FileItem: &spec.ContentItemFile{
-					FileName: "dummy.pdf",
-					FileMIME: "application/pdf",
-					FileURL:  pdfURL,
-					ID:       "abc",
-				},
-			},
 		},
 	}
-
+	if sendFile {
+		// Placeholder PDF URL.
+		fileURL := "https://www.w3schools.com/asp/text/textfile.txt"
+		userMessage.Contents = append(userMessage.Contents, spec.InputOutputContentItemUnion{
+			Kind: spec.ContentItemKindFile,
+			FileItem: &spec.ContentItemFile{
+				FileName: "dummy",
+				FileMIME: "text/plain",
+				FileURL:  fileURL,
+			},
+		})
+	}
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
 			Name:            "gpt-5-mini",

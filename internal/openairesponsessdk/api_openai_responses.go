@@ -492,6 +492,8 @@ func applyOpenAIResponsesOutputParam(params *responses.ResponseNewParams, op *sp
 		case spec.OutputVerbosityHigh, spec.OutputVerbosityMedium, spec.OutputVerbosityLow:
 			text.Verbosity = responses.ResponseTextConfigVerbosity(*op.Verbosity)
 			textSet = true
+		case spec.OutputVerbosityMax:
+			text.Verbosity = responses.ResponseTextConfigVerbosity(spec.OutputVerbosityHigh)
 		default:
 			// No valid verbosity specified.
 		}

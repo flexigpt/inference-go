@@ -427,6 +427,8 @@ func applyOpenAIChatOutputParam(params *openai.ChatCompletionNewParams, op *spec
 		switch *op.Verbosity {
 		case spec.OutputVerbosityHigh, spec.OutputVerbosityMedium, spec.OutputVerbosityLow:
 			params.Verbosity = openai.ChatCompletionNewParamsVerbosity(*op.Verbosity)
+		case spec.OutputVerbosityMax:
+			params.Verbosity = openai.ChatCompletionNewParamsVerbosity(spec.OutputVerbosityHigh)
 		default:
 			// No valid verbosity specified.
 		}

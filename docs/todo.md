@@ -122,7 +122,6 @@
   - Normalized: `ModelParam.Reasoning` + `ReasoningContent`
   - Anthropic: thinking blocks, redacted thinking supported
   - OpenAI Responses: reasoning config plus reasoning items supported
-    - Note: reasoning summary/verbosity controls are pending (tracked in TODO)
   - OpenAI Chat: `reasoning_effort` supported as config only
     - Chat does not support reasoning blocks as message content; adapter drops reasoning messages
 
@@ -141,7 +140,7 @@
 
 - Text generated verbosity control:
   - `Verbosity *string`
-  - In OpenAI responses
+  - In OpenAI as verbosity and as effort in anthropic.
 
 - Tool selection policy (separate from tool definitions)
   - Normalized
@@ -244,7 +243,6 @@
   - `metadata` (opaque kv map)
     - If ever needed: only via allowlisted passthrough and still subject to stateless constraints
   - `truncation`
-  - Text verbosity controls outside of reasoning (do not standardize), e.g. `text.verbosity`
 
 ## Tools
 

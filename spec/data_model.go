@@ -47,6 +47,7 @@ const (
 	OutputVerbosityLow    OutputVerbosity = "low"
 	OutputVerbosityMedium OutputVerbosity = "medium"
 	OutputVerbosityHigh   OutputVerbosity = "high"
+	OutputVerbosityMax    OutputVerbosity = "max"
 )
 
 type OutputFormatKind string
@@ -80,7 +81,7 @@ type OutputFormat struct {
 
 type OutputParam struct {
 	Format *OutputFormat `json:"format,omitempty"`
-	// Verbosity is supported by OpenAI, not supported by Anthropic.
+	// Maps to "Verbosity" in OpenAI, "Effort" in Anthropic.
 	Verbosity *OutputVerbosity `json:"verbosity,omitempty"`
 }
 
