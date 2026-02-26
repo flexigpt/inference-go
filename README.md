@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
 [![Go Report Card](https://goreportcard.com/badge/github.com/flexigpt/inference-go)](https://goreportcard.com/report/github.com/flexigpt/inference-go)
 [![lint](https://github.com/flexigpt/inference-go/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/flexigpt/inference-go/actions/workflows/lint.yml)
-[![test](https://github.com/ppipada/inference-go/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/ppipada/inference-go/actions/workflows/test.yml)
+[![test](https://github.com/flexigpt/inference-go/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/flexigpt/inference-go/actions/workflows/test.yml)
 
 A single interface in Go to get inference from multiple LLM / AI providers using their official SDKs.
 
@@ -11,6 +11,7 @@ A single interface in Go to get inference from multiple LLM / AI providers using
 - [Installation](#installation)
 - [Quickstart](#quickstart)
 - [Examples](#examples)
+- [Provider configuration](#provider-configuration)
 - [Supported providers](#supported-providers)
   - [Anthropic Messages API](#anthropic-messages-api)
   - [OpenAI Responses API](#openai-responses-api)
@@ -34,6 +35,7 @@ A single interface in Go to get inference from multiple LLM / AI providers using
   - reasoning / thinking content,
   - streaming events (text + thinking),
   - usage accounting.
+  - output controls (structured output, verbosity/effort) and tool policies (where supported by provider APIs).
 
 - Streaming support:
   - Text streaming for all providers that support it.
@@ -76,6 +78,33 @@ Basic pattern:
 - [Extended OpenAI Responses example](./internal/integration/openai_responses_tools_attachments_example_test.go)
   - Demonstrates tools, web search, file and image attachments.
 
+## Provider configuration
+
+Providers are registered dynamically via `ProviderSetAPI.AddProvider`, using `AddProviderConfig`.
+
+Fields:
+
+- `sdkType` (`spec.ProviderSDKType`)
+  - `providerSDKTypeAnthropicMessages`
+  - `providerSDKTypeOpenAIChatCompletions`
+  - `providerSDKTypeOpenAIResponses`
+- `origin` (string, **required**)
+  - Base URL to the provider (or your gateway / proxy). Example: `https://api.openai.com`
+- `chatCompletionPathPrefix` (string, optional)
+  - Extra path prefix appended to `origin` before the SDK adds the endpoint path.
+  - Useful when routing through gateways like `https://my-gateway.example.com/openai/`.
+  - If you accidentally include the full endpoint path, the adapter will trim the suffix that the official SDK adds:
+    - Anthropic: trims trailing `v1/messages`
+    - OpenAI Chat Completions: trims trailing `chat/completions`
+    - OpenAI Responses: trims trailing `responses`
+- `apiKeyHeaderKey` (string, optional)
+  - If your gateway expects a non-standard API key header, set it here.
+  - The adapters attach this header when it differs from the standard header:
+    - Anthropic standard: `x-api-key`
+    - OpenAI standard: `Authorization`
+- `defaultHeaders` (`map[string]string`, optional)
+  - Extra headers appended to every request (e.g. gateway routing headers).
+
 ## Supported providers
 
 ### Anthropic Messages API
@@ -88,15 +117,22 @@ Feature support
 | Streaming text            |        yes |                                                                                                              |
 | Reasoning / thinking      |        yes | Thinking/Redacted is supported; redacted is not streamed to caller. Thinking enabled == temperature omitted. |
 | Streaming thinking        |        yes |                                                                                                              |
+| Output formats            |        yes | Text (default) and `jsonSchema` via `ModelParam.OutputParam.format`.                                         |
+| Output verbosity / effort |        yes | `ModelParam.OutputParam.verbosity` maps to Anthropic `output_config.effort` (low/medium/high/max).           |
+| Stop sequences            |        yes | `ModelParam.StopSequences` maps to `stop_sequences`.                                                         |
 | Images (input)            |        yes | Inline base64 (`imageData`) or remote URLs (`imageURL`) mapped to Anthropic image blocks.                    |
 | Files / documents (input) |        yes | PDFs only, via base64 or URL. Plain-text base64 and other MIME types are currently ignored.                  |
 | Audio/Video input/output  |         no |                                                                                                              |
 | Tools (function/custom)   |        yes | JSON Schema based.                                                                                           |
+| Tool policy               |        yes | `ToolPolicy` supported (auto/any/tool/none) + `disableParallel`.                                             |
+| Tool output content types |        yes | Tool results support text/image/pdf-document blocks (within Anthropic API constraints).                      |
 | Web search                |        yes | Server web search tool use + web search tool-result blocks.                                                  |
 | Citations                 |    partial | URL citations only. Other stateful citations are not mapped.                                                 |
 | Metadata / service tiers  |     opaque | Not exposed in normalized types; available in debug payload.                                                 |
 | Stateful flows            |         no | Library focuses on stateless calls only.                                                                     |
 | Usage data                |        yes | Input/Output/Cached. Anthropic doesn't expose Reasoning tokens usage.                                        |
+| Refusal output            |    partial | No dedicated refusal content item; `stop_reason=refusal` is surfaced via normalized status.                  |
+| Max Tokens                |        yes | `MaxTokens` are compulsory in the API. This SDK enforces a default of `8192`                                 |
 
 - Behavior for conversational + interleaved reasoning message input
   - Input: No reasoning content in the incoming messages.
@@ -116,10 +152,15 @@ Feature support
 | Streaming text            |        yes |                                                                                                                    |
 | Reasoning / thinking      |        yes | Reasoning outputs are mapped. Reasoning **inputs** are accepted only as `encrypted_content`; others are dropped.   |
 | Streaming thinking        |        yes |                                                                                                                    |
+| Output formats            |    partial | Text (default) and `jsonSchema` via `ModelParam.OutputParam.format` (mapped to `params.Text.format`).              |
+| Output verbosity          |        yes |                                                                                                                    |
+| Stop sequences            |         no | OpenAI Responses API doesnt support stop sequences (ignored if provided in `ModeParams`).                          |
 | Images (input)            |        yes | `imageData` (base64) or `imageURL`, with `detail` low/high/auto, mapped to Responses `input_image` items.          |
 | Files / documents (input) |        yes | `fileData` (base64) or `fileURL` mapped to Responses `input_file` items; works for PDFs and other file MIME types. |
 | Audio/Video input/output  |         no |                                                                                                                    |
 | Tools (function/custom)   |        yes | JSON Schema based. Note: `custom` tool **definitions** are currently emitted as `function` tools.                  |
+| Tool policy               |        yes | `ToolPolicy` supported (auto/any/tool/none) + `disableParallel`.                                                   |
+| Tool output content types |        yes | Function/custom tool outputs can carry text/image/file content (data or URL).                                      |
 | Web search                |        yes | Calls are mapped when emitted; results typically surface as citations/annotations in text.                         |
 | Citations                 |        yes | URL citations mapped to `spec.CitationKindURL`.                                                                    |
 | Metadata / service tiers  |     opaque | Not exposed in normalized types; available in debug payload.                                                       |
@@ -138,21 +179,27 @@ Feature support
 
 Feature support
 
-| Area                      | Supported? | Notes                                                                                                             |
-| ------------------------- | ---------: | ----------------------------------------------------------------------------------------------------------------- |
-| Text input/output         |        yes | Only the first choice from output is surfaced up.                                                                 |
-| Streaming text            |        yes |                                                                                                                   |
-| Reasoning / thinking      |        yes | Reasoning effort config only; no separate reasoning messages in API.                                              |
-| Streaming thinking        |         no | Not exposed by Chat Completions.                                                                                  |
-| Images (input)            |        yes | `imageData` (base64) and `imageURL` are both supported; base64 is sent as a data URL with `detail` low/high/auto. |
-| Files / documents (input) |        yes | `fileData` (base64) only, sent as a data URL; `fileURL` and stateful file IDs are not used by this adapter.       |
-| Audio/Video input/output  |         no |                                                                                                                   |
-| Tools (function/custom)   |        yes | JSON Schema based. Note: `custom` tool **definitions** are currently emitted as `function` tools.                 |
-| Web search                |        yes | API doesn't expose a tool; mapped via top-level `web_search_options` derived from a `webSearch` ToolChoice.       |
-| Citations                 |        yes | URL citations mapped from annotations.                                                                            |
-| Metadata / service tiers  |     opaque | Not exposed in normalized types; available in debug payload.                                                      |
-| Stateful flows            |         no | Library focuses on stateless calls only.                                                                          |
-| Usage data                |        yes | Input/Output/Cached/Reasoning.                                                                                    |
+| Area                      | Supported? | Notes                                                                                                               |
+| ------------------------- | ---------: | ------------------------------------------------------------------------------------------------------------------- |
+| Text input/output         |        yes | Only the first choice from output is surfaced up.                                                                   |
+| Streaming text            |        yes |                                                                                                                     |
+| Reasoning / thinking      |        yes | Reasoning effort config only; no separate reasoning messages in API.                                                |
+| Streaming thinking        |         no | Not exposed by Chat Completions.                                                                                    |
+| Output formats            |        yes | Text (default) and `jsonSchema` via `ModelParam.OutputParam.format` (mapped to `response_format`).                  |
+| Output verbosity          |        yes | `ModelParam.OutputParam.verbosity` mapped to `verbosity` (max maps to high).                                        |
+| Stop sequences            |        yes | Supported up to 4 sequences (API limit); errors if more than 4 are provided.                                        |
+| Images (input)            |        yes | `imageData` (base64) and `imageURL` are both supported; base64 is sent as a data URL with `detail` low/high/auto.   |
+| Files / documents (input) |        yes | `fileData` (base64) only, sent as a data URL; `fileURL` and stateful file IDs are not used by this adapter.         |
+| Audio/Video input/output  |         no |                                                                                                                     |
+| Tools (function/custom)   |        yes | JSON Schema based. Note: `custom` tool **definitions** are currently emitted as `function` tools.                   |
+| Tool policy               |        yes | `ToolPolicy` supported (auto/any/tool/none) + `disableParallel` (mapped to `parallel_tool_calls=false`).            |
+| Tool output content types |    partial | Tool outputs are forwarded as tool messages with _text only_; image/file tool output items are ignored. (API limit) |
+| Web search                |        yes | API doesn't expose a tool; mapped via top-level `web_search_options` derived from a `webSearch` ToolChoice.         |
+| Citations                 |        yes | URL citations mapped from annotations.                                                                              |
+| Metadata / service tiers  |     opaque | Not exposed in normalized types; available in debug payload.                                                        |
+| Stateful flows            |         no | Library focuses on stateless calls only.                                                                            |
+| Usage data                |        yes | Input/Output/Cached/Reasoning.                                                                                      |
+| System prompt role        |    partial | SystemPrompt is sent as `developer` for OpenAI `o*` / `gpt-5*` models, for others its sent as `system` .            |
 
 - Behavior for conversational + interleaved reasoning message input
   - Reasoning effort config is kept as is.
