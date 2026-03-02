@@ -100,7 +100,7 @@ type ModelParam struct {
 	// Cross-provider notes:
 	//   - OpenAI Chat Completions: maps to response_format + verbosity.
 	//   - OpenAI Responses: maps to text.
-	//   - Anthropic Messages: supports jsonSchema only via output_config.format. verbosity is not supported.
+	//   - Anthropic Messages: supports jsonSchema via output_config.format; verbosity maps to output_config.effort.
 	OutputParam *OutputParam `json:"outputParam,omitempty"`
 
 	// StopSequences requests provider-side stop sequences when supported.

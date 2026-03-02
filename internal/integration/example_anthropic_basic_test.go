@@ -71,7 +71,7 @@ func Example_anthropic_basicConversation() {
 		},
 	}
 
-	resp, err := ps.FetchCompletion(ctx, "anthropic", req, nil)
+	resp, err := ps.FetchCompletion(ctx, "anthropic", req, &spec.FetchCompletionOptions{CompletionKey: "haiku45"})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {

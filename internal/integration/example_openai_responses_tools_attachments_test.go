@@ -72,7 +72,8 @@ func Example_openAIResponses_toolsAndAttachments() {
 					"description": "Optional topic to focus on.",
 				},
 			},
-			"required": []any{"document"},
+			"required":             []any{"document"},
+			"additionalProperties": false,
 		},
 	}
 
@@ -84,7 +85,7 @@ func Example_openAIResponses_toolsAndAttachments() {
 		Description: "Search the web for recent information.",
 		WebSearchArguments: &spec.WebSearchToolChoiceItem{
 			MaxUses:           2,
-			SearchContextSize: "medium",
+			SearchContextSize: spec.WebSearchContextSizeMedium,
 			AllowedDomains:    []string{}, // any domain
 			UserLocation: &spec.WebSearchToolChoiceItemUserLocation{
 				City:     "San Francisco",
@@ -147,6 +148,30 @@ func Example_openAIResponses_toolsAndAttachments() {
 				Type:  spec.ReasoningTypeSingleWithLevels,
 				Level: spec.ReasoningLevelMedium,
 			},
+			OutputParam: &spec.OutputParam{
+				// Responses maps this to params.Text.format + params.Text.verbosity.
+				Verbosity: func() *spec.OutputVerbosity {
+					v := spec.OutputVerbosityMedium
+					return &v
+				}(),
+				Format: &spec.OutputFormat{
+					Kind: spec.OutputFormatKindJSONSchema,
+					JSONSchemaParam: &spec.JSONSchemaParam{
+						Name: "final_answer",
+						Schema: map[string]any{
+							"type": "object",
+							"properties": map[string]any{
+								"image_description": map[string]any{"type": "string"},
+								"file_name":         map[string]any{"type": "string"},
+								"answer":            map[string]any{"type": "string"},
+							},
+							"required":             []any{"image_description", "answer", "file_name"},
+							"additionalProperties": false,
+						},
+						Strict: true,
+					},
+				},
+			},
 		},
 		Inputs: []spec.InputUnion{
 			{
@@ -155,6 +180,11 @@ func Example_openAIResponses_toolsAndAttachments() {
 			},
 		},
 		ToolChoices: toolChoices,
+		ToolPolicy: &spec.ToolPolicy{
+			// Demonstrates policy plumbing.
+			Mode:            spec.ToolPolicyModeAuto,
+			DisableParallel: true,
+		},
 	}
 
 	// Stream both text and reasoning to stdout.
@@ -177,6 +207,7 @@ func Example_openAIResponses_toolsAndAttachments() {
 		StreamConfig: &spec.StreamConfig{
 			// Use library defaults; override here if you want.
 		},
+		CompletionKey: "gpt5mini",
 	}
 
 	resp, err := ps.FetchCompletion(ctx, "openai-responses-extended", req, opts)

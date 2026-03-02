@@ -159,9 +159,13 @@ func (api *OpenAIResponsesAPI) SetProviderAPIKey(
 	return nil
 }
 
+func (api *OpenAIResponsesAPI) GetProviderCapability(ctx context.Context) (spec.ModelCapabilities, error) {
+	return openairesponsessdkCapability, nil
+}
+
 func (api *OpenAIResponsesAPI) FetchCompletion(
 	ctx context.Context,
-	req *spec.FetchCompletionRequest,
+	inReq *spec.FetchCompletionRequest,
 	opts *spec.FetchCompletionOptions,
 ) (*spec.FetchCompletionResponse, error) {
 	api.mu.RLock()
@@ -175,8 +179,14 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 	if client == nil {
 		return nil, errors.New("openai responses api LLM: client not initialized")
 	}
-	if req == nil || len(req.Inputs) == 0 || req.ModelParam.Name == "" {
+	if inReq == nil || len(inReq.Inputs) == 0 || inReq.ModelParam.Name == "" {
 		return nil, errors.New("openai responses api LLM: invalid data")
+	}
+	req, warns, err := sdkutil.NormalizeRequestForSDK(
+		ctx, inReq, opts, spec.ProviderSDKTypeOpenAIResponses, openairesponsessdkCapability,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	sanitizedInputs := sanitizeReasoningInputs(req.Inputs)
@@ -302,6 +312,10 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 		normalizedResp, fullRawResp, apiErr = api.doNonStreaming(ctx, client, params, timeout, toolChoiceNameMap)
 	}
 
+	if normalizedResp != nil && len(warns) > 0 {
+		normalizedResp.Warnings = append(normalizedResp.Warnings, warns...)
+	}
+
 	if span != nil {
 		end := spec.CompletionSpanEnd{
 			ProviderResponse: fullRawResp,
@@ -360,9 +374,10 @@ func (api *OpenAIResponsesAPI) doStreaming(
 			return nil
 		}
 		event := spec.StreamEvent{
-			Kind:     spec.StreamContentKindText,
-			Provider: providerName,
-			Model:    modelName,
+			Kind:          spec.StreamContentKindText,
+			Provider:      providerName,
+			Model:         modelName,
+			CompletionKey: opts.CompletionKey,
 			Text: &spec.StreamTextChunk{
 				Text: chunk,
 			},
@@ -375,9 +390,10 @@ func (api *OpenAIResponsesAPI) doStreaming(
 			return nil
 		}
 		event := spec.StreamEvent{
-			Kind:     spec.StreamContentKindThinking,
-			Provider: providerName,
-			Model:    modelName,
+			Kind:          spec.StreamContentKindThinking,
+			Provider:      providerName,
+			Model:         modelName,
+			CompletionKey: opts.CompletionKey,
 			Thinking: &spec.StreamThinkingChunk{
 				Text: chunk,
 			},
@@ -494,6 +510,7 @@ func applyOpenAIResponsesOutputParam(params *responses.ResponseNewParams, op *sp
 			textSet = true
 		case spec.OutputVerbosityMax:
 			text.Verbosity = responses.ResponseTextConfigVerbosity(spec.OutputVerbosityHigh)
+			textSet = true
 		default:
 			// No valid verbosity specified.
 		}
@@ -565,24 +582,43 @@ func applyOpenAIResponsesToolPolicy(
 		if len(params.Tools) == 0 {
 			return errors.New("openai responses: toolPolicy=any requires toolChoices/tools to be provided")
 		}
-		resolvedTools, err := sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
-		if err != nil || len(resolvedTools) == 0 {
-			return errors.New(
-				"openai responses: toolPolicy=tool requires allowedTools with a resolvable toolChoiceName/toolChoiceID",
-			)
+		var resolvedTools []sdkutil.ResolvedAllowedTool
+		if policy.Mode == spec.ToolPolicyModeAny && len(policy.AllowedTools) == 0 {
+			// "Any tool" == all tools from toolChoices (including web_search).
+			for name, tc := range toolChoiceNameMap {
+				resolvedTools = append(resolvedTools, sdkutil.ResolvedAllowedTool{
+					Type: tc.Type,
+					Name: name,
+				})
+			}
+			if len(resolvedTools) == 0 {
+				return errors.New("openai responses: toolPolicy=any has no tools in toolChoices")
+			}
+		} else {
+			var err error
+			resolvedTools, err = sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
+			if err != nil || len(resolvedTools) == 0 {
+				return errors.New(
+					"openai responses: toolPolicy=any/tool requires allowedTools with a resolvable toolChoiceName/toolChoiceID",
+				)
+			}
 		}
 
 		allowedChoices := make([]map[string]any, 0, len(resolvedTools))
 		for _, t := range resolvedTools {
-			c := map[string]any{
-				// We register tools as function tools (even for spec.ToolTypeCustom),
-				// so tool_choice must reference "function".
-				"type": "function",
-				"name": t.Name,
+			c, ok := openAIResponsesAllowedToolEntry(t)
+			if !ok {
+				continue
 			}
 			allowedChoices = append(allowedChoices, c)
 		}
+		if len(allowedChoices) == 0 {
+			return errors.New("openai responses: resolved allowedTools contains no supported tool entries")
+		}
 		if policy.Mode == spec.ToolPolicyModeTool {
+			if len(allowedChoices) < 1 {
+				return errors.New("openai responses: toolPolicy=tool resolved to 0 tools")
+			}
 			allowedChoices = allowedChoices[:1]
 		}
 
@@ -598,6 +634,21 @@ func applyOpenAIResponsesToolPolicy(
 
 	default:
 		return fmt.Errorf("openai responses: unknown toolPolicy.mode %q", policy.Mode)
+	}
+}
+
+func openAIResponsesAllowedToolEntry(t sdkutil.ResolvedAllowedTool) (map[string]any, bool) {
+	switch t.Type {
+	case spec.ToolTypeWebSearch:
+		return map[string]any{"type": "web_search"}, true
+	case spec.ToolTypeFunction, spec.ToolTypeCustom:
+		// Custom tools are registered as function tools in toolChoicesToOpenAIResponseTools.
+		if strings.TrimSpace(t.Name) == "" {
+			return nil, false
+		}
+		return map[string]any{"type": "function", "name": t.Name}, true
+	default:
+		return nil, false
 	}
 }
 
@@ -1222,13 +1273,18 @@ func toolChoicesToOpenAIResponseTools(
 		name := tw.Name
 		switch tc.Type {
 		case spec.ToolTypeFunction, spec.ToolTypeCustom:
-			if tc.Arguments == nil || name == "" {
+			if name == "" {
 				continue
 			}
+			params := tc.Arguments
+			if params == nil {
+				params = sdkutil.EmptyJSONArgs
+			}
+
 			// For now, both function and custom tools are expressed as function tools.
 			fn := responses.FunctionToolParam{
 				Name:        name,
-				Parameters:  tc.Arguments,
+				Parameters:  params,
 				Type:        openaiSharedConstant.Function("function"),
 				Description: param.NewOpt(sdkutil.ToolDescription(tc)),
 			}
@@ -1257,9 +1313,9 @@ func toolChoicesToOpenAIResponseTools(
 				}
 			}
 			switch tc.WebSearchArguments.SearchContextSize {
-			case "low":
+			case spec.WebSearchContextSizeLow:
 				fn.SearchContextSize = responses.WebSearchToolSearchContextSizeLow
-			case "high":
+			case spec.WebSearchContextSizeHigh:
 				fn.SearchContextSize = responses.WebSearchToolSearchContextSizeHigh
 			default:
 				fn.SearchContextSize = responses.WebSearchToolSearchContextSizeMedium

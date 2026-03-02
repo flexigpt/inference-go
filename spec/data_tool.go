@@ -11,9 +11,13 @@ const (
 	ToolPolicyModeNone ToolPolicyMode = "none"
 )
 
-// AllowedTool are lists of tools that the model is allowed to call from the choices provided.
-// OpenAI supports specifying multiple tools in allowed tools with mode any/tool ("required" in API).
-// Anthropic supports specifying only one tool via mode "tool".
+// AllowedTool identifies a tool from ToolChoices that the model is allowed/required to call.
+//
+// Notes:
+// - For ToolPolicyModeTool, AllowedTools is required (must resolve to at least one tool).
+// - For ToolPolicyModeAny, AllowedTools is optional:
+//   - empty => “any of the provided ToolChoices” (recommended default)
+//   - non-empty => restrict to the specified subset.
 type AllowedTool struct {
 	ToolChoiceID   string `json:"toolChoiceID"`
 	ToolChoiceName string `json:"toolChoiceName"`
@@ -23,10 +27,15 @@ type AllowedTool struct {
 type ToolPolicy struct {
 	// Mode selects the tool policy:
 	//   - auto: model may decide.
-	//   - any: model must use a tool (OpenAI maps to "required")
+	//   - any: model must use *a* tool.
+	//          OpenAI adapters map this to tool_choice="required" and (by default) allow any ToolChoice.
 	//   - tool: Force a specific tool by name/ID.
 	//           Anthropic directly supports. OpenAI supports this as "required" + one tool in allowed tools.
 	//   - none: prohibit tool use.
+	//
+	// Web search note:
+	// - In OpenAI Chat Completions, web search is configured via top-level web_search_options, not as a tool-call.
+	//   ToolPolicy cannot “force web search” there; toolPolicy.mode=none disables it (best-effort).
 	Mode ToolPolicyMode `json:"mode"`
 
 	AllowedTools []AllowedTool `json:"allowedTools,omitempty"`
@@ -50,9 +59,17 @@ type WebSearchToolChoiceItemUserLocation struct {
 	Timezone string `json:"timezone,omitzero"`
 }
 
+type WebSearchContextSize string
+
+const (
+	WebSearchContextSizeLow    WebSearchContextSize = "low"
+	WebSearchContextSizeMedium WebSearchContextSize = "medium"
+	WebSearchContextSizeHigh   WebSearchContextSize = "high"
+)
+
 type WebSearchToolChoiceItem struct {
 	MaxUses           int64                                `json:"maxUses,omitzero"`
-	SearchContextSize string                               `json:"searchContextSize,omitzero"`
+	SearchContextSize WebSearchContextSize                 `json:"searchContextSize,omitzero"`
 	AllowedDomains    []string                             `json:"allowedDomains,omitzero"`
 	BlockedDomains    []string                             `json:"blockedDomains,omitzero"`
 	UserLocation      *WebSearchToolChoiceItemUserLocation `json:"userLocation,omitempty"`

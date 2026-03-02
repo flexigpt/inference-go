@@ -161,9 +161,13 @@ func (api *AnthropicMessagesAPI) SetProviderAPIKey(ctx context.Context, apiKey s
 	return nil
 }
 
+func (api *AnthropicMessagesAPI) GetProviderCapability(ctx context.Context) (spec.ModelCapabilities, error) {
+	return anthropicsdkCapability, nil
+}
+
 func (api *AnthropicMessagesAPI) FetchCompletion(
 	ctx context.Context,
-	req *spec.FetchCompletionRequest,
+	inReq *spec.FetchCompletionRequest,
 	opts *spec.FetchCompletionOptions,
 ) (*spec.FetchCompletionResponse, error) {
 	api.mu.RLock()
@@ -177,9 +181,16 @@ func (api *AnthropicMessagesAPI) FetchCompletion(
 	if client == nil {
 		return nil, errors.New("anthropic messages api LLM: client not initialized")
 	}
-	if req == nil || len(req.Inputs) == 0 || req.ModelParam.Name == "" {
+	if inReq == nil || len(inReq.Inputs) == 0 || inReq.ModelParam.Name == "" {
 		return nil, errors.New("anthropic messages api LLM: empty completion data")
 	}
+	req, warns, err := sdkutil.NormalizeRequestForSDK(
+		ctx, inReq, opts, spec.ProviderSDKTypeAnthropic, anthropicsdkCapability,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Decide if we must override thinking based on interleaved input history.
 	thinkingAnalysis := analyzeAnthropicThinkingBehavior(req.Inputs)
 
@@ -275,6 +286,10 @@ func (api *AnthropicMessagesAPI) FetchCompletion(
 		normalizedResp, fullRawResp, apiErr = api.doNonStreaming(ctx, client, params, timeout, toolChoiceNameMap)
 	}
 
+	if normalizedResp != nil && len(warns) > 0 {
+		normalizedResp.Warnings = append(normalizedResp.Warnings, warns...)
+	}
+
 	if span != nil {
 		end := spec.CompletionSpanEnd{
 			ProviderResponse: fullRawResp,
@@ -331,9 +346,10 @@ func (api *AnthropicMessagesAPI) doStreaming(
 			return nil
 		}
 		event := spec.StreamEvent{
-			Kind:     spec.StreamContentKindText,
-			Provider: providerName,
-			Model:    modelName,
+			Kind:          spec.StreamContentKindText,
+			Provider:      providerName,
+			Model:         modelName,
+			CompletionKey: opts.CompletionKey,
 			Text: &spec.StreamTextChunk{
 				Text: chunk,
 			},
@@ -346,10 +362,11 @@ func (api *AnthropicMessagesAPI) doStreaming(
 			return nil
 		}
 		event := spec.StreamEvent{
-			Kind:     spec.StreamContentKindThinking,
-			Provider: providerName,
-			Model:    modelName,
-			Thinking: &spec.StreamThinkingChunk{Text: chunk},
+			Kind:          spec.StreamContentKindThinking,
+			Provider:      providerName,
+			Model:         modelName,
+			CompletionKey: opts.CompletionKey,
+			Thinking:      &spec.StreamThinkingChunk{Text: chunk},
 		}
 		return sdkutil.SafeCallStreamHandler(opts.StreamHandler, event)
 	}
@@ -474,7 +491,7 @@ func handleContentBlockDeltaEvent(
 }
 
 func applyAnthropicOutputParam(params *anthropic.MessageNewParams, op *spec.OutputParam) error {
-	if params == nil || op == nil || op.Verbosity == nil || op.Format == nil {
+	if params == nil || op == nil {
 		// Do not send anything if caller didn't request.
 		return nil
 	}
@@ -1064,12 +1081,17 @@ func toolChoicesToAnthropicTools(
 		name := tw.Name
 		switch tc.Type {
 		case spec.ToolTypeFunction, spec.ToolTypeCustom:
-			if name == "" || tc.Arguments == nil {
+			if name == "" {
 				continue
 			}
 
 			// Copy schema so we can safely manipulate.
-			schema := make(map[string]any, len(tc.Arguments))
+			srcArgs := tc.Arguments
+			if srcArgs == nil {
+				srcArgs = sdkutil.EmptyJSONArgs
+			}
+			schema := make(map[string]any, len(srcArgs))
+			maps.Copy(schema, srcArgs)
 			maps.Copy(schema, tc.Arguments)
 
 			inputSchema := anthropic.ToolInputSchemaParam{

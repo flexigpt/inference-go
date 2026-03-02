@@ -3,42 +3,7 @@ package spec
 import (
 	"context"
 	"net/http"
-	"time"
 )
-
-const (
-	DefaultAuthorizationHeaderKey = "Authorization"
-	DefaultAPITimeout             = 300 * time.Second
-
-	DefaultAnthropicOrigin                 = "https://api.anthropic.com"
-	DefaultAnthropicChatCompletionPrefix   = "/v1/messages"
-	DefaultAnthropicAuthorizationHeaderKey = "x-api-key"
-
-	DefaultOpenAIOrigin                = "https://api.openai.com"
-	DefaultOpenAIChatCompletionsPrefix = "/v1/chat/completions"
-
-	DefaultFileDataMIME  = "application/octet-stream"
-	DefaultImageDataMIME = "image/png"
-)
-
-var OpenAIChatCompletionsDefaultHeaders = map[string]string{"content-type": "application/json"}
-
-const (
-	ProviderSDKTypeAnthropic             ProviderSDKType = "providerSDKTypeAnthropicMessages"
-	ProviderSDKTypeOpenAIChatCompletions ProviderSDKType = "providerSDKTypeOpenAIChatCompletions"
-	ProviderSDKTypeOpenAIResponses       ProviderSDKType = "providerSDKTypeOpenAIResponses"
-)
-
-// ProviderParam represents information about a provider.
-type ProviderParam struct {
-	Name                     ProviderName      `json:"name"`
-	SDKType                  ProviderSDKType   `json:"sdkType"`
-	APIKey                   string            `json:"apiKey"`
-	Origin                   string            `json:"origin"`
-	ChatCompletionPathPrefix string            `json:"chatCompletionPathPrefix"`
-	APIKeyHeaderKey          string            `json:"apiKeyHeaderKey"`
-	DefaultHeaders           map[string]string `json:"defaultHeaders"`
-}
 
 // StreamContentKind enumerates the kinds of streaming events that can be delivered while a completion is in progress.
 type StreamContentKind string
@@ -60,8 +25,9 @@ type StreamEvent struct {
 	Kind StreamContentKind `json:"kind"`
 
 	// Optional metadata to help consumers correlate events across models/providers.
-	Provider ProviderName `json:"provider,omitempty"`
-	Model    ModelName    `json:"model,omitempty"`
+	Provider      ProviderName `json:"provider,omitempty"`
+	Model         ModelName    `json:"model,omitempty"`
+	CompletionKey string       `json:"completionKey,omitempty"`
 
 	// Exactly one of the below will be non-nil depending on Kind.
 	Text     *StreamTextChunk     `json:"text,omitempty"`
@@ -82,17 +48,31 @@ type StreamHandler func(event StreamEvent) error
 // FetchCompletionOptions controls optional behaviors for FetchCompletion.
 // A nil pointer is treated the same as &FetchCompletionOptions{}.
 type FetchCompletionOptions struct {
+	// CompletionKey is an opaque, runtime-only key that is passed in runtime operations
+	// It can be used by the capability resolver to map arbitrary user/model identifiers to capability profiles.
+	CompletionKey string `json:"-"`
+
 	// StreamHandler, if non-nil, is invoked with incremental streaming events
 	// when ModelParam.Stream is true. Returning a non-nil error will stop
 	// streaming early and propagate that error back to the caller.
 	StreamHandler StreamHandler `json:"-"`
 	StreamConfig  *StreamConfig `json:"streamConfig,omitempty"`
+
+	// CapabilityResolver, if non-nil, is used to resolve model capabilities for request validation/normalization.
+	// Else, inbuilt SDK capabilities are enforced.
+	CapabilityResolver ModelCapabilityResolver `json:"-"`
+}
+
+type Warning struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
 type FetchCompletionResponse struct {
 	Outputs      []OutputUnion `json:"outputs,omitempty"`
 	Usage        *Usage        `json:"usage,omitempty"`
 	Error        *Error        `json:"error,omitempty"`
+	Warnings     []Warning     `json:"warnings,omitempty"`
 	DebugDetails any           `json:"debugDetails,omitempty"`
 }
 
@@ -165,17 +145,4 @@ type CompletionDebugger interface {
 		ctx context.Context,
 		info *CompletionSpanStart,
 	) (ctxWithSpan context.Context, span CompletionSpan)
-}
-
-type CompletionProvider interface {
-	InitLLM(ctx context.Context) error
-	DeInitLLM(ctx context.Context) error
-	GetProviderInfo(ctx context.Context) *ProviderParam
-	IsConfigured(ctx context.Context) bool
-	SetProviderAPIKey(ctx context.Context, apiKey string) error
-	FetchCompletion(
-		ctx context.Context,
-		fetchCompletionRequest *FetchCompletionRequest,
-		opts *FetchCompletionOptions,
-	) (*FetchCompletionResponse, error)
 }

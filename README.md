@@ -16,6 +16,7 @@ A single interface in Go to get inference from multiple LLM / AI providers using
   - [Anthropic Messages API](#anthropic-messages-api)
   - [OpenAI Responses API](#openai-responses-api)
   - [OpenAI Chat Completions API](#openai-chat-completions-api)
+- [Model capabilities and normalization](#model-capabilities-and-normalization)
 - [HTTP debugging](#http-debugging)
 - [Notes](#notes)
 - [Development](#development)
@@ -36,6 +37,10 @@ A single interface in Go to get inference from multiple LLM / AI providers using
   - streaming events (text + thinking),
   - usage accounting.
   - output controls (structured output, verbosity/effort) and tool policies (where supported by provider APIs).
+  - capabilities + normalization:
+    - all feature support per SDK is described by `spec.ModelCapabilities` (`spec/capability.go`)
+    - default SDK-wide capability profiles live in `internal/*/capability.go`
+    - capabilities are available programmatically via `ProviderSetAPI.GetProviderCapability`
 
 - Streaming support:
   - Text streaming for all providers that support it.
@@ -72,11 +77,15 @@ Basic pattern:
 
 ## Examples
 
-- [Basic OpenAI Responses](./internal/integration/openai_responses_basic_example_test.go)
-- [Basic OpenAI Chat Completions](./internal/integration/openai_chat_example_test.go)
-- [Basic Anthropic Messages](./internal/integration/anthropic_example_test.go)
-- [Extended OpenAI Responses example](./internal/integration/openai_responses_tools_attachments_example_test.go)
+- [Basic Anthropic Messages](internal/integration/example_anthropic_basic_test.go)
+
+- [Basic OpenAI Chat Completions](internal/integration/example_openai_chat_basic_test.go)
+
+- [Basic OpenAI Responses](internal/integration/example_openai_responses_basic_test.go)
+- [Extended OpenAI Responses example](internal/integration/example_openai_responses_tools_attachments_test.go)
   - Demonstrates tools, web search, file and image attachments.
+
+- [Capability override example (get provider caps, override per-model)](./internal/integration/example_capability_override_test.go)
 
 ## Provider configuration
 
@@ -194,7 +203,7 @@ Feature support
 | Tools (function/custom)   |        yes | JSON Schema based. Note: `custom` tool **definitions** are currently emitted as `function` tools.                   |
 | Tool policy               |        yes | `ToolPolicy` supported (auto/any/tool/none) + `disableParallel` (mapped to `parallel_tool_calls=false`).            |
 | Tool output content types |    partial | Tool outputs are forwarded as tool messages with _text only_; image/file tool output items are ignored. (API limit) |
-| Web search                |        yes | API doesn't expose a tool; mapped via top-level `web_search_options` derived from a `webSearch` ToolChoice.         |
+| Web search                |        yes | Not a tool-call in this API; configured via top-level `web_search_options` derived from a `webSearch` `ToolChoice`. |
 | Citations                 |        yes | URL citations mapped from annotations.                                                                              |
 | Metadata / service tiers  |     opaque | Not exposed in normalized types; available in debug payload.                                                        |
 | Stateful flows            |         no | Library focuses on stateless calls only.                                                                            |
@@ -204,6 +213,25 @@ Feature support
 - Behavior for conversational + interleaved reasoning message input
   - Reasoning effort config is kept as is.
   - All reasoning input/output messages are dropped as the api doesn't support it.
+
+## Model capabilities and normalization
+
+- This SDK validates and normalizes requests against a capability profile _before_ calling the underlying provider SDK. Key points:
+  - The capability schema is `spec.ModelCapabilities` in [`spec/capability.go`](./spec/capability.go).
+  - Each provider adapter has an SDK-wide default capability profile (as a Go struct):
+    - Anthropic Messages: `internal/anthropicsdk/capability.go`
+    - OpenAI Chat Completions: `internal/openaichatsdk/capability.go`
+    - OpenAI Responses: `internal/openairesponsessdk/capability.go`
+  - You can access these defaults programmatically via:
+    - `ProviderSetAPI.GetProviderCapability(ctx, providerName)`
+
+- Recommended: Per-model behavior
+  - Real world features support varies by _model_.
+  - To enforce per-model differences, pass a `spec.ModelCapabilityResolver` in `FetchCompletionOptions`.
+    - The resolver can start from the provider’s SDK-wide defaults and override fields as needed.
+
+- See a runnable repository example that demonstrates the intended flow:
+  - [`internal/integration/capability_override_example_test.go`](./internal/integration/capability_override_example_test.go)
 
 ## HTTP debugging
 

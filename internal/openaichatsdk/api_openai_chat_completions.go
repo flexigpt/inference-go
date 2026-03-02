@@ -160,9 +160,13 @@ func (api *OpenAIChatCompletionsAPI) SetProviderAPIKey(
 	return nil
 }
 
+func (api *OpenAIChatCompletionsAPI) GetProviderCapability(ctx context.Context) (spec.ModelCapabilities, error) {
+	return openaichatsdkCapability, nil
+}
+
 func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 	ctx context.Context,
-	req *spec.FetchCompletionRequest,
+	inReq *spec.FetchCompletionRequest,
 	opts *spec.FetchCompletionOptions,
 ) (*spec.FetchCompletionResponse, error) {
 	api.mu.RLock()
@@ -176,8 +180,14 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 	if client == nil {
 		return nil, errors.New("openai chat completions api LLM: client not initialized")
 	}
-	if req == nil || len(req.Inputs) == 0 || req.ModelParam.Name == "" {
+	if inReq == nil || len(inReq.Inputs) == 0 || inReq.ModelParam.Name == "" {
 		return nil, errors.New("openai chat completions api LLM: empty completion data")
+	}
+	req, warns, err := sdkutil.NormalizeRequestForSDK(
+		ctx, inReq, opts, spec.ProviderSDKTypeOpenAIChatCompletions, openaichatsdkCapability,
+	)
+	if err != nil {
+		return nil, err
 	}
 
 	// Build OpenAI chat messages.
@@ -250,15 +260,20 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 			params.Tools = toolDefs
 			toolChoiceNameMap = nameMap
 		}
-		// Map a single webSearch ToolChoice (if any) to top-level web_search_options.
-		if ws := firstWebSearchToolChoice(req.ToolChoices); ws != nil && ws.WebSearchArguments != nil {
-			applyOpenAIChatWebSearchOptions(&params, ws.WebSearchArguments)
-		}
 
 		// Optional: tool policy (tool_choice / parallel_tool_calls).
 		if req.ToolPolicy != nil {
 			if err := applyOpenAIChatToolPolicy(&params, req.ToolPolicy, toolChoiceNameMap); err != nil {
 				return nil, err
+			}
+		}
+
+		// Map a single webSearch ToolChoice (if any) to top-level web_search_options.
+		// If toolPolicy=none, treat that as "no tools of any kind", including web search.
+		if req.ToolPolicy == nil || req.ToolPolicy.Mode != spec.ToolPolicyModeNone {
+			ws := firstWebSearchToolChoice(req.ToolChoices)
+			if ws != nil && ws.WebSearchArguments != nil {
+				applyOpenAIChatWebSearchOptions(&params, ws.WebSearchArguments)
 			}
 		}
 	}
@@ -292,6 +307,10 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 		)
 	} else {
 		normalizedResp, fullRawResp, apiErr = api.doNonStreaming(ctx, client, params, timeout, toolChoiceNameMap)
+	}
+
+	if normalizedResp != nil && len(warns) > 0 {
+		normalizedResp.Warnings = append(normalizedResp.Warnings, warns...)
 	}
 
 	if span != nil {
@@ -352,9 +371,10 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 			return nil
 		}
 		event := spec.StreamEvent{
-			Kind:     spec.StreamContentKindText,
-			Provider: providerName,
-			Model:    modelName,
+			Kind:          spec.StreamContentKindText,
+			Provider:      providerName,
+			Model:         modelName,
+			CompletionKey: opts.CompletionKey,
 			Text: &spec.StreamTextChunk{
 				Text: chunk,
 			},
@@ -493,21 +513,50 @@ func applyOpenAIChatToolPolicy(
 	case spec.ToolPolicyModeNone:
 		// "None" is not present in SDK union. Need to empty the available tool choices to simulate none.
 		params.Tools = []openai.ChatCompletionToolUnionParam{}
+		// "web_search_options" is not a "tool" in this API, but caller intent for toolPolicy=none is "no tool use at
+		// all", so clear it as well.
+		params.WebSearchOptions = openai.ChatCompletionNewParamsWebSearchOptions{}
 		return nil
 
 	case spec.ToolPolicyModeAny, spec.ToolPolicyModeTool:
 		if len(params.Tools) == 0 {
 			return errors.New("openai chat.completions: toolPolicy=any/tool requires toolChoices/tools to be provided")
 		}
-		resolvedTools, err := sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
-		if err != nil || len(resolvedTools) == 0 {
-			return errors.New(
-				"openai chat.completions: toolPolicy=any/tool requires allowedTools with a resolvable toolChoiceName/toolChoiceID",
-			)
+		var resolvedTools []sdkutil.ResolvedAllowedTool
+		if policy.Mode == spec.ToolPolicyModeAny && len(policy.AllowedTools) == 0 {
+			// "Any tool" == all callable tools from toolChoices.
+			for name, tc := range toolChoiceNameMap {
+				if tc.Type == spec.ToolTypeWebSearch {
+					continue
+				}
+				if strings.TrimSpace(name) == "" {
+					continue
+				}
+				resolvedTools = append(resolvedTools, sdkutil.ResolvedAllowedTool{
+					Type: tc.Type,
+					Name: name,
+				})
+			}
+			if len(resolvedTools) == 0 {
+				return errors.New("openai chat.completions: toolPolicy=any has no callable (function/custom) tools")
+			}
+		} else {
+			var err error
+			resolvedTools, err = sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
+			if err != nil || len(resolvedTools) == 0 {
+				return errors.New(
+					"openai chat.completions: toolPolicy=any/tool requires allowedTools with a resolvable toolChoiceName/toolChoiceID",
+				)
+			}
 		}
 
 		allowedChoices := make([]map[string]any, 0, len(resolvedTools))
 		for _, t := range resolvedTools {
+			if t.Type == spec.ToolTypeWebSearch {
+				// "web_search" isn't a tool-call in chat.completions.
+				continue
+			}
+
 			// We register tools as function tools in toolChoicesToOpenAIChatTools
 			// (even when the original ToolChoice.Type is "custom"), so tool_choice
 			// must reference "function".
@@ -516,6 +565,14 @@ func applyOpenAIChatToolPolicy(
 				"function": map[string]string{"name": t.Name},
 			}
 			allowedChoices = append(allowedChoices, c)
+		}
+		if len(allowedChoices) == 0 {
+			if len(allowedChoices) < 1 {
+				return errors.New("openai chat.completions: toolPolicy=tool resolved to 0 callable tools")
+			}
+			return errors.New(
+				"openai chat.completions: resolved allowedTools contains no callable (function/custom) tools",
+			)
 		}
 		if policy.Mode == spec.ToolPolicyModeTool {
 			allowedChoices = allowedChoices[:1]
@@ -845,14 +902,18 @@ func toolChoicesToOpenAIChatTools(
 
 		switch tc.Type {
 		case spec.ToolTypeFunction, spec.ToolTypeCustom:
-			if tc.Arguments == nil || name == "" {
+			if name == "" {
 				continue
+			}
+			params := tc.Arguments
+			if params == nil {
+				params = sdkutil.EmptyJSONArgs
 			}
 			// For now, both function and custom tools are expressed as function tools,
 			// mirroring the Responses adapter behavior.
 			fn := shared.FunctionDefinitionParam{
 				Name:       name,
-				Parameters: tc.Arguments,
+				Parameters: params,
 			}
 			if desc := sdkutil.ToolDescription(tc); desc != "" {
 				fn.Description = openai.String(desc)
@@ -891,10 +952,9 @@ func applyOpenAIChatWebSearchOptions(
 
 	var opt openai.ChatCompletionNewParamsWebSearchOptions
 
-	searchContextSize := strings.ToLower(strings.TrimSpace(ws.SearchContextSize))
-	switch searchContextSize {
-	case "low", "medium", "high":
-		opt.SearchContextSize = searchContextSize
+	switch ws.SearchContextSize {
+	case spec.WebSearchContextSizeLow, spec.WebSearchContextSizeMedium, spec.WebSearchContextSizeHigh:
+		opt.SearchContextSize = string(ws.SearchContextSize)
 	default:
 		// Default to "medium" if unset/invalid.
 		opt.SearchContextSize = "medium"

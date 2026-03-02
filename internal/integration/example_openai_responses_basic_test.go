@@ -10,9 +10,9 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-// Example_openAIChat_basicConversation demonstrates a minimal non-streaming
-// call to OpenAI's Chat Completions API.
-func Example_openAIChat_basicConversation() {
+// Example_openAIResponses_basicConversation demonstrates a minimal non-streaming
+// call to OpenAI's Responses API using text-only input.
+func Example_openAIResponses_basicConversation() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -22,36 +22,40 @@ func Example_openAIChat_basicConversation() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "openai-chat", &inference.AddProviderConfig{
-		SDKType:                  spec.ProviderSDKTypeOpenAIChatCompletions,
-		Origin:                   spec.DefaultOpenAIOrigin,
-		ChatCompletionPathPrefix: spec.DefaultOpenAIChatCompletionsPrefix,
+	_, err = ps.AddProvider(ctx, "openai-responses", &inference.AddProviderConfig{
+		SDKType: spec.ProviderSDKTypeOpenAIResponses,
+		Origin:  spec.DefaultOpenAIOrigin,
+		// Only used when Origin is overridden; kept here for clarity.
+		ChatCompletionPathPrefix: "/v1/responses",
 		APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
-		DefaultHeaders:           spec.OpenAIChatCompletionsDefaultHeaders,
 	})
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error adding OpenAI Chat provider:", err)
+		fmt.Fprintln(os.Stderr, "error adding OpenAI Responses provider:", err)
 		return
 	}
 
 	apiKey := os.Getenv("OPENAI_API_KEY")
 	if apiKey == "" {
-		fmt.Fprintln(os.Stderr, "OPENAI_API_KEY not set; skipping live OpenAI Chat call")
+		fmt.Fprintln(os.Stderr, "OPENAI_API_KEY not set; skipping live OpenAI Responses call")
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "openai-chat", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, "openai-responses", apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
 	}
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gpt-4.1-mini",
+			Name:            "gpt-5-mini",
 			Stream:          false,
 			MaxPromptLength: 4096,
 			MaxOutputLength: 256,
 			SystemPrompt:    "You are a concise assistant.",
+			Reasoning: &spec.ReasoningParam{
+				Type:  spec.ReasoningTypeSingleWithLevels,
+				Level: spec.ReasoningLevelLow,
+			},
 		},
 		Inputs: []spec.InputUnion{
 			{
@@ -62,7 +66,7 @@ func Example_openAIChat_basicConversation() {
 						{
 							Kind: spec.ContentItemKindText,
 							TextItem: &spec.ContentItemText{
-								Text: "Say hello from OpenAI Chat Completions in one short sentence.",
+								Text: "Explain the difference between goroutines and OS threads in 2–3 sentences.",
 							},
 						},
 					},
@@ -71,7 +75,12 @@ func Example_openAIChat_basicConversation() {
 		},
 	}
 
-	resp, err := ps.FetchCompletion(ctx, "openai-chat", req, nil)
+	resp, err := ps.FetchCompletion(
+		ctx,
+		"openai-responses",
+		req,
+		&spec.FetchCompletionOptions{CompletionKey: "gpt5mini"},
+	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {
@@ -86,7 +95,7 @@ func Example_openAIChat_basicConversation() {
 		}
 		for _, c := range out.OutputMessage.Contents {
 			if c.Kind == spec.ContentItemKindText && c.TextItem != nil {
-				fmt.Fprintln(os.Stderr, "OpenAI Chat assistant:", c.TextItem.Text)
+				fmt.Fprintln(os.Stderr, "OpenAI Responses assistant:", c.TextItem.Text)
 			}
 		}
 	}

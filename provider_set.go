@@ -35,7 +35,7 @@ type DebugClientBuilder func(p spec.ProviderParam) spec.CompletionDebugger
 type ProviderSetAPI struct {
 	mu sync.RWMutex
 
-	providers          map[spec.ProviderName]spec.CompletionProvider
+	providers          map[spec.ProviderName]sdkutil.CompletionProvider
 	logger             *slog.Logger
 	debugClientBuilder DebugClientBuilder
 }
@@ -65,7 +65,7 @@ func NewProviderSetAPI(
 	opts ...ProviderSetOption,
 ) (*ProviderSetAPI, error) {
 	ps := &ProviderSetAPI{
-		providers: map[spec.ProviderName]spec.CompletionProvider{},
+		providers: map[spec.ProviderName]sdkutil.CompletionProvider{},
 	}
 
 	for _, opt := range opts {
@@ -192,6 +192,23 @@ func (ps *ProviderSetAPI) SetProviderAPIKey(
 	return p.InitLLM(ctx)
 }
 
+func (ps *ProviderSetAPI) GetProviderCapability(
+	ctx context.Context,
+	provider spec.ProviderName,
+) (spec.ModelCapabilities, error) {
+	if provider == "" {
+		return spec.ModelCapabilities{}, errors.New("got empty provider")
+	}
+	ps.mu.RLock()
+	p, exists := ps.providers[provider]
+	ps.mu.RUnlock()
+
+	if !exists {
+		return spec.ModelCapabilities{}, errors.New("invalid provider")
+	}
+	return p.GetProviderCapability(ctx)
+}
+
 // FetchCompletion processes a completion request for a given provider.
 func (ps *ProviderSetAPI) FetchCompletion(
 	ctx context.Context,
@@ -244,7 +261,7 @@ func isProviderSDKTypeSupported(t spec.ProviderSDKType) bool {
 	return false
 }
 
-func getProviderAPI(p spec.ProviderParam, dbg spec.CompletionDebugger) (spec.CompletionProvider, error) {
+func getProviderAPI(p spec.ProviderParam, dbg spec.CompletionDebugger) (sdkutil.CompletionProvider, error) {
 	switch p.SDKType {
 	case spec.ProviderSDKTypeAnthropic:
 		return anthropicsdk.NewAnthropicMessagesAPI(p, dbg)
