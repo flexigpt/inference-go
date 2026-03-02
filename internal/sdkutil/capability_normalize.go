@@ -27,19 +27,17 @@ func NormalizeRequestForSDK(
 	}
 
 	caps := &providerCapabilities
-	if opts != nil {
-		if opts.CapabilityResolver != nil {
-			caps, err = opts.CapabilityResolver.ResolveModelCapabilities(ctx, spec.ResolveModelCapabilitiesRequest{
-				SDKType:       sdkType,
-				Model:         req.ModelParam.Name,
-				CapabilityKey: opts.CompletionKey,
-			})
-			if err != nil {
-				return nil, nil, err
-			}
-			if caps == nil {
-				return nil, nil, errors.New("capability resolver returned nil ModelCapabilities")
-			}
+	if opts != nil && opts.CapabilityResolver != nil {
+		caps, err = opts.CapabilityResolver.ResolveModelCapabilities(ctx, spec.ResolveModelCapabilitiesRequest{
+			ProviderSDKType: sdkType,
+			ModelName:       req.ModelParam.Name,
+			CompletionKey:   opts.CompletionKey,
+		})
+		if err != nil {
+			return nil, nil, err
+		}
+		if caps == nil {
+			return nil, nil, errors.New("capability resolver returned nil ModelCapabilities")
 		}
 	}
 
@@ -57,7 +55,8 @@ func NormalizeRequestForSDK(
 
 	// Reasoning validation / safe-dropping.
 	if nreq.ModelParam.Reasoning != nil {
-		if caps.Reasoning == nil || !supportsReasoningType(*nreq.ModelParam.Reasoning, caps.Reasoning) {
+		if caps.ReasoningCapabilities == nil ||
+			!supportsReasoningType(*nreq.ModelParam.Reasoning, caps.ReasoningCapabilities) {
 			warnings = append(warnings, spec.Warning{
 				Code:    "reasoning_dropped_unsupported",
 				Message: "Reasoning was dropped because it is not supported by the selected SDK/model.",
@@ -65,7 +64,7 @@ func NormalizeRequestForSDK(
 			nreq.ModelParam.Reasoning = nil
 		} else {
 			// SummaryStyle: safe to drop if unsupported.
-			if nreq.ModelParam.Reasoning.SummaryStyle != nil && !caps.Reasoning.SupportsSummaryStyle {
+			if nreq.ModelParam.Reasoning.SummaryStyle != nil && !caps.ReasoningCapabilities.SupportsSummaryStyle {
 				warnings = append(warnings, spec.Warning{
 					Code:    "reasoning_summaryStyle_dropped",
 					Message: "reasoning.summaryStyle is not supported and was dropped.",
@@ -74,10 +73,13 @@ func NormalizeRequestForSDK(
 				rp.SummaryStyle = nil
 				nreq.ModelParam.Reasoning = &rp
 			}
+
 			// Level validation (do not “nearest-map”; drop reasoning in bestEffort).
 			if nreq.ModelParam.Reasoning.Type == spec.ReasoningTypeSingleWithLevels {
-				if !supportsReasoningLevel(nreq.ModelParam.Reasoning.Level, caps.Reasoning.SupportedLevels) {
-
+				if !supportsReasoningLevel(
+					nreq.ModelParam.Reasoning.Level,
+					caps.ReasoningCapabilities.SupportedReasoningLevels,
+				) {
 					warnings = append(warnings, spec.Warning{
 						Code: "reasoning_dropped_invalid_level",
 						Message: fmt.Sprintf(
@@ -92,7 +94,9 @@ func NormalizeRequestForSDK(
 	}
 
 	// Enforce SDK constraints: e.g. Anthropic temperature disallowed when reasoning enabled.
-	if nreq.ModelParam.Reasoning != nil && caps.Reasoning != nil && caps.Reasoning.TemperatureDisallowedWhenEnabled {
+	if nreq.ModelParam.Reasoning != nil &&
+		caps.ReasoningCapabilities != nil &&
+		caps.ReasoningCapabilities.TemperatureDisallowedWhenEnabled {
 		if nreq.ModelParam.Temperature != nil {
 			warnings = append(warnings, spec.Warning{
 				Code:    "temperature_dropped_reasoning_enabled",
@@ -104,23 +108,26 @@ func NormalizeRequestForSDK(
 
 	// Stop sequences.
 	if len(nreq.ModelParam.StopSequences) > 0 {
-		if caps.StopSequences == nil || !caps.StopSequences.Supported {
+		if caps.StopSequenceCapabilities == nil || !caps.StopSequenceCapabilities.IsSupported {
 			warnings = append(warnings, spec.Warning{
 				Code:    "stopSequences_dropped_unsupported",
 				Message: "stopSequences was dropped because it is not supported by this SDK/model.",
 			})
 			nreq.ModelParam.StopSequences = nil
 		} else {
-			if caps.StopSequences.Max > 0 && len(nreq.ModelParam.StopSequences) > caps.StopSequences.Max {
-
+			if caps.StopSequenceCapabilities.MaxSequences > 0 &&
+				len(nreq.ModelParam.StopSequences) > caps.StopSequenceCapabilities.MaxSequences {
 				warnings = append(warnings, spec.Warning{
-					Code:    "stopSequences_truncated",
-					Message: fmt.Sprintf("stopSequences was truncated to max=%d.", caps.StopSequences.Max),
+					Code: "stopSequences_truncated",
+					Message: fmt.Sprintf(
+						"stopSequences was truncated to max=%d.",
+						caps.StopSequenceCapabilities.MaxSequences,
+					),
 				})
-				nreq.ModelParam.StopSequences = nreq.ModelParam.StopSequences[:caps.StopSequences.Max]
+				nreq.ModelParam.StopSequences = nreq.ModelParam.StopSequences[:caps.StopSequenceCapabilities.MaxSequences]
 			}
-			if caps.StopSequences.DisallowedWithReasoning && nreq.ModelParam.Reasoning != nil {
 
+			if caps.StopSequenceCapabilities.DisallowedWithReasoning && nreq.ModelParam.Reasoning != nil {
 				warnings = append(warnings, spec.Warning{
 					Code:    "stopSequences_dropped_reasoning",
 					Message: "stopSequences was dropped because it is incompatible with reasoning for this SDK/model.",
@@ -130,17 +137,17 @@ func NormalizeRequestForSDK(
 		}
 	}
 
-	//  OutputParam: format is contract-like (error if unsupported); verbosity is safe to drop.
-	if nreq.ModelParam.OutputParam != nil && caps.Output != nil {
+	// OutputParam: format is contract-like (error if unsupported); verbosity is safe to drop.
+	if nreq.ModelParam.OutputParam != nil && caps.OutputCapabilities != nil {
 		op := nreq.ModelParam.OutputParam
 
 		if op.Format != nil {
-			if !supportsOutputFormat(op.Format.Kind, caps.Output.SupportedFormats) {
+			if !supportsOutputFormat(op.Format.Kind, caps.OutputCapabilities.SupportedOutputFormats) {
 				return nil, warnings, fmt.Errorf("output format %q unsupported for sdkType=%s", op.Format.Kind, sdkType)
 			}
 		}
-		if op.Verbosity != nil && !caps.Output.SupportsVerbosity {
 
+		if op.Verbosity != nil && !caps.OutputCapabilities.SupportsVerbosity {
 			warnings = append(warnings, spec.Warning{
 				Code:    "verbosity_dropped_unsupported",
 				Message: "outputParam.verbosity was dropped because it is not supported by this SDK/model.",
@@ -148,12 +155,11 @@ func NormalizeRequestForSDK(
 			cop := *op
 			cop.Verbosity = nil
 			nreq.ModelParam.OutputParam = &cop
-
 		}
 	}
 
-	// OutputParam: if caps.Output is nil, treat format as unsupported and verbosity as droppable.
-	if nreq.ModelParam.OutputParam != nil && caps.Output == nil {
+	// OutputParam: if caps.OutputCapabilities is nil, treat format as unsupported and verbosity as droppable.
+	if nreq.ModelParam.OutputParam != nil && caps.OutputCapabilities == nil {
 		if nreq.ModelParam.OutputParam.Format != nil {
 			return nil, warnings, errors.New(
 				"outputParam.format requested but output capabilities are unavailable/unsupported for this SDK/model",
@@ -171,14 +177,14 @@ func NormalizeRequestForSDK(
 	}
 
 	// Tools: validate ToolChoices / ToolPolicy against capabilities.
-	if (len(nreq.ToolChoices) > 0 || nreq.ToolPolicy != nil) && caps.Tools == nil {
+	if (len(nreq.ToolChoices) > 0 || nreq.ToolPolicy != nil) && caps.ToolCapabilities == nil {
 		return nil, warnings, errors.New("tools/toolPolicy provided but tools are not supported by selected SDK/model")
 	}
 
-	if len(nreq.ToolChoices) > 0 && caps.Tools != nil {
+	if len(nreq.ToolChoices) > 0 && caps.ToolCapabilities != nil {
 		filtered := make([]spec.ToolChoice, 0, len(nreq.ToolChoices))
 		for _, tc := range nreq.ToolChoices {
-			if supportsToolType(tc.Type, caps.Tools.SupportedToolTypes) {
+			if supportsToolType(tc.Type, caps.ToolCapabilities.SupportedToolTypes) {
 				filtered = append(filtered, tc)
 				continue
 			}
@@ -195,7 +201,8 @@ func NormalizeRequestForSDK(
 
 	// Tool policy minimal validation (structural; provider-specific resolution remains in adapters).
 	if nreq.ToolPolicy != nil {
-		if caps.Tools != nil && !supportsToolPolicyMode(nreq.ToolPolicy.Mode, caps.Tools.SupportedPolicyModes) {
+		if caps.ToolCapabilities != nil &&
+			!supportsToolPolicyMode(nreq.ToolPolicy.Mode, caps.ToolCapabilities.SupportedToolPolicyModes) {
 			return nil, warnings, fmt.Errorf(
 				"toolPolicy.mode %q unsupported for sdkType=%s",
 				nreq.ToolPolicy.Mode,
@@ -208,24 +215,25 @@ func NormalizeRequestForSDK(
 		if nreq.ToolPolicy.Mode == spec.ToolPolicyModeAny && len(nreq.ToolChoices) == 0 {
 			return nil, warnings, errors.New("toolPolicy.mode=any requires toolChoices")
 		}
-		// Forced tool count constraint (bestEffort: keep first N).
-		if caps.Tools != nil && caps.Tools.MaxForcedTools > 0 && nreq.ToolPolicy.Mode == spec.ToolPolicyModeTool {
-			if len(nreq.ToolPolicy.AllowedTools) > caps.Tools.MaxForcedTools {
 
+		// Forced tool count constraint (bestEffort: keep first N).
+		if caps.ToolCapabilities != nil && caps.ToolCapabilities.MaxForcedTools > 0 &&
+			nreq.ToolPolicy.Mode == spec.ToolPolicyModeTool {
+			if len(nreq.ToolPolicy.AllowedTools) > caps.ToolCapabilities.MaxForcedTools {
 				warnings = append(warnings, spec.Warning{
 					Code: "allowedTools_truncated",
 					Message: fmt.Sprintf(
 						"allowedTools truncated to %d due to SDK/model limitation.",
-						caps.Tools.MaxForcedTools,
+						caps.ToolCapabilities.MaxForcedTools,
 					),
 				})
 				cp := *nreq.ToolPolicy
-				cp.AllowedTools = cp.AllowedTools[:caps.Tools.MaxForcedTools]
-
+				cp.AllowedTools = cp.AllowedTools[:caps.ToolCapabilities.MaxForcedTools]
 				nreq.ToolPolicy = &cp
 			}
 		}
 	}
+
 	return &nreq, warnings, nil
 }
 
@@ -241,6 +249,7 @@ func getInputModalitiesForValidation(inputs []spec.InputUnion) []spec.Modality {
 		if IsInputUnionEmpty(in) {
 			continue
 		}
+
 		var msg *spec.InputOutputContent
 		switch in.Kind {
 		case spec.InputKindInputMessage:
@@ -280,6 +289,7 @@ func getInputModalitiesForValidation(inputs []spec.InputUnion) []spec.Modality {
 		default:
 			// Modality checks via only input and output message.
 		}
+
 		if msg == nil {
 			continue
 		}
@@ -334,7 +344,7 @@ func supportsReasoningType(r spec.ReasoningParam, caps *spec.ReasoningCapabiliti
 	if caps == nil {
 		return false
 	}
-	return slices.Contains(caps.SupportedTypes, r.Type)
+	return slices.Contains(caps.SupportedReasoningTypes, r.Type)
 }
 
 func supportsReasoningLevel(level spec.ReasoningLevel, allowed []spec.ReasoningLevel) bool {

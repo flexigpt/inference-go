@@ -6,9 +6,9 @@ var openairesponsessdkCapability = spec.ModelCapabilities{
 	ModalitiesIn:  []spec.Modality{spec.ModalityTextIn, spec.ModalityImageIn, spec.ModalityFileIn},
 	ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
 
-	Reasoning: &spec.ReasoningCapabilities{
-		SupportedTypes: []spec.ReasoningType{spec.ReasoningTypeSingleWithLevels},
-		SupportedLevels: []spec.ReasoningLevel{
+	ReasoningCapabilities: &spec.ReasoningCapabilities{
+		SupportedReasoningTypes: []spec.ReasoningType{spec.ReasoningTypeSingleWithLevels},
+		SupportedReasoningLevels: []spec.ReasoningLevel{
 			spec.ReasoningLevelNone,
 			spec.ReasoningLevelMinimal,
 			spec.ReasoningLevelLow,
@@ -16,18 +16,26 @@ var openairesponsessdkCapability = spec.ModelCapabilities{
 			spec.ReasoningLevelHigh,
 			spec.ReasoningLevelXHigh,
 		},
-		SupportsSummaryStyle:             true,
-		TemperatureDisallowedWhenEnabled: false,
+		SupportsSummaryStyle: true,
+
 		SupportsEncryptedReasoningInput:  true,
+		TemperatureDisallowedWhenEnabled: false,
 	},
-	StopSequences: &spec.StopSequenceCapabilities{Supported: false},
-	Output: &spec.OutputCapabilities{
-		SupportedFormats:  []spec.OutputFormatKind{spec.OutputFormatKindText, spec.OutputFormatKindJSONSchema},
-		SupportsVerbosity: true,
+
+	StopSequenceCapabilities: &spec.StopSequenceCapabilities{
+		IsSupported:             false,
+		DisallowedWithReasoning: false,
+		MaxSequences:            0,
 	},
-	Tools: &spec.ToolCapabilities{
+	OutputCapabilities: &spec.OutputCapabilities{
+		SupportedOutputFormats: []spec.OutputFormatKind{spec.OutputFormatKindText, spec.OutputFormatKindJSONSchema},
+		SupportsVerbosity:      true,
+	},
+
+	ToolCapabilities: &spec.ToolCapabilities{
 		SupportedToolTypes: []spec.ToolType{spec.ToolTypeFunction, spec.ToolTypeCustom, spec.ToolTypeWebSearch},
-		SupportedPolicyModes: []spec.ToolPolicyMode{
+
+		SupportedToolPolicyModes: []spec.ToolPolicyMode{
 			spec.ToolPolicyModeAuto,
 			spec.ToolPolicyModeAny,
 			spec.ToolPolicyModeTool,

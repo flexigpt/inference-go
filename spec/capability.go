@@ -18,27 +18,27 @@ const (
 )
 
 type ReasoningCapabilities struct {
-	SupportedTypes                   []ReasoningType  `json:"supportedTypes"`
-	SupportedLevels                  []ReasoningLevel `json:"supportedLevels"`
+	SupportedReasoningTypes          []ReasoningType  `json:"supportedReasoningTypes"`
+	SupportedReasoningLevels         []ReasoningLevel `json:"supportedReasoningLevels"`
 	SupportsSummaryStyle             bool             `json:"supportsSummaryStyle"`
-	TemperatureDisallowedWhenEnabled bool             `json:"temperatureDisallowedWhenEnabled"`
 	SupportsEncryptedReasoningInput  bool             `json:"supportsEncryptedReasoningInput"`
+	TemperatureDisallowedWhenEnabled bool             `json:"temperatureDisallowedWhenEnabled"`
 }
 
 type StopSequenceCapabilities struct {
-	Supported               bool `json:"supported"`
+	IsSupported             bool `json:"isSupported"`
 	DisallowedWithReasoning bool `json:"disallowedWithReasoning"`
-	Max                     int  `json:"max"`
+	MaxSequences            int  `json:"maxSequences"`
 }
 
 type OutputCapabilities struct {
-	SupportedFormats  []OutputFormatKind `json:"supportedFormats"`
-	SupportsVerbosity bool               `json:"supportsVerbosity"`
+	SupportedOutputFormats []OutputFormatKind `json:"supportedOutputFormats"`
+	SupportsVerbosity      bool               `json:"supportsVerbosity"`
 }
 
 type ToolCapabilities struct {
 	SupportedToolTypes        []ToolType       `json:"supportedToolTypes"`
-	SupportedPolicyModes      []ToolPolicyMode `json:"supportedPolicyModes"`
+	SupportedToolPolicyModes  []ToolPolicyMode `json:"supportedToolPolicyModes"`
 	SupportsParallelToolCalls bool             `json:"supportsParallelToolCalls"`
 	MaxForcedTools            int              `json:"maxForcedTools"`
 }
@@ -47,16 +47,16 @@ type ModelCapabilities struct {
 	ModalitiesIn  []Modality `json:"modalitiesIn"`
 	ModalitiesOut []Modality `json:"modalitiesOut"`
 
-	Reasoning     *ReasoningCapabilities    `json:"reasoning,omitempty"`
-	StopSequences *StopSequenceCapabilities `json:"stopSequences,omitempty"`
-	Output        *OutputCapabilities       `json:"output,omitempty"`
-	Tools         *ToolCapabilities         `json:"tools,omitempty"`
+	ReasoningCapabilities    *ReasoningCapabilities    `json:"reasoningCapabilities,omitempty"`
+	StopSequenceCapabilities *StopSequenceCapabilities `json:"stopSequenceCapabilities,omitempty"`
+	OutputCapabilities       *OutputCapabilities       `json:"outputCapabilities,omitempty"`
+	ToolCapabilities         *ToolCapabilities         `json:"toolCapabilities,omitempty"`
 }
 
 type ResolveModelCapabilitiesRequest struct {
-	SDKType       ProviderSDKType `json:"sdkType"`
-	Model         ModelName       `json:"model"`
-	CapabilityKey string          `json:"capabilityKey"`
+	ProviderSDKType ProviderSDKType `json:"providerSDKType"`
+	ModelName       ModelName       `json:"modelName"`
+	CompletionKey   string          `json:"completionKey"`
 }
 
 type ModelCapabilityResolver interface {

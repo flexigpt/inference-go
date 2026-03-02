@@ -29,6 +29,7 @@ func TestNormalizeRequestForSDK_OpenAIChat_PreservesWebSearchToolChoice(t *testi
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	caps, err := api.GetProviderCapability(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -82,6 +83,7 @@ func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	baseCaps, err := api.GetProviderCapability(t.Context())
 	if err != nil {
 		t.Fatal(err)
@@ -89,14 +91,16 @@ func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 
 	// Example: model does NOT allow reasoning level none/xhigh (per your prompt).
 	custom := baseCaps
-	custom.Reasoning = &spec.ReasoningCapabilities{
-		SupportedTypes: []spec.ReasoningType{spec.ReasoningTypeSingleWithLevels},
-		SupportedLevels: []spec.ReasoningLevel{
+	custom.ReasoningCapabilities = &spec.ReasoningCapabilities{
+		SupportedReasoningTypes: []spec.ReasoningType{spec.ReasoningTypeSingleWithLevels},
+		SupportedReasoningLevels: []spec.ReasoningLevel{
 			spec.ReasoningLevelLow,
 			spec.ReasoningLevelMedium,
 			spec.ReasoningLevelHigh,
 		},
-		SupportsSummaryStyle: true,
+		SupportsSummaryStyle:             true,
+		SupportsEncryptedReasoningInput:  false,
+		TemperatureDisallowedWhenEnabled: false,
 	}
 
 	req := &spec.FetchCompletionRequest{

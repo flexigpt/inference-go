@@ -5,12 +5,14 @@ import "github.com/flexigpt/inference-go/spec"
 var anthropicsdkCapability = spec.ModelCapabilities{
 	ModalitiesIn:  []spec.Modality{spec.ModalityTextIn, spec.ModalityImageIn, spec.ModalityFileIn},
 	ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	Reasoning: &spec.ReasoningCapabilities{
-		SupportedTypes: []spec.ReasoningType{
+
+	ReasoningCapabilities: &spec.ReasoningCapabilities{
+		SupportedReasoningTypes: []spec.ReasoningType{
 			spec.ReasoningTypeHybridWithTokens,
 			spec.ReasoningTypeSingleWithLevels,
 		},
-		SupportedLevels: []spec.ReasoningLevel{
+
+		SupportedReasoningLevels: []spec.ReasoningLevel{
 			spec.ReasoningLevelNone,
 			spec.ReasoningLevelMinimal,
 			spec.ReasoningLevelLow,
@@ -18,18 +20,25 @@ var anthropicsdkCapability = spec.ModelCapabilities{
 			spec.ReasoningLevelHigh,
 			spec.ReasoningLevelXHigh,
 		},
-		SupportsSummaryStyle:             false,
-		TemperatureDisallowedWhenEnabled: true,
+		SupportsSummaryStyle: false,
+
 		SupportsEncryptedReasoningInput:  false,
+		TemperatureDisallowedWhenEnabled: true,
 	},
-	StopSequences: &spec.StopSequenceCapabilities{Supported: true, Max: 0},
-	Output: &spec.OutputCapabilities{
-		SupportedFormats:  []spec.OutputFormatKind{spec.OutputFormatKindText, spec.OutputFormatKindJSONSchema},
-		SupportsVerbosity: true, // maps to effort
+	StopSequenceCapabilities: &spec.StopSequenceCapabilities{
+		IsSupported:             true,
+		DisallowedWithReasoning: false,
+		MaxSequences:            0,
 	},
-	Tools: &spec.ToolCapabilities{
+	OutputCapabilities: &spec.OutputCapabilities{
+		SupportedOutputFormats: []spec.OutputFormatKind{spec.OutputFormatKindText, spec.OutputFormatKindJSONSchema},
+		SupportsVerbosity:      true, // Maps to effort.
+	},
+
+	ToolCapabilities: &spec.ToolCapabilities{
 		SupportedToolTypes: []spec.ToolType{spec.ToolTypeFunction, spec.ToolTypeCustom, spec.ToolTypeWebSearch},
-		SupportedPolicyModes: []spec.ToolPolicyMode{
+
+		SupportedToolPolicyModes: []spec.ToolPolicyMode{
 			spec.ToolPolicyModeAuto,
 			spec.ToolPolicyModeAny,
 			spec.ToolPolicyModeTool,

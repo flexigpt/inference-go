@@ -26,7 +26,7 @@ func (r overrideResolver) ResolveModelCapabilities(
 	if r.byModel == nil {
 		return nil, errors.New("invalid model")
 	}
-	if c := r.byModel[req.Model]; c != nil {
+	if c := r.byModel[req.ModelName]; c != nil {
 		return c, nil
 	}
 	return nil, errors.New("model not found")
@@ -65,8 +65,8 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 	// The point is: *capabilities are the authoritative enforcement mechanism*.
 	override := baseCaps
 	override.ModalitiesIn = []spec.Modality{spec.ModalityTextIn, spec.ModalityImageIn} // drop fileIn
-	if override.Reasoning != nil {
-		override.Reasoning.SupportedLevels = []spec.ReasoningLevel{
+	if override.ReasoningCapabilities != nil {
+		override.ReasoningCapabilities.SupportedReasoningLevels = []spec.ReasoningLevel{
 			spec.ReasoningLevelLow,
 			spec.ReasoningLevelMedium,
 			spec.ReasoningLevelHigh,
