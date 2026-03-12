@@ -31,6 +31,11 @@ tasks:
              --exclude_ext=yaml,sum,mod,md5 --not-match-f='LICENSE$|\.gitignore$' \
              .
 
+  checkupgrade:
+    cmds:
+      - gomajor list
+      - go-mod-upgrade -l
+
   godepgraph:
     cmds:
       - godepgraph -s -o github.com/flexigpt/inference-go,command-line-arguments provider_set.go | dot -Tpng -o godepgraph.png
