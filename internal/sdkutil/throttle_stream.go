@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	FlushInterval  = 256 * time.Millisecond
+	FlushInterval  = 32 * time.Millisecond
 	FlushChunkSize = 1024
 )
 
