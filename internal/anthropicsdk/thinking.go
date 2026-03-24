@@ -291,9 +291,10 @@ func applyAnthropicThinkingPolicy(
 		}
 		if effectiveAdaptive {
 			// Reasoning.type=singleWithLevels -> adaptive thinking.
-			a := anthropic.NewThinkingConfigAdaptiveParam()
 			params.Thinking = anthropic.ThinkingConfigParamUnion{
-				OfAdaptive: &a,
+				OfAdaptive: &anthropic.ThinkingConfigAdaptiveParam{
+					Display: anthropic.ThinkingConfigAdaptiveDisplaySummarized,
+				},
 			}
 		} else {
 			// Existing behavior: fixed-budget enabled thinking.
