@@ -257,13 +257,13 @@ type CompletionDebugger interface {
 - Use it via `WithDebugClientBuilder`:
 
 ```go
+dbg := debugclient.NewHTTPCompletionDebugger(&debugclient.DebugConfig{LogToSlog: false})
 ps, _ := inference.NewProviderSetAPI(
     inference.WithDebugClientBuilder(func(p spec.ProviderParam) spec.CompletionDebugger {
-        return debugclient.NewHTTPCompletionDebugger(&debugclient.DebugConfig{
-            LogToSlog: false,
-        })
+        return dbg
     }),
 )
+// You can also change the debug config later.
 ```
 
 ## Notes

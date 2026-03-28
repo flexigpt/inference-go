@@ -16,13 +16,15 @@ import (
 
 type contextKey string
 
-const ctxKeyHTTPDebugState = contextKey("debugHTTPState")
+const (
+	ctxKeyHTTPDebugState  = contextKey("debugHTTPState")
+	ctxKeyHTTPDebugConfig = contextKey("debugHTTPConfig")
+)
 
 // logTransport is a custom http.RoundTripper that captures HTTP requests and
 // responses (including bodies) according to DebugConfig.
 type logTransport struct {
 	base http.RoundTripper
-	cfg  DebugConfig
 }
 
 func (t *logTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -31,24 +33,19 @@ func (t *logTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		base = http.DefaultTransport
 	}
 
-	if t.cfg.Disable {
-		// Debugging disabled; just pass through.
-		return base.RoundTrip(req)
-	}
-
 	ctx := req.Context()
 	state, _ := httpDebugStateFromContext(ctx)
 	if state == nil {
-		// Best-effort container (only visible to logs in this RoundTrip if
-		// the caller didn't attach one).
-		state = &HTTPDebugState{}
+		// This request was not opted into debugging by StartSpan.
+		return base.RoundTrip(req)
 	}
+	cfg, _ := httpDebugConfigFromContext(ctx)
 
 	// Capture request details (including optional body).
-	reqDetails := captureRequestDetails(req, t.cfg)
+	reqDetails := captureRequestDetails(req, cfg)
 	state.RequestDetails = reqDetails
 
-	if t.cfg.LogToSlog {
+	if cfg.LogToSlog {
 		logutil.Debug("http_debug: request", "details", getDetailsStr(reqDetails))
 	}
 
@@ -58,7 +55,7 @@ func (t *logTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	// Capture response details (headers, status, and possibly body).
 	var respDetails *APIResponseDetails
 	if resp != nil {
-		respDetails = captureResponseDetails(resp, t.cfg, state)
+		respDetails = captureResponseDetails(resp, cfg, state)
 		state.ResponseDetails = respDetails
 	}
 
@@ -71,7 +68,7 @@ func (t *logTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		}
 	}
 
-	if t.cfg.LogToSlog {
+	if cfg.LogToSlog {
 		if respDetails != nil {
 			logutil.Debug("http_debug: response", "details", getDetailsStr(respDetails))
 		}
@@ -81,6 +78,15 @@ func (t *logTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	return resp, err
+}
+
+func withHTTPDebugConfig(ctx context.Context, cfg DebugConfig) context.Context {
+	return context.WithValue(ctx, ctxKeyHTTPDebugConfig, cfg)
+}
+
+func httpDebugConfigFromContext(ctx context.Context) (DebugConfig, bool) {
+	cfg, ok := ctx.Value(ctxKeyHTTPDebugConfig).(DebugConfig)
+	return cfg, ok
 }
 
 func captureRequestDetails(req *http.Request, cfg DebugConfig) *APIRequestDetails {

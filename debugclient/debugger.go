@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/flexigpt/inference-go/internal/sdkutil"
 	"github.com/flexigpt/inference-go/spec"
@@ -41,6 +42,7 @@ type DebugConfig struct {
 // (HTTPDebugState) suitable for attachment to FetchCompletionResponse.DebugDetails.
 type HTTPCompletionDebugger struct {
 	config DebugConfig
+	mu     sync.RWMutex
 }
 
 // NewHTTPCompletionDebugger constructs a CompletionDebugger that instruments
@@ -48,7 +50,7 @@ type HTTPCompletionDebugger struct {
 // blob from HTTP-level data and the raw provider response.
 //
 // Config may be nil; in that case DebugConfig{} (defaults) is used.
-func NewHTTPCompletionDebugger(config *DebugConfig) spec.CompletionDebugger {
+func NewHTTPCompletionDebugger(config *DebugConfig) *HTTPCompletionDebugger {
 	var c DebugConfig
 	if config != nil {
 		c = *config
@@ -56,12 +58,20 @@ func NewHTTPCompletionDebugger(config *DebugConfig) spec.CompletionDebugger {
 	return &HTTPCompletionDebugger{config: c}
 }
 
+func (d *HTTPCompletionDebugger) SetConfig(cfg DebugConfig) {
+	d.mu.Lock()
+	d.config = cfg
+	d.mu.Unlock()
+}
+
+func (d *HTTPCompletionDebugger) GetConfig() DebugConfig {
+	d.mu.RLock()
+	defer d.mu.RUnlock()
+	return d.config
+}
+
 // HTTPClient implements spec.CompletionDebugger.HTTPClient.
 func (d *HTTPCompletionDebugger) HTTPClient(base *http.Client) *http.Client {
-	if d.config.Disable {
-		return base
-	}
-
 	if base == nil {
 		base = &http.Client{Transport: http.DefaultTransport}
 	}
@@ -73,7 +83,6 @@ func (d *HTTPCompletionDebugger) HTTPClient(base *http.Client) *http.Client {
 	clone := *base
 	clone.Transport = &logTransport{
 		base: rt,
-		cfg:  d.config,
 	}
 	return &clone
 }
@@ -89,13 +98,15 @@ func (d *HTTPCompletionDebugger) StartSpan(
 	ctx context.Context,
 	info *spec.CompletionSpanStart,
 ) (context.Context, spec.CompletionSpan) {
-	if d.config.Disable {
+	cfg := d.GetConfig()
+	if cfg.Disable {
 		return ctx, nil
 	}
 
 	ctx = withHTTPDebugState(ctx)
+	ctx = withHTTPDebugConfig(ctx, cfg)
 	span := &httpSpan{
-		cfg:  d.config,
+		cfg:  cfg,
 		ctx:  ctx,
 		info: info,
 	}
