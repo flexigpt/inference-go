@@ -212,6 +212,7 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 	if t := req.ModelParam.Temperature; t != nil {
 		params.Temperature = openai.Float(*t)
 	}
+	applyOpenAIChatCacheControl(&params, req.ModelParam.CacheControl)
 
 	if rp := req.ModelParam.Reasoning; rp != nil &&
 		rp.Type == spec.ReasoningTypeSingleWithLevels {

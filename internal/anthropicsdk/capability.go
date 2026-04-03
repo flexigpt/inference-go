@@ -47,4 +47,33 @@ var anthropicsdkCapability = spec.ModelCapabilities{
 		SupportsParallelToolCalls: true,
 		MaxForcedTools:            1,
 	},
+
+	CacheCapabilities: &spec.CacheCapabilities{
+		SupportsAutomaticCaching: false,
+		TopLevel: &spec.CacheControlCapabilities{
+			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
+			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTL5m, spec.CacheControlTTL1h},
+			SupportsKey:    false,
+		},
+		InputOutputContent: &spec.CacheControlCapabilities{
+			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
+			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTL5m, spec.CacheControlTTL1h},
+			SupportsKey:    false,
+		},
+		ToolChoice: &spec.CacheControlCapabilities{
+			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
+			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTL5m, spec.CacheControlTTL1h},
+			SupportsKey:    false,
+		},
+		ToolCall: &spec.CacheControlCapabilities{
+			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
+			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTL5m, spec.CacheControlTTL1h},
+			SupportsKey:    false,
+		},
+		ToolOutput: &spec.CacheControlCapabilities{
+			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
+			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTL5m, spec.CacheControlTTL1h},
+			SupportsKey:    false,
+		},
+	},
 }

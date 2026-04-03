@@ -44,4 +44,13 @@ var openairesponsessdkCapability = spec.ModelCapabilities{
 		SupportsParallelToolCalls: true,
 		MaxForcedTools:            1,
 	},
+
+	CacheCapabilities: &spec.CacheCapabilities{
+		SupportsAutomaticCaching: true,
+		TopLevel: &spec.CacheControlCapabilities{
+			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
+			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTLInMemory, spec.CacheControlTTL24h},
+			SupportsKey:    true,
+		},
+	},
 }

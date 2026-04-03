@@ -43,6 +43,23 @@ type ToolCapabilities struct {
 	MaxForcedTools            int              `json:"maxForcedTools"`
 }
 
+type CacheControlCapabilities struct {
+	SupportedKinds []CacheControlKind `json:"supportedKinds,omitempty"`
+	SupportedTTLs  []CacheControlTTL  `json:"supportedTTLs,omitempty"`
+	SupportsKey    bool               `json:"supportsKey"`
+}
+
+type CacheCapabilities struct {
+	SupportsAutomaticCaching bool `json:"supportsAutomaticCaching"`
+
+	TopLevel           *CacheControlCapabilities `json:"topLevel,omitempty"`
+	InputOutputContent *CacheControlCapabilities `json:"inputOutputContent,omitempty"`
+	ReasoningContent   *CacheControlCapabilities `json:"reasoningContent,omitempty"`
+	ToolChoice         *CacheControlCapabilities `json:"toolChoice,omitempty"`
+	ToolCall           *CacheControlCapabilities `json:"toolCall,omitempty"`
+	ToolOutput         *CacheControlCapabilities `json:"toolOutput,omitempty"`
+}
+
 type ModelCapabilities struct {
 	ModalitiesIn  []Modality `json:"modalitiesIn"`
 	ModalitiesOut []Modality `json:"modalitiesOut"`
@@ -51,6 +68,7 @@ type ModelCapabilities struct {
 	StopSequenceCapabilities *StopSequenceCapabilities `json:"stopSequenceCapabilities,omitempty"`
 	OutputCapabilities       *OutputCapabilities       `json:"outputCapabilities,omitempty"`
 	ToolCapabilities         *ToolCapabilities         `json:"toolCapabilities,omitempty"`
+	CacheCapabilities        *CacheCapabilities        `json:"cacheCapabilities,omitempty"`
 }
 
 type ResolveModelCapabilitiesRequest struct {

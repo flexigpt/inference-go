@@ -6,13 +6,22 @@ const (
 	CacheControlKindEphemeral CacheControlKind = "ephemeral"
 )
 
-type CacheControlEphemeral struct {
-	TTL string `json:"ttl,omitzero"`
-}
+type CacheControlTTL string
+
+const (
+	CacheControlTTL5m       CacheControlTTL = "5m"
+	CacheControlTTL1h       CacheControlTTL = "1h"
+	CacheControlTTL24h      CacheControlTTL = "24h"
+	CacheControlTTLInMemory CacheControlTTL = "in-memory"
+)
 
 type CacheControl struct {
 	Kind CacheControlKind `json:"kind"`
 
-	// Exactly one of the below should be non-nil, depending on Kind.
-	CacheControlEphemeral *CacheControlEphemeral `json:"cacheControlEphemeral,omitempty"`
+	// Optional. If empty and CacheControl is explicitly set, provider default may apply.
+	TTL CacheControlTTL `json:"ttl,omitempty"`
+
+	// Optional request-level cache key. Relevant for OpenAI-style root caching.
+	// Irrelevant on unsupported providers/scopes and should be ignored, not errored.
+	Key string `json:"key,omitempty"`
 }

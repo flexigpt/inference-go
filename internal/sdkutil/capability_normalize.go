@@ -41,14 +41,13 @@ func NormalizeRequestForSDK(
 		}
 	}
 
-	// Clone only the parts we might mutate.
-	nreq := *req
-	mp := req.ModelParam
-	nmp := mp // value copy
-	nreq.ModelParam = nmp
+	nreq, err := CloneFetchCompletionRequest(req)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// Modalities validation (inferred from inputs).
-	used := getInputModalitiesForValidation(req.Inputs)
+	used := getInputModalitiesForValidation(nreq.Inputs)
 	if err := requireModalities(used, caps.ModalitiesIn); err != nil {
 		return nil, nil, err
 	}
@@ -234,7 +233,9 @@ func NormalizeRequestForSDK(
 		}
 	}
 
-	return &nreq, warnings, nil
+	warnings = append(warnings, normalizeRequestCacheControls(nreq, caps.CacheCapabilities)...)
+
+	return nreq, warnings, nil
 }
 
 func getInputModalitiesForValidation(inputs []spec.InputUnion) []spec.Modality {

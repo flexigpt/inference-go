@@ -95,6 +95,8 @@ type ModelParam struct {
 	SystemPrompt    string          `json:"systemPrompt"`
 	Timeout         int             `json:"timeout"`
 
+	CacheControl *CacheControl `json:"cacheControl,omitempty"`
+
 	// OutputParam controls the model's output format.
 	//
 	// Cross-provider notes:

@@ -219,7 +219,7 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 	if req.ModelParam.Temperature != nil {
 		params.Temperature = openai.Float(*req.ModelParam.Temperature)
 	}
-
+	applyOpenAIResponsesCacheControl(&params, req.ModelParam.CacheControl)
 	if rp := req.ModelParam.Reasoning; rp != nil &&
 		rp.Type == spec.ReasoningTypeSingleWithLevels {
 		switch rp.Level {

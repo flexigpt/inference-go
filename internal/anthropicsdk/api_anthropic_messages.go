@@ -216,6 +216,7 @@ func (api *AnthropicMessagesAPI) FetchCompletion(
 	if len(sysParams) > 0 {
 		params.System = sysParams
 	}
+	applyAnthropicTopLevelCacheControl(&params, req.ModelParam.CacheControl)
 
 	// Apply thinking / temperature in a robust, policy-driven way.
 	applyAnthropicThinkingPolicy(&params, &req.ModelParam, thinkingAnalysis)
@@ -628,6 +629,7 @@ func toAnthropicMessagesInput(
 				continue
 			}
 			blocks := contentItemsToAnthropicContentBlocks(in.InputMessage.Contents)
+			blocks = applyAnthropicContentBlockCacheControl(blocks, in.InputMessage.CacheControl)
 			if len(blocks) == 0 {
 				continue
 			}
@@ -639,6 +641,7 @@ func toAnthropicMessagesInput(
 				continue
 			}
 			blocks := contentItemsToAnthropicContentBlocks(in.OutputMessage.Contents)
+			blocks = applyAnthropicContentBlockCacheControl(blocks, in.OutputMessage.CacheControl)
 			if len(blocks) == 0 {
 				continue
 			}
@@ -790,11 +793,13 @@ func toolCallToAnthropicToolUseBlock(
 		}
 		raw := json.RawMessage(args)
 
-		return &anthropic.ContentBlockParamUnion{OfToolUse: &anthropic.ToolUseBlockParam{
+		out := anthropic.ContentBlockParamUnion{OfToolUse: &anthropic.ToolUseBlockParam{
 			ID:    toolCall.ID,
 			Name:  toolCall.Name,
 			Input: raw,
 		}}
+		applyAnthropicToolUseCacheControl(&out, toolCall.CacheControl)
+		return &out
 
 	case spec.ToolTypeWebSearch:
 		if len(toolCall.WebSearchToolCallItems) == 0 {
@@ -807,11 +812,13 @@ func toolCallToAnthropicToolUseBlock(
 			return nil
 		}
 
-		return &anthropic.ContentBlockParamUnion{OfServerToolUse: &anthropic.ServerToolUseBlockParam{
+		out := anthropic.ContentBlockParamUnion{OfServerToolUse: &anthropic.ServerToolUseBlockParam{
 			ID:    toolCall.ID,
 			Input: wcall.SearchItem.Input,
 			Name:  anthropic.ServerToolUseBlockParamNameWebSearch,
 		}}
+		applyAnthropicToolUseCacheControl(&out, toolCall.CacheControl)
+		return &out
 
 	}
 	return nil
@@ -835,7 +842,9 @@ func toolOutputToAnthropicBlocks(
 			Content:   items,
 			IsError:   anthropic.Bool(toolOutput.IsError),
 		}
-		return &anthropic.ContentBlockParamUnion{OfToolResult: &toolBlock}
+		out := anthropic.ContentBlockParamUnion{OfToolResult: &toolBlock}
+		applyAnthropicToolResultCacheControl(&out, toolOutput.CacheControl)
+		return &out
 
 	case spec.ToolTypeWebSearch:
 		content := webSearchToolOutputItemsToAnthropicWebSearchContent(
@@ -847,10 +856,11 @@ func toolOutputToAnthropicBlocks(
 		wsBlock := anthropic.WebSearchToolResultBlockParam{
 			ToolUseID: toolOutput.CallID,
 			Content:   *content,
-			// CacheControl omitted; add mapping from toolOutput.CacheControl if needed.
 			// Type omitted; zero value marshals as "web_search_tool_result".
 		}
-		return &anthropic.ContentBlockParamUnion{OfWebSearchToolResult: &wsBlock}
+		out := anthropic.ContentBlockParamUnion{OfWebSearchToolResult: &wsBlock}
+		applyAnthropicToolResultCacheControl(&out, toolOutput.CacheControl)
+		return &out
 	default:
 		// Nothing to do more.
 	}
@@ -1140,6 +1150,7 @@ func toolChoicesToAnthropicTools(
 					variant.Description = anthropic.String(desc)
 				}
 			}
+			applyAnthropicToolCacheControl(&toolUnion, tc.CacheControl)
 			out = append(out, toolUnion)
 
 		case spec.ToolTypeWebSearch:
@@ -1175,9 +1186,11 @@ func toolChoicesToAnthropicTools(
 				}
 			}
 
-			out = append(out, anthropic.ToolUnionParam{
+			toolUnion := anthropic.ToolUnionParam{
 				OfWebSearchTool20250305: &wsTool,
-			})
+			}
+			applyAnthropicToolCacheControl(&toolUnion, tc.CacheControl)
+			out = append(out, toolUnion)
 			webSearchAdded = true
 		}
 
@@ -1514,8 +1527,8 @@ func usageFromAnthropicMessage(msg *anthropic.Message) *spec.Usage {
 	u := msg.Usage
 
 	uOut.InputTokensCached = u.CacheReadInputTokens
-	uOut.InputTokensUncached = u.InputTokens
-	uOut.InputTokensTotal = u.CacheReadInputTokens + u.InputTokens
+	uOut.InputTokensUncached = u.InputTokens + u.CacheCreationInputTokens
+	uOut.InputTokensTotal = u.CacheReadInputTokens + u.InputTokens + u.CacheCreationInputTokens
 	uOut.OutputTokens = u.OutputTokens
 	// Anthropic does not currently expose explicit reasoning token counts.
 	uOut.ReasoningTokens = 0
