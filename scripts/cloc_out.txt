@@ -1,19 +1,43 @@
 cloc --vcs=git --ignored=ignored.txt \
-        --force-lang=Mustache,tmpl --force-lang=INI,env --force-lang=INI,dev --force-lang=INI,prod \
-        --exclude_ext=yaml,sum,mod,md5 --not-match-f='LICENSE$|\.gitignore$' \
-        .
+			--force-lang=Mustache,tmpl --force-lang=INI,env --force-lang=INI,dev --force-lang=INI,prod \
+			--exclude_ext=yaml,sum,mod,md5 --not-match-f='LICENSE$|\.gitignore$' \
+			.
 
 # -------------------------------------------------------------------------------
 # Date                     files          blank        comment           code
 # -------------------------------------------------------------------------------
-# 4 January 2026              46           1194            721           6782
+# 6 April 2026              72           8797            912            21502
+# 5 January 2026            46           1194            721            6782
 # -------------------------------------------------------------------------------
+
+# ===
+# Output on 6 April 2026
+
+      76 text files.
+      72 unique files.
+Wrote ignored.txt
+       6 files ignored.
+
+github.com/AlDanial/cloc v 2.04  T=0.30 s (237.8 files/s, 103073.6 lines/s)
+-------------------------------------------------------------------------------
+Language                     files          blank        comment           code
+-------------------------------------------------------------------------------
+Markdown                         5           7357              0          12227
+Go                              53           1244            704           8699
+YAML                             7            162            178            357
+JSON                             3              4              0             96
+Bourne Shell                     2             24             30             83
+Text                             1              4              0             28
+INI                              1              2              0             12
+-------------------------------------------------------------------------------
+SUM:                            72           8797            912          21502
+-------------------------------------------------------------------------------
 
 # ===
 # Output on 5 Jan 2026
 
       49 text files.
-      46 unique files.                              
+      46 unique files.
 Wrote ignored.txt
        5 files ignored.
 
