@@ -5,28 +5,6 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-func anthropicCacheControlParam(cc *spec.CacheControl) *anthropic.CacheControlEphemeralParam {
-	if cc == nil {
-		return nil
-	}
-	if cc.Kind != "" && cc.Kind != spec.CacheControlKindEphemeral {
-		return nil
-	}
-
-	out := anthropic.CacheControlEphemeralParam{
-		Type: "ephemeral",
-	}
-
-	switch cc.TTL {
-	case spec.CacheControlTTL1h:
-		out.TTL = anthropic.CacheControlEphemeralTTLTTL1h
-	default:
-		out.TTL = anthropic.CacheControlEphemeralTTLTTL5m
-	}
-
-	return &out
-}
-
 func applyAnthropicTopLevelCacheControl(
 	params *anthropic.MessageNewParams,
 	cc *spec.CacheControl,
@@ -125,4 +103,26 @@ func applyAnthropicToolCacheControl(
 	case tool.OfWebSearchTool20250305 != nil:
 		tool.OfWebSearchTool20250305.CacheControl = *cache
 	}
+}
+
+func anthropicCacheControlParam(cc *spec.CacheControl) *anthropic.CacheControlEphemeralParam {
+	if cc == nil {
+		return nil
+	}
+	if cc.Kind != "" && cc.Kind != spec.CacheControlKindEphemeral {
+		return nil
+	}
+
+	out := anthropic.CacheControlEphemeralParam{
+		Type: "ephemeral",
+	}
+
+	switch cc.TTL {
+	case spec.CacheControlTTL1h:
+		out.TTL = anthropic.CacheControlEphemeralTTLTTL1h
+	default:
+		out.TTL = anthropic.CacheControlEphemeralTTLTTL5m
+	}
+
+	return &out
 }

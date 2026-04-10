@@ -51,6 +51,25 @@ func GetDataContractInfo() DataContractInfo {
 	}
 }
 
+// ValidateDataContract recomputes the hash and compares it to DataContractHash.
+// Tests in this module should call this to enforce that any schema change in
+// the contract files is accompanied by an explicit update of DataContractHash
+// (and, if breaking, DataContractVersion).
+func ValidateDataContract() error {
+	computed, err := ComputeDataContractHash()
+	if err != nil {
+		return err
+	}
+	if computed != DataContractHash {
+		return fmt.Errorf(
+			"data contract hash mismatch: compiled=%s, computed=%s. If this change is intentional, update DataContractHash in data_contract.go and bump DataContractVersion",
+			DataContractHash,
+			computed,
+		)
+	}
+	return nil
+}
+
 // ComputeDataContractHash recomputes the SHA-256 hash of the contract files'
 // contents. It is intended for use in tests and development tooling.
 //
@@ -80,23 +99,4 @@ func ComputeDataContractHash() (string, error) {
 	}
 
 	return "sha256:" + hex.EncodeToString(h.Sum(nil)), nil
-}
-
-// ValidateDataContract recomputes the hash and compares it to DataContractHash.
-// Tests in this module should call this to enforce that any schema change in
-// the contract files is accompanied by an explicit update of DataContractHash
-// (and, if breaking, DataContractVersion).
-func ValidateDataContract() error {
-	computed, err := ComputeDataContractHash()
-	if err != nil {
-		return err
-	}
-	if computed != DataContractHash {
-		return fmt.Errorf(
-			"data contract hash mismatch: compiled=%s, computed=%s. If this change is intentional, update DataContractHash in data_contract.go and bump DataContractVersion",
-			DataContractHash,
-			computed,
-		)
-	}
-	return nil
 }

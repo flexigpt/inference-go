@@ -108,28 +108,6 @@ func analyzeAnthropicThinkingBehavior(inputs []spec.InputUnion) anthropicThinkin
 	return a
 }
 
-func isAnthropicSignedOrRedactedReasoning(r *spec.ReasoningContent) bool {
-	if r == nil {
-		return false
-	}
-	// Redacted thinking is always acceptable.
-	for _, s := range r.RedactedThinking {
-		if strings.TrimSpace(s) != "" {
-			return true
-		}
-	}
-	// Signed thinking requires both signature and non-empty thinking.
-	if strings.TrimSpace(r.Signature) == "" {
-		return false
-	}
-	for _, t := range r.Thinking {
-		if strings.TrimSpace(t) != "" {
-			return true
-		}
-	}
-	return false
-}
-
 // findLastUserMessageIndex finds the index of the last user-authored item in the
 // interleaved input list (user InputMessage or function/custom tool output).
 // It returns (idx, isToolResult).
@@ -157,6 +135,38 @@ func findLastUserMessageIndex(inputs []spec.InputUnion) (int, bool) {
 		}
 	}
 	return -1, false
+}
+
+// prevAssistantTurnStartsWithThinking checks, for the assistant "turn" immediately
+// preceding the given tool_result index, whether the first assistant-authored
+// item after the previous user message is a signed/redacted reasoning message.
+func prevAssistantTurnStartsWithThinking(inputs []spec.InputUnion, toolResultIdx int) bool {
+	if toolResultIdx <= 0 || toolResultIdx > len(inputs)-1 {
+		return false
+	}
+
+	// Find the user item *before* this tool_result.
+	prevUserIdx := -1
+	for j := toolResultIdx - 1; j >= 0; j-- {
+		if isUserAuthoredItem(inputs[j]) {
+			prevUserIdx = j
+			break
+		}
+	}
+
+	// Now find the first assistant-authored item between prevUserIdx and toolResultIdx.
+	for k := prevUserIdx + 1; k < toolResultIdx; k++ {
+		in := inputs[k]
+		if !isAssistantAuthoredItem(in) {
+			continue
+		}
+		// "Starts with thinking" means the first assistant item is signed/redacted reasoning.
+		if in.Kind == spec.InputKindReasoningMessage && isAnthropicSignedOrRedactedReasoning(in.ReasoningMessage) {
+			return true
+		}
+		return false
+	}
+	return false
 }
 
 func isUserAuthoredItem(in spec.InputUnion) bool {
@@ -194,34 +204,24 @@ func isAssistantAuthoredItem(in spec.InputUnion) bool {
 	}
 }
 
-// prevAssistantTurnStartsWithThinking checks, for the assistant "turn" immediately
-// preceding the given tool_result index, whether the first assistant-authored
-// item after the previous user message is a signed/redacted reasoning message.
-func prevAssistantTurnStartsWithThinking(inputs []spec.InputUnion, toolResultIdx int) bool {
-	if toolResultIdx <= 0 || toolResultIdx > len(inputs)-1 {
+func isAnthropicSignedOrRedactedReasoning(r *spec.ReasoningContent) bool {
+	if r == nil {
 		return false
 	}
-
-	// Find the user item *before* this tool_result.
-	prevUserIdx := -1
-	for j := toolResultIdx - 1; j >= 0; j-- {
-		if isUserAuthoredItem(inputs[j]) {
-			prevUserIdx = j
-			break
-		}
-	}
-
-	// Now find the first assistant-authored item between prevUserIdx and toolResultIdx.
-	for k := prevUserIdx + 1; k < toolResultIdx; k++ {
-		in := inputs[k]
-		if !isAssistantAuthoredItem(in) {
-			continue
-		}
-		// "Starts with thinking" means the first assistant item is signed/redacted reasoning.
-		if in.Kind == spec.InputKindReasoningMessage && isAnthropicSignedOrRedactedReasoning(in.ReasoningMessage) {
+	// Redacted thinking is always acceptable.
+	for _, s := range r.RedactedThinking {
+		if strings.TrimSpace(s) != "" {
 			return true
 		}
+	}
+	// Signed thinking requires both signature and non-empty thinking.
+	if strings.TrimSpace(r.Signature) == "" {
 		return false
+	}
+	for _, t := range r.Thinking {
+		if strings.TrimSpace(t) != "" {
+			return true
+		}
 	}
 	return false
 }
