@@ -5,7 +5,7 @@
 [![lint](https://github.com/flexigpt/inference-go/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/flexigpt/inference-go/actions/workflows/lint.yml)
 [![test](https://github.com/flexigpt/inference-go/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/flexigpt/inference-go/actions/workflows/test.yml)
 
-A single interface in Go to get inference from multiple LLM / AI providers using their official SDKs.
+A single normalized Go interface for LLM inference across multiple providers, using their official SDKs where available.
 
 - [Features at a glance](#features-at-a-glance)
 - [Installation](#installation)
@@ -16,6 +16,7 @@ A single interface in Go to get inference from multiple LLM / AI providers using
   - [Anthropic Messages API](#anthropic-messages-api)
   - [OpenAI Responses API](#openai-responses-api)
   - [OpenAI Chat Completions API](#openai-chat-completions-api)
+  - [Google Generate Content API](#google-generate-content-api)
 - [Model capabilities and normalization](#model-capabilities-and-normalization)
 - [HTTP debugging](#http-debugging)
 - [Notes](#notes)
@@ -24,41 +25,35 @@ A single interface in Go to get inference from multiple LLM / AI providers using
 
 ## Features at a glance
 
-- Single normalized interface (`ProviderSetAPI`) for multiple providers. Current support:
-  - Anthropic Messages API. [Official SDK used](https://github.com/anthropics/anthropic-sdk-go)
-  - OpenAI Chat Completions API [Official SDK used](https://github.com/openai/openai-go)
-  - OpenAI Responses API [Official SDK used](https://github.com/openai/openai-go)
+- Single normalized interface via `ProviderSetAPI`
+- Provider support today:
+  - Anthropic Messages API via `github.com/anthropics/anthropic-sdk-go`
+  - OpenAI Responses API via `github.com/openai/openai-go/v3`
+  - OpenAI Chat Completions API via `github.com/openai/openai-go/v3`
+  - Google Generate Content API via `google.golang.org/genai`
 
-- Normalized data model in `spec/`:
-  - messages (user / assistant / system/developer instructions are provided via `ModelParam.SystemPrompt`),
-  - text, images, and files, (no audio/video content types yet),
-  - tools (function, custom, built-in tools like web search),
-  - reasoning / thinking content,
-  - streaming events (text + thinking),
-  - usage accounting.
-  - output controls (structured output, verbosity/effort) and tool policies (where supported by provider APIs).
-  - capabilities + normalization:
-    - all feature support per SDK is described by `spec.ModelCapabilities` (`spec/capability.go`)
-    - default SDK-wide capability profiles live in `internal/*/capability.go`
-    - capabilities are available programmatically via `ProviderSetAPI.GetProviderCapability`
+- Normalized request/response model in `spec/`:
+  - text, image, and file input content
+  - assistant/user/tool/reasoning content
+  - function/custom/web-search tool definitions and tool calls
+  - structured output and verbosity controls
+  - reasoning/thinking controls
+  - streaming events for text and thinking
+  - usage accounting
+  - cache-control normalization where supported
 
-- Streaming support:
-  - Text streaming for all providers that support it.
-  - Reasoning / thinking streaming where the provider exposes it (Anthropic, OpenAI Responses).
+- Request normalization before provider calls:
+  - capability-driven validation and safe dropping of unsupported features
+  - warnings returned in `FetchCompletionResponse.Warnings`
+  - per-model capability override support through `FetchCompletionOptions.CapabilityResolver`
 
-- Client and Server Tools:
-  - Client tools are supported via Function Calling.
-  - Anthropic server-side web search.
-  - OpenAI Responses web search tool.
-  - OpenAI Chat Completions web search via `web_search_options`.
+- Streaming:
+  - text streaming for supported providers
+  - thinking/reasoning streaming where the provider exposes it
 
-- HTTP-level debugging:
-  - Pluggable `CompletionDebugger` interface.
-  - A built-in ready to use implementation at: `debugclient.HTTPCompletionDebugger`:
-    - wraps SDK HTTP clients,
-    - captures request/response metadata,
-    - redacts secrets and sensitive content,
-    - attaches a scrubbed debug blob to `FetchCompletionResponse.DebugDetails`.
+- Debugging:
+  - pluggable `CompletionDebugger`
+  - built-in HTTP debugger in `debugclient`
 
 ## Installation
 
@@ -69,173 +64,214 @@ go get github.com/flexigpt/inference-go
 
 ## Quickstart
 
-Basic pattern:
+Basic flow:
 
-1. Create a `ProviderSetAPI`.
-2. Add one or more providers. Set their API keys.
-3. Send a `FetchCompletionRequest`.
+1. Create a `ProviderSetAPI`
+2. Register one or more providers with `AddProvider`
+3. Set each provider API key with `SetProviderAPIKey`
+4. Call `FetchCompletion`
 
 ## Examples
 
-- [Basic Anthropic Messages](internal/integration/example_anthropic_basic_test.go)
+Available repository examples:
 
-- [Basic OpenAI Chat Completions](internal/integration/example_openai_chat_basic_test.go)
+- Anthropic
+  - [Basic Anthropic call](internal/integration/example_anthropic_basic_test.go)
+  - [Anthropic tools + streaming + reasoning](internal/integration/example_anthropic_tools_streaming_test.go)
 
-- [Basic OpenAI Responses](internal/integration/example_openai_responses_basic_test.go)
-- [Extended OpenAI Responses example](internal/integration/example_openai_responses_tools_attachments_test.go)
-  - Demonstrates tools, web search, file and image attachments.
+- OpenAI
+  - [Basic OpenAI Chat Completions](internal/integration/example_openai_chat_basic_test.go)
+  - [OpenAI Responses basic](internal/integration/example_openai_responses_basic_test.go)
+  - [OpenAI Responses tools + attachments + streaming](internal/integration/example_openai_responses_tools_attachments_test.go)
+  - [OpenAI Chat tools + JSON Schema + streaming](internal/integration/example_openai_chat_tools_websearch_stream_test.go)
+
+- Google
+  - [Google Generate Content basic](internal/integration/example_google_genai_basic_test.go)
 
 - [Capability override example (get provider caps, override per-model)](./internal/integration/example_capability_override_test.go)
 
 ## Provider configuration
 
-Providers are registered dynamically via `ProviderSetAPI.AddProvider`, using `AddProviderConfig`.
+Providers are registered dynamically with `ProviderSetAPI.AddProvider`.
+
+```go
+type AddProviderConfig struct {
+    SDKType                  spec.ProviderSDKType
+    Origin                   string
+    ChatCompletionPathPrefix string
+    APIKeyHeaderKey          string
+    DefaultHeaders           map[string]string
+}
+```
 
 Fields:
 
-- `sdkType` (`spec.ProviderSDKType`)
-  - `providerSDKTypeAnthropicMessages`
-  - `providerSDKTypeOpenAIChatCompletions`
-  - `providerSDKTypeOpenAIResponses`
-- `origin` (string, **required**)
-  - Base URL to the provider (or your gateway / proxy). Example: `https://api.openai.com`
-- `chatCompletionPathPrefix` (string, optional)
-  - Extra path prefix appended to `origin` before the SDK adds the endpoint path.
-  - Useful when routing through gateways like `https://my-gateway.example.com/openai/`.
-  - If you accidentally include the full endpoint path, the adapter will trim the suffix that the official SDK adds:
-    - Anthropic: trims trailing `v1/messages`
-    - OpenAI Chat Completions: trims trailing `chat/completions`
-    - OpenAI Responses: trims trailing `responses`
-- `apiKeyHeaderKey` (string, optional)
-  - If your gateway expects a non-standard API key header, set it here.
-  - The adapters attach this header when it differs from the standard header:
-    - Anthropic standard: `x-api-key`
-    - OpenAI standard: `Authorization`
-- `defaultHeaders` (`map[string]string`, optional)
-  - Extra headers appended to every request (e.g. gateway routing headers).
+- `SDKType`
+  - `spec.ProviderSDKTypeAnthropic`
+  - `spec.ProviderSDKTypeOpenAIChatCompletions`
+  - `spec.ProviderSDKTypeOpenAIResponses`
+  - `spec.ProviderSDKTypeGoogleGenerateContent`
+
+- `Origin`
+  - Required
+  - Base origin for the provider or gateway/proxy
+
+- `ChatCompletionPathPrefix`
+  - Optional generic path prefix
+  - Historical field name, reused across providers
+  - Useful when routing through a gateway path prefix
+  - Adapters trim built-in endpoint suffixes when needed:
+    - Anthropic: trailing `v1/messages`
+    - OpenAI Chat: trailing `chat/completions`
+    - OpenAI Responses: trailing `responses`
+
+- `APIKeyHeaderKey`
+  - Optional override for non-standard gateway auth headers
+
+- `DefaultHeaders`
+  - Optional extra headers added to every request
 
 ## Supported providers
 
 ### Anthropic Messages API
 
-Feature support
+| Area                  | Support | Notes                                                                 |
+| --------------------- | ------- | --------------------------------------------------------------------- |
+| Text input/output     | yes     | User/assistant messages normalized                                    |
+| Streaming text        | yes     |                                                                       |
+| Reasoning/thinking    | yes     | Signed thinking and redacted thinking supported                       |
+| Streaming thinking    | yes     | Redacted thinking is not streamed                                     |
+| Output format         | yes     | text and `jsonSchema`                                                 |
+| Output verbosity      | yes     | maps to Anthropic effort                                              |
+| Stop sequences        | yes     | maps to `stop_sequences`                                              |
+| Images input          | yes     | base64 or URL                                                         |
+| Files input           | partial | PDFs supported; plain-text file document mapping is still pending     |
+| Function/custom tools | yes     |                                                                       |
+| Web search            | yes     | server-side web search tool and result blocks                         |
+| Tool policy           | yes     | `auto`, `any`, `tool`, `none`                                         |
+| Cache control         | partial | top-level, input/output content, tool choice, tool call, tool output  |
+| Citations             | partial | URL citations normalized                                              |
+| Usage                 | yes     | input/output/cached; no explicit reasoning token count from Anthropic |
 
-| Area                      | Supported? | Notes                                                                                                        |
-| ------------------------- | ---------: | ------------------------------------------------------------------------------------------------------------ |
-| Text input/output         |        yes | User and assistant messages mapped to text blocks.                                                           |
-| Streaming text            |        yes |                                                                                                              |
-| Reasoning / thinking      |        yes | Thinking/Redacted is supported; redacted is not streamed to caller. Thinking enabled == temperature omitted. |
-| Streaming thinking        |        yes |                                                                                                              |
-| Output formats            |        yes | Text (default) and `jsonSchema` via `ModelParam.OutputParam.format`.                                         |
-| Output verbosity / effort |        yes | `ModelParam.OutputParam.verbosity` maps to Anthropic `output_config.effort` (low/medium/high/max).           |
-| Stop sequences            |        yes | `ModelParam.StopSequences` maps to `stop_sequences`.                                                         |
-| Images (input)            |        yes | Inline base64 (`imageData`) or remote URLs (`imageURL`) mapped to Anthropic image blocks.                    |
-| Files / documents (input) |        yes | PDFs only, via base64 or URL. Plain-text base64 and other MIME types are currently ignored.                  |
-| Audio/Video input/output  |         no |                                                                                                              |
-| Tools (function/custom)   |        yes | JSON Schema based.                                                                                           |
-| Tool policy               |        yes | `ToolPolicy` supported (auto/any/tool/none) + `disableParallel`.                                             |
-| Tool output content types |        yes | Tool results support text/image/pdf-document blocks (within Anthropic API constraints).                      |
-| Web search                |        yes | Server web search tool use + web search tool-result blocks.                                                  |
-| Citations                 |    partial | URL citations only. Other stateful citations are not mapped.                                                 |
-| Metadata / service tiers  |     opaque | Not exposed in normalized types; available in debug payload.                                                 |
-| Stateful flows            |         no | Library focuses on stateless calls only.                                                                     |
-| Usage data                |        yes | Input/Output/Cached. Anthropic doesn't expose Reasoning tokens usage.                                        |
-| Refusal output            |    partial | No dedicated refusal content item; `stop_reason=refusal` is surfaced via normalized status.                  |
-| Max Tokens                |        yes | `MaxTokens` are compulsory in the API. This SDK enforces a default of `8192`                                 |
+Normalization notes:
 
-- Behavior for conversational + interleaved reasoning message input
-  - Input: No reasoning content in the incoming messages.
-    - Action: Build the message list unchanged. If the last user message is a `tool_result`, force _thinking disabled_; otherwise, honor the requested thinking setting.
-  - Input: All reasoning messages are signed.
-    - Action: Build the message list unchanged. If the last user message is a `tool_result` _and_ the previous assistant message begins with thinking content, force _thinking enabled_; otherwise, honor the requested thinking setting.
-  - Input: Mix of reasoning messages where some include a valid signature thinking and others do not.
-    - Action: Retain only the reasoning messages with a valid signature; drop the rest. Apply the above behaviors after this cleanup.
+- reasoning input history keeps Anthropic-compatible signed/redacted reasoning only
+- if an interleaved tool-result turn requires Anthropic thinking to be enabled/disabled, the adapter applies the needed override
+- tool-result ordering is normalized for Anthropic’s strict tool-use/tool-result turn rules
 
 ### OpenAI Responses API
 
-Feature support
+| Area                  | Support | Notes                                                           |
+| --------------------- | ------- | --------------------------------------------------------------- |
+| Text input/output     | yes     |                                                                 |
+| Streaming text        | yes     |                                                                 |
+| Reasoning/thinking    | yes     | config + reasoning output items                                 |
+| Streaming thinking    | yes     | reasoning summary and reasoning text deltas                     |
+| Output format         | yes     | text and `jsonSchema`                                           |
+| Output verbosity      | yes     |                                                                 |
+| Stop sequences        | no      | dropped with warning by normalization                           |
+| Images input          | yes     | base64 or URL                                                   |
+| Files input           | yes     | base64 or URL                                                   |
+| Function/custom tools | yes     | custom tool definitions are currently emitted as function tools |
+| Web search            | yes     | built-in web search tool                                        |
+| Tool policy           | yes     | `auto`, `any`, `tool`, `none`                                   |
+| Cache control         | partial | top-level prompt cache only                                     |
+| Citations             | yes     | URL citations normalized                                        |
+| Usage                 | yes     | input/output/cached/reasoning                                   |
 
-| Area                      | Supported? | Notes                                                                                                              |
-| ------------------------- | ---------: | ------------------------------------------------------------------------------------------------------------------ |
-| Text input/output         |        yes | Input/output messages fully supported.                                                                             |
-| Streaming text            |        yes |                                                                                                                    |
-| Reasoning / thinking      |        yes | Reasoning outputs are mapped. Reasoning **inputs** are accepted only as `encrypted_content`; others are dropped.   |
-| Streaming thinking        |        yes |                                                                                                                    |
-| Output formats            |    partial | Text (default) and `jsonSchema` via `ModelParam.OutputParam.format` (mapped to `params.Text.format`).              |
-| Output verbosity          |        yes |                                                                                                                    |
-| Stop sequences            |         no | OpenAI Responses API doesnt support stop sequences (ignored if provided in `ModeParams`).                          |
-| Images (input)            |        yes | `imageData` (base64) or `imageURL`, with `detail` low/high/auto, mapped to Responses `input_image` items.          |
-| Files / documents (input) |        yes | `fileData` (base64) or `fileURL` mapped to Responses `input_file` items; works for PDFs and other file MIME types. |
-| Audio/Video input/output  |         no |                                                                                                                    |
-| Tools (function/custom)   |        yes | JSON Schema based. Note: `custom` tool **definitions** are currently emitted as `function` tools.                  |
-| Tool policy               |        yes | `ToolPolicy` supported (auto/any/tool/none) + `disableParallel`.                                                   |
-| Tool output content types |        yes | Function/custom tool outputs can carry text/image/file content (data or URL).                                      |
-| Web search                |        yes | Calls are mapped when emitted; results typically surface as citations/annotations in text.                         |
-| Citations                 |        yes | URL citations mapped to `spec.CitationKindURL`.                                                                    |
-| Metadata / service tiers  |     opaque | Not exposed in normalized types; available in debug payload.                                                       |
-| Stateful flows            |         no | Store is explicitly disabled (`Store: false`).                                                                     |
-| Usage data                |        yes | Input/Output/Cached/Reasoning.                                                                                     |
+Normalization notes:
 
-- Behavior for conversational + interleaved reasoning message input
-  - Input: No reasoning messages.
-    - Action: Build the message list unchanged. Honor the requested thinking setting.
-  - Input: All reasoning messages are `encrypted_content`.
-    - Action: Build the message list unchanged. Honor the requested thinking setting.
-  - Input: Mixed reasoning messages: some are signature-based and some are `encrypted_content`.
-    - Action: Keep only the `encrypted_content` reasoning; drop the signature-based reasoning.
+- reasoning input history is sanitized to OpenAI-compatible encrypted reasoning only
+- if no encrypted reasoning input exists, reasoning history items are dropped
+- stateful Responses features like `previous_response_id` and provider-side storage are intentionally not normalized
 
 ### OpenAI Chat Completions API
 
-Feature support
+| Area                      | Support | Notes                                                                 |
+| ------------------------- | ------- | --------------------------------------------------------------------- |
+| Text input/output         | yes     | first choice only is surfaced                                         |
+| Streaming text            | yes     |                                                                       |
+| Reasoning config          | yes     | reasoning effort only                                                 |
+| Streaming thinking        | no      | API does not expose separate reasoning stream                         |
+| Reasoning message history | no      | dropped by adapter                                                    |
+| Output format             | yes     | text and `jsonSchema`                                                 |
+| Output verbosity          | yes     | `max` maps to `high`                                                  |
+| Stop sequences            | yes     | up to 4                                                               |
+| Images input              | yes     | base64 data URL or remote URL                                         |
+| Files input               | partial | embedded file data only                                               |
+| Function/custom tools     | yes     | custom tool definitions are currently emitted as function tools       |
+| Web search                | yes     | via top-level `web_search_options`, not as a normal tool call         |
+| Tool policy               | yes     | `auto`, `any`, `tool`, `none`                                         |
+| Cache control             | partial | top-level prompt cache only                                           |
+| Citations                 | yes     | URL citations from annotations                                        |
+| Usage                     | yes     | input/output/cached/reasoning                                         |
+| System prompt role        | yes     | sent as `developer` for `o*` / `gpt-5*` model families, else `system` |
 
-| Area                      | Supported? | Notes                                                                                                               |
-| ------------------------- | ---------: | ------------------------------------------------------------------------------------------------------------------- |
-| Text input/output         |        yes | Only the first choice from output is surfaced up.                                                                   |
-| Streaming text            |        yes |                                                                                                                     |
-| Reasoning / thinking      |        yes | Reasoning effort config only; no separate reasoning messages in API.                                                |
-| Streaming thinking        |         no | Not exposed by Chat Completions.                                                                                    |
-| Output formats            |        yes | Text (default) and `jsonSchema` via `ModelParam.OutputParam.format` (mapped to `response_format`).                  |
-| Output verbosity          |        yes | `ModelParam.OutputParam.verbosity` mapped to `verbosity` (max maps to high).                                        |
-| Stop sequences            |        yes | Supported up to 4 sequences (API limit); errors if more than 4 are provided.                                        |
-| Images (input)            |        yes | `imageData` (base64) and `imageURL` are both supported; base64 is sent as a data URL with `detail` low/high/auto.   |
-| Files / documents (input) |        yes | `fileData` (base64) only, sent as a data URL; `fileURL` and stateful file IDs are not used by this adapter.         |
-| Audio/Video input/output  |         no |                                                                                                                     |
-| Tools (function/custom)   |        yes | JSON Schema based. Note: `custom` tool **definitions** are currently emitted as `function` tools.                   |
-| Tool policy               |        yes | `ToolPolicy` supported (auto/any/tool/none) + `disableParallel` (mapped to `parallel_tool_calls=false`).            |
-| Tool output content types |    partial | Tool outputs are forwarded as tool messages with _text only_; image/file tool output items are ignored. (API limit) |
-| Web search                |        yes | Not a tool-call in this API; configured via top-level `web_search_options` derived from a `webSearch` `ToolChoice`. |
-| Citations                 |        yes | URL citations mapped from annotations.                                                                              |
-| Metadata / service tiers  |     opaque | Not exposed in normalized types; available in debug payload.                                                        |
-| Stateful flows            |         no | Library focuses on stateless calls only.                                                                            |
-| Usage data                |        yes | Input/Output/Cached/Reasoning.                                                                                      |
-| System prompt role        |    partial | SystemPrompt is sent as `developer` for OpenAI `o*` / `gpt-5*` models, for others its sent as `system` .            |
+Normalization notes:
 
-- Behavior for conversational + interleaved reasoning message input
-  - Reasoning effort config is kept as is.
-  - All reasoning input/output messages are dropped as the api doesn't support it.
+- reasoning message inputs are dropped because Chat Completions does not support structured reasoning history
+- tool outputs are normalized back in as text-only tool messages
+- web search forcing semantics differ from function tools because Chat Completions exposes web search as top-level request options, not as a standard tool call
+
+### Google Generate Content API
+
+| Area                  | Support | Notes                                                                                            |
+| --------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| Text input/output     | yes     | first candidate only is surfaced                                                                 |
+| Streaming text        | yes     |                                                                                                  |
+| Reasoning/thinking    | yes     | config + Google-native signed thought history                                                    |
+| Streaming thinking    | yes     | streams thought text when exposed by the API                                                     |
+| Output format         | partial | text and `jsonSchema`; currently only the raw schema payload is forwarded                        |
+| Output verbosity      | no      | dropped with warning by normalization                                                            |
+| Stop sequences        | yes     | normalized up to capability max                                                                  |
+| Images input          | yes     | inline bytes or URI                                                                              |
+| Files input           | yes     | inline bytes or URI                                                                              |
+| Function/custom tools | yes     | custom tool definitions are emitted as function declarations                                     |
+| Web search            | yes     | Google Search grounding normalized as web-search call/output                                     |
+| Tool policy           | partial | `auto`, `any`, `tool`, `none` for callable tools; web search cannot be forced as a callable tool |
+| Cache control         | no      | dropped with warning by normalization                                                            |
+| Citations             | partial | grounding is normalized as web-search tool outputs, not attached to text citations yet           |
+| Usage                 | yes     | input/output/cached/reasoning                                                                    |
+
+Normalization notes:
+
+- reasoning input history keeps only valid Google-native signed thoughts
+- non-Google reasoning history is sanitized out before request conversion
+- function tool output history is currently text-only
+- `ToolPolicy.DisableParallel` is not currently normalized for Google Generate Content
 
 ## Model capabilities and normalization
 
-- This SDK validates and normalizes requests against a capability profile _before_ calling the underlying provider SDK. Key points:
-  - The capability schema is `spec.ModelCapabilities` in [`spec/capability.go`](./spec/capability.go).
-  - Each provider adapter has an SDK-wide default capability profile (as a Go struct):
-    - Anthropic Messages: `internal/anthropicsdk/capability.go`
-    - OpenAI Chat Completions: `internal/openaichatsdk/capability.go`
-    - OpenAI Responses: `internal/openairesponsessdk/capability.go`
-  - You can access these defaults programmatically via:
-    - `ProviderSetAPI.GetProviderCapability(ctx, providerName)`
+Capabilities are described by `spec.ModelCapabilities` in [`spec/capability.go`](./spec/capability.go).
 
-- Recommended: Per-model behavior
-  - Real world features support varies by _model_.
-  - To enforce per-model differences, pass a `spec.ModelCapabilityResolver` in `FetchCompletionOptions`.
-    - The resolver can start from the provider’s SDK-wide defaults and override fields as needed.
+Default provider capability profiles live in:
 
-- See a runnable repository example that demonstrates the intended flow:
-  - [`internal/integration/capability_override_example_test.go`](./internal/integration/capability_override_example_test.go)
+- Anthropic: [`internal/anthropicsdk/capability.go`](./internal/anthropicsdk/capability.go)
+- OpenAI Responses: [`internal/openairesponsessdk/capability.go`](./internal/openairesponsessdk/capability.go)
+- OpenAI Chat: [`internal/openaichatsdk/capability.go`](./internal/openaichatsdk/capability.go)
+- Google Generate Content: [`internal/googlegeneratecontentsdk/capability.go`](./internal/googlegeneratecontentsdk/capability.go)
+
+You can inspect the active provider-wide default via:
+
+- `ProviderSetAPI.GetProviderCapability(ctx, providerName)`
+
+Normalization behavior:
+
+- unsupported contract-like features generally return an error
+  - example: unsupported output format
+- unsupported safe-to-drop features are removed and reported via `FetchCompletionResponse.Warnings`
+  - example: unsupported verbosity or cache-control scope
+- some provider-specific history items are sanitized before request conversion
+  - Anthropic: only Anthropic-compatible reasoning history is retained
+  - OpenAI Responses: only encrypted reasoning history is retained
+  - OpenAI Chat: reasoning history is dropped
+  - Google: only valid signed Google thought history is retained
+
+For per-model capability differences, pass a custom `spec.ModelCapabilityResolver` in `FetchCompletionOptions`.
 
 ## HTTP debugging
 
-The library exposes a pluggable `CompletionDebugger` interface:
+The library exposes a pluggable `CompletionDebugger`:
 
 ```go
 type CompletionDebugger interface {
@@ -244,53 +280,51 @@ type CompletionDebugger interface {
 }
 ```
 
-- package `debugclient` includes an implementation that can be readily used as `HTTPCompletionDebugger`:
-  - wraps the provider SDK’s `*http.Client`,
-  - captures and scrubs:
-    - URL, method, headers (with secret redaction),
-    - query params,
-    - request/response bodies (optional, scrubbed of LLM text and large base64),
-    - curl command for reproduction,
-  - attaches a structured `HTTPDebugState` to `FetchCompletionResponse.DebugDetails`.
-  - You can then inspect `resp.DebugDetails` for a given call, or just rely on `slog` output.
+Package `debugclient` includes a ready-to-use implementation:
 
-- Use it via `WithDebugClientBuilder`:
+- wraps provider SDK HTTP clients
+- captures scrubbed request/response metadata
+- redacts secrets and sensitive content
+- attaches structured debug data to `FetchCompletionResponse.DebugDetails`
+
+Typical setup:
 
 ```go
-dbg := debugclient.NewHTTPCompletionDebugger(&debugclient.DebugConfig{LogToSlog: false})
+dbg := debugclient.NewHTTPCompletionDebugger(&debugclient.DebugConfig{
+    LogToSlog: false,
+})
+
 ps, _ := inference.NewProviderSetAPI(
     inference.WithDebugClientBuilder(func(p spec.ProviderParam) spec.CompletionDebugger {
         return dbg
     }),
 )
-// You can also change the debug config later.
 ```
 
 ## Notes
 
-- Stateless focus. The design focuses on stateless request/response interactions:
-  - no conversation IDs,
-  - no file IDs,
+- Stateless focus
+  - the SDK intentionally focuses on stateless request/response flows
+  - provider-native conversation state, uploaded file IDs, stored responses, and similar stateful features are out of scope for the normalized interface
 
-- Opaque / provider‑specific fields.
-  - Many provider‑specific fields (error details, service tiers, cache metadata, full raw responses) are only available through the debug payload, not in the normalized `spec` types.
-  - Few of the common needed params may be added over time and as needed.
+- Opaque provider-specific fields
+  - many provider-native details remain available only through debug payloads, not the normalized response structs
 
-- Token counting - Normalized `Usage` reports what the provider exposes:
-  - Anthropic: input vs. cached tokens, output tokens.
-  - OpenAI: prompt vs. cached tokens, completion tokens, reasoning tokens where available.
+- Prompt filtering
+  - `ModelParam.MaxPromptLength` uses a heuristic tokenizer via `sdkutil.FilterMessagesByTokenCount`
+  - it is approximate, not a provider tokenizer
 
-- Heuristic prompt filtering.
-  - `ModelParam.MaxPromptLength` triggers `sdkutil.FilterMessagesByTokenCount`, which uses a simple heuristic token counter. It is approximate, not an exact tokenizer.
+- Choice/candidate handling
+  - OpenAI Chat surfaces the first choice
+  - Google Generate Content surfaces the first candidate
 
 ## Development
 
-- Formatting follows `gofumpt` and `golines` via `golangci-lint`, which is also used for linting. All rules are in [.golangci.yml](.golangci.yml).
-- Useful scripts are defined in `taskfile.yml`; requires [Task](https://taskfile.dev/).
-- Bug reports and PRs are welcome:
-  - Keep the public API (`package inference` and `spec`) small and intentional.
-  - Avoid leaking provider‑specific types through the public surface; put them under `internal/`.
-  - Please run tests and linters before sending a PR.
+- Formatting/linting uses the repository configuration in `.golangci.yml`
+- Useful scripts are available in `taskfile.yml`
+- PRs are welcome
+  - keep the public surface small and provider-neutral
+  - avoid leaking provider SDK types into `package inference` or `spec`
 
 ## License
 
