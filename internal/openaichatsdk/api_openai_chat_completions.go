@@ -879,9 +879,8 @@ func getOpenAIMessageFromSystemPrompt(
 	}
 	msg := openai.SystemMessage(sp)
 	// Convert a system message to a developer message for o* / gpt-5* models.
-	if providerName == "openai" &&
-		(strings.HasPrefix(string(modelName), "o") ||
-			strings.HasPrefix(string(modelName), "gpt-5")) {
+	if strings.Contains(strings.ToLower(string(providerName)), "openai") &&
+		(strings.HasPrefix(string(modelName), "o") || strings.HasPrefix(string(modelName), "gpt-5")) {
 		msg = openai.DeveloperMessage(sp)
 	}
 	return &msg

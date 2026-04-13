@@ -208,11 +208,14 @@ func NormalizeRequestForSDK(
 				sdkType,
 			)
 		}
+		if (nreq.ToolPolicy.Mode == spec.ToolPolicyModeAny ||
+			nreq.ToolPolicy.Mode == spec.ToolPolicyModeTool) &&
+			len(nreq.ToolChoices) == 0 {
+			return nil, warnings, fmt.Errorf("toolPolicy.mode=%s requires toolChoices", nreq.ToolPolicy.Mode)
+		}
+
 		if nreq.ToolPolicy.Mode == spec.ToolPolicyModeTool && len(nreq.ToolPolicy.AllowedTools) == 0 {
 			return nil, warnings, errors.New("toolPolicy.mode=tool requires allowedTools")
-		}
-		if nreq.ToolPolicy.Mode == spec.ToolPolicyModeAny && len(nreq.ToolChoices) == 0 {
-			return nil, warnings, errors.New("toolPolicy.mode=any requires toolChoices")
 		}
 
 		// Forced tool count constraint (bestEffort: keep first N).

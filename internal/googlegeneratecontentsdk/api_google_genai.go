@@ -684,27 +684,17 @@ func groundingToWebSearchOutputs(
 	}
 
 	var outs []spec.OutputUnion
+	const callID = "ws_call"
+	var callItems []spec.WebSearchToolCallItemUnion
 
-	for qi, query := range gm.WebSearchQueries {
+	for _, query := range gm.WebSearchQueries {
+
 		if strings.TrimSpace(query) == "" {
 			continue
 		}
-		callID := fmt.Sprintf("ws_call_%d", qi)
-		outs = append(outs, spec.OutputUnion{
-			Kind: spec.OutputKindWebSearchToolCall,
-			WebSearchToolCall: &spec.ToolCall{
-				ChoiceID: choiceID,
-				Type:     spec.ToolTypeWebSearch,
-				Role:     spec.RoleAssistant,
-				ID:       callID,
-				CallID:   callID,
-				Name:     spec.DefaultWebSearchToolName,
-				Status:   spec.StatusCompleted,
-				WebSearchToolCallItems: []spec.WebSearchToolCallItemUnion{{
-					Kind:       spec.WebSearchToolCallKindSearch,
-					SearchItem: &spec.WebSearchToolCallSearch{Query: query},
-				}},
-			},
+		callItems = append(callItems, spec.WebSearchToolCallItemUnion{
+			Kind:       spec.WebSearchToolCallKindSearch,
+			SearchItem: &spec.WebSearchToolCallSearch{Query: query},
 		})
 	}
 
@@ -721,6 +711,22 @@ func groundingToWebSearchOutputs(
 			},
 		})
 	}
+	if len(callItems) > 0 || len(wsItems) > 0 {
+		outs = append(outs, spec.OutputUnion{
+			Kind: spec.OutputKindWebSearchToolCall,
+			WebSearchToolCall: &spec.ToolCall{
+				ChoiceID:               choiceID,
+				Type:                   spec.ToolTypeWebSearch,
+				Role:                   spec.RoleAssistant,
+				ID:                     callID,
+				CallID:                 callID,
+				Name:                   spec.DefaultWebSearchToolName,
+				Status:                 spec.StatusCompleted,
+				WebSearchToolCallItems: callItems,
+			},
+		})
+	}
+
 	if len(wsItems) > 0 {
 		outs = append(outs, spec.OutputUnion{
 			Kind: spec.OutputKindWebSearchToolOutput,
@@ -728,8 +734,8 @@ func groundingToWebSearchOutputs(
 				ChoiceID:                 choiceID,
 				Type:                     spec.ToolTypeWebSearch,
 				Role:                     spec.RoleAssistant,
-				ID:                       "ws_output",
-				CallID:                   "ws_output",
+				ID:                       callID,
+				CallID:                   callID,
 				Name:                     spec.DefaultWebSearchToolName,
 				Status:                   spec.StatusCompleted,
 				WebSearchToolOutputItems: wsItems,
@@ -931,14 +937,14 @@ func applyGoogleGenerateContentOutputParam(
 func mapGenAIFinishReasonToStatus(reason genai.FinishReason) spec.Status {
 	switch reason {
 	case genai.FinishReasonStop,
-		genai.FinishReasonMalformedFunctionCall,
-		genai.FinishReasonUnexpectedToolCall,
 		genai.FinishReasonOther,
 		genai.FinishReasonUnspecified:
 		return spec.StatusCompleted
 	case genai.FinishReasonMaxTokens:
 		return spec.StatusIncomplete
-	case genai.FinishReasonSafety,
+	case genai.FinishReasonMalformedFunctionCall,
+		genai.FinishReasonUnexpectedToolCall,
+		genai.FinishReasonSafety,
 		genai.FinishReasonRecitation,
 		genai.FinishReasonProhibitedContent,
 		genai.FinishReasonSPII,

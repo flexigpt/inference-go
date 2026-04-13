@@ -269,10 +269,14 @@ func reasoningContentToGenAIPart(r *spec.ReasoningContent) *genai.Part {
 		if text == "" {
 			return nil
 		}
+		sig, ok := decodeThoughtSignature(r.Signature)
+		if !ok {
+			return nil
+		}
 		return &genai.Part{
 			Text:             text,
 			Thought:          true,
-			ThoughtSignature: thoughtSignatureFromString(r.Signature),
+			ThoughtSignature: sig,
 		}
 	}
 	return nil

@@ -123,7 +123,10 @@ func sanitizeGoogleGenerateContentReasoningInputs(inputs []spec.InputUnion) []sp
 // Google-native thought: at least one non-empty Thinking string AND a
 // non-empty Signature (base64-encoded ThoughtSignature bytes).
 func isGoogleNativeReasoning(r *spec.ReasoningContent) bool {
-	if r == nil || strings.TrimSpace(r.Signature) == "" {
+	if r == nil {
+		return false
+	}
+	if _, ok := decodeThoughtSignature(r.Signature); !ok {
 		return false
 	}
 	for _, t := range r.Thinking {
@@ -142,17 +145,6 @@ func thoughtSignatureToString(sig []byte) string {
 		return ""
 	}
 	return base64.StdEncoding.EncodeToString(sig)
-}
-
-// thoughtSignatureFromString decodes a base64-encoded Signature string back
-// to the raw bytes required by genai.Part.ThoughtSignature.
-// If the string is not valid base64, it falls back to a direct []byte cast.
-func thoughtSignatureFromString(sig string) []byte {
-	b, ok := decodeThoughtSignature(sig)
-	if !ok {
-		return nil
-	}
-	return b
 }
 
 func decodeThoughtSignature(sig string) ([]byte, bool) {
