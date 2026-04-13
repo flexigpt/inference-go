@@ -13,6 +13,8 @@ const (
 	DefaultOpenAIOrigin                = "https://api.openai.com"
 	DefaultOpenAIChatCompletionsPrefix = "/v1/chat/completions"
 
+	DefaultGoogleGenerateContentOrigin = "https://generativelanguage.googleapis.com"
+
 	DefaultFileDataMIME  = "application/octet-stream"
 	DefaultImageDataMIME = "image/png"
 )
@@ -23,6 +25,7 @@ const (
 	ProviderSDKTypeAnthropic             ProviderSDKType = "providerSDKTypeAnthropicMessages"
 	ProviderSDKTypeOpenAIChatCompletions ProviderSDKType = "providerSDKTypeOpenAIChatCompletions"
 	ProviderSDKTypeOpenAIResponses       ProviderSDKType = "providerSDKTypeOpenAIResponses"
+	ProviderSDKTypeGoogleGenerateContent ProviderSDKType = "providerSDKTypeGoogleGenerateContent"
 )
 
 // ProviderParam represents information about a provider.
