@@ -64,21 +64,33 @@ func (api *GoogleGenerateContentAPI) InitLLM(ctx context.Context) error {
 		Backend: genai.BackendGeminiAPI,
 	}
 
-	// Custom base URL (optional).
-	if pi.Origin != "" {
-		baseURL := strings.TrimSuffix(pi.Origin, "/") + "/"
-		cc.HTTPOptions = genai.HTTPOptions{BaseURL: baseURL}
+	httpOpts := genai.HTTPOptions{}
+
+	// Custom base URL / path prefix (optional).
+	baseURL := spec.DefaultGoogleGenerateContentOrigin
+	if pi.Origin != "" || strings.TrimSpace(pi.ChatCompletionPathPrefix) != "" {
+		baseURL = strings.TrimSuffix(pi.Origin, "/")
+		if prefix := strings.Trim(strings.TrimSpace(pi.ChatCompletionPathPrefix), "/"); prefix != "" {
+			baseURL = strings.TrimRight(baseURL+"/"+prefix, "/")
+		}
+		if baseURL != "" {
+			httpOpts.BaseURL = baseURL + "/"
+		}
 	}
 
 	// Custom default headers (optional).
-	if len(pi.DefaultHeaders) > 0 {
-		if cc.HTTPOptions.Headers == nil {
-			cc.HTTPOptions.Headers = make(http.Header)
-		}
+	if len(pi.DefaultHeaders) > 0 || strings.TrimSpace(pi.APIKeyHeaderKey) != "" {
+		httpOpts.Headers = make(http.Header)
+
 		for k, v := range pi.DefaultHeaders {
-			cc.HTTPOptions.Headers.Set(strings.TrimSpace(k), strings.TrimSpace(v))
+			httpOpts.Headers.Set(strings.TrimSpace(k), strings.TrimSpace(v))
+		}
+		if hdr := strings.TrimSpace(pi.APIKeyHeaderKey); hdr != "" {
+			httpOpts.Headers.Set(hdr, pi.APIKey)
 		}
 	}
+
+	cc.HTTPOptions = httpOpts
 
 	// Debugger HTTP client (optional).
 	if api.debugger != nil {
@@ -93,14 +105,10 @@ func (api *GoogleGenerateContentAPI) InitLLM(ctx context.Context) error {
 	}
 	api.client = client
 
-	providerURL := spec.DefaultGoogleGenerateContentOrigin
-	if pi.Origin != "" {
-		providerURL = pi.Origin
-	}
 	logutil.Info(
 		"google genai api LLM provider initialized",
 		"name", string(pi.Name),
-		"URL", providerURL,
+		"URL", baseURL,
 	)
 	return nil
 }
@@ -229,7 +237,30 @@ func (api *GoogleGenerateContentAPI) FetchCompletion(
 	var webSearchChoiceID string
 
 	if len(req.ToolChoices) > 0 {
-		tools, nameMap, wsChoiceID, buildErr := buildGoogleGenerateContentTools(req.ToolChoices)
+		toolChoicesForProvider := req.ToolChoices
+		if req.ToolPolicy != nil {
+			switch req.ToolPolicy.Mode {
+			case spec.ToolPolicyModeNone:
+				// Gemini web search is not governed by FunctionCallingConfig, so
+				// the only reliable way to enforce "none" is to omit all tools.
+				toolChoicesForProvider = nil
+			case spec.ToolPolicyModeAny, spec.ToolPolicyModeTool:
+				// Gemini can force callable function/custom tools, but not
+				// GoogleSearch grounding. Drop web search tools here so the
+				// strict policy semantics stay correct.
+				toolChoicesForProvider = filterGoogleGenerateContentCallableToolChoices(req.ToolChoices)
+				if len(toolChoicesForProvider) == 0 {
+					return nil, fmt.Errorf(
+						"googleGenerateContent: toolPolicy.mode=%q cannot be satisfied because Gemini GenerateContent cannot force webSearch; provide at least one function/custom tool or use toolPolicy=auto",
+						req.ToolPolicy.Mode,
+					)
+				}
+			default:
+				// Fall.
+			}
+		}
+
+		tools, nameMap, wsChoiceID, buildErr := buildGoogleGenerateContentTools(toolChoicesForProvider)
 		if buildErr != nil {
 			return nil, buildErr
 		}
@@ -237,14 +268,14 @@ func (api *GoogleGenerateContentAPI) FetchCompletion(
 			config.Tools = tools
 			toolChoiceNameMap = nameMap
 			webSearchChoiceID = wsChoiceID
-		}
-
-		if req.ToolPolicy != nil && len(tools) > 0 {
-			tc, policyErr := buildGoogleGenerateContentToolConfig(req.ToolPolicy, toolChoiceNameMap)
-			if policyErr != nil {
-				return nil, policyErr
+			if req.ToolPolicy != nil {
+				tc, policyErr := buildGoogleGenerateContentToolConfig(req.ToolPolicy, toolChoiceNameMap)
+				if policyErr != nil {
+					return nil, policyErr
+				}
+				config.ToolConfig = tc
 			}
-			config.ToolConfig = tc
+
 		}
 	}
 
@@ -411,6 +442,9 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 		}
 
 		for _, part := range cand.Content.Parts {
+			if part == nil {
+				continue
+			}
 			accParts = append(accParts, part)
 
 			if part.Text == "" {
@@ -533,6 +567,9 @@ func outputsFromGenAIResponse(
 	}
 
 	for i, part := range cand.Content.Parts {
+		if part == nil {
+			continue
+		}
 		switch {
 		case part.Text != "" && part.Thought:
 			// Thinking / reasoning part – flush any pending regular text first.
@@ -616,6 +653,23 @@ func outputsFromGenAIResponse(
 		return nil
 	}
 	return outs
+}
+
+func filterGoogleGenerateContentCallableToolChoices(toolChoices []spec.ToolChoice) []spec.ToolChoice {
+	if len(toolChoices) == 0 {
+		return nil
+	}
+
+	out := make([]spec.ToolChoice, 0, len(toolChoices))
+	for _, tc := range toolChoices {
+		switch tc.Type {
+		case spec.ToolTypeFunction, spec.ToolTypeCustom:
+			out = append(out, tc)
+		default:
+			// Fall.
+		}
+	}
+	return out
 }
 
 // groundingToWebSearchOutputs converts Google grounding metadata to spec
@@ -813,7 +867,7 @@ func buildGoogleGenerateContentToolConfig(
 			resolved, err := sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
 			if err != nil || len(resolved) == 0 {
 				return nil, errors.New(
-					"googleGenerateContent: toolPolicy=any requires allowedTools with a resolvable toolChoiceName/toolChoiceID",
+					"googleGenerateContent: toolPolicy=any requires allowedTools with at least one resolvable function/custom tool",
 				)
 			}
 			for _, t := range resolved {
@@ -829,20 +883,15 @@ func buildGoogleGenerateContentToolConfig(
 		resolved, err := sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
 		if err != nil || len(resolved) == 0 {
 			return nil, errors.New(
-				"googleGenerateContent: toolPolicy=tool requires allowedTools with a resolvable toolChoiceName/toolChoiceID",
+				"googleGenerateContent: toolPolicy=tool requires exactly one resolvable function/custom tool in allowedTools",
 			)
 		}
-		for _, t := range resolved {
-			if t.Type == spec.ToolTypeWebSearch {
-				continue
-			}
-			fcc.AllowedFunctionNames = append(fcc.AllowedFunctionNames, t.Name)
-		}
-		if len(fcc.AllowedFunctionNames) == 0 {
+		if len(resolved) != 1 {
 			return nil, errors.New(
-				"googleGenerateContent: toolPolicy=tool resolved to 0 callable (function/custom) tools",
+				"googleGenerateContent: toolPolicy=tool requires exactly one callable (function/custom) tool; webSearch cannot be forced on Gemini GenerateContent",
 			)
 		}
+		fcc.AllowedFunctionNames = []string{resolved[0].Name}
 
 	default:
 		return nil, fmt.Errorf("googleGenerateContent: unknown toolPolicy.mode %q", policy.Mode)

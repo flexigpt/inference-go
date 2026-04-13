@@ -47,7 +47,7 @@ func Example_googleGenerateContent_basicConversation() {
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gemini-2.5-flash",
+			Name:            "gemini-3-flash-preview",
 			Stream:          false,
 			MaxPromptLength: 4096,
 			MaxOutputLength: 256,

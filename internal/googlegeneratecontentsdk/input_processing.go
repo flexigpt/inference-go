@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"google.golang.org/genai"
@@ -139,6 +140,9 @@ func inputUnionToGenAIParts(in spec.InputUnion) (role string, parts []*genai.Par
 		}
 		if strings.TrimSpace(output.CallID) == "" {
 			return "", nil, errors.New("googleGenerateContent: function tool output is missing callID")
+		}
+		if strings.TrimSpace(output.Name) == "" {
+			return "", nil, errors.New("googleGenerateContent: function tool output is missing name")
 		}
 		p := toolOutputToGenAIFunctionResponsePart(output)
 		if p == nil {
@@ -291,12 +295,10 @@ func toolCallToGenAIFunctionCallPart(call *spec.ToolCall) (*genai.Part, error) {
 		id = strings.TrimSpace(call.CallID)
 	}
 
-	var args map[string]any
+	args := map[string]any{}
 	if a := strings.TrimSpace(call.Arguments); a != "" && a != "{}" {
 		if err := json.Unmarshal([]byte(a), &args); err != nil {
-			logutil.Debug("googleGenerateContent: failed to unmarshal tool call arguments",
-				"name", name, "err", err)
-			args = map[string]any{}
+			return nil, fmt.Errorf("googleGenerateContent: tool call %q has invalid JSON arguments: %w", name, err)
 		}
 	}
 

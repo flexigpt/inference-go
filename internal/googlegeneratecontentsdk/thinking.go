@@ -148,13 +148,24 @@ func thoughtSignatureToString(sig []byte) string {
 // to the raw bytes required by genai.Part.ThoughtSignature.
 // If the string is not valid base64, it falls back to a direct []byte cast.
 func thoughtSignatureFromString(sig string) []byte {
-	sig = strings.TrimSpace(sig)
-	if sig == "" {
+	b, ok := decodeThoughtSignature(sig)
+	if !ok {
 		return nil
 	}
-	b, err := base64.StdEncoding.DecodeString(sig)
-	if err != nil {
-		return []byte(sig)
-	}
 	return b
+}
+
+func decodeThoughtSignature(sig string) ([]byte, bool) {
+	sig = strings.TrimSpace(sig)
+	if sig == "" {
+		return nil, false
+	}
+	if b, err := base64.StdEncoding.DecodeString(sig); err == nil && len(b) > 0 {
+		return b, true
+	}
+
+	if b, err := base64.RawStdEncoding.DecodeString(sig); err == nil && len(b) > 0 {
+		return b, true
+	}
+	return nil, false
 }
