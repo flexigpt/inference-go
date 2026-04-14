@@ -29,13 +29,12 @@ type DebugConfig struct {
 
 // APIRequestDetails describes a single HTTP request captured by the debugger.
 type APIRequestDetails struct {
-	URL         *string        `json:"url,omitempty"`
-	Method      *string        `json:"method,omitempty"`
-	Headers     map[string]any `json:"headers,omitempty"`
-	Params      map[string]any `json:"params,omitempty"`
-	Data        any            `json:"data,omitempty"`
-	Timeout     *int           `json:"timeout,omitempty"`
-	CurlCommand *string        `json:"curlCommand,omitempty"`
+	URL     *string        `json:"url,omitempty"`
+	Method  *string        `json:"method,omitempty"`
+	Headers map[string]any `json:"headers,omitempty"`
+	Params  map[string]any `json:"params,omitempty"`
+	Data    any            `json:"data,omitempty"`
+	Timeout *int           `json:"timeout,omitempty"`
 }
 
 // APIResponseDetails describes a single HTTP response captured by the debugger.

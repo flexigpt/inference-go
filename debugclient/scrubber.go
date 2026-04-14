@@ -229,7 +229,7 @@ func (s *scrubber) scrubContentSegment(seg map[string]any, depth int) any {
 
 		// Textual segments: drop text/content.
 		if !s.cfg.DisableContentStripping && (segType == "input_text" || segType == "output_text" ||
-			segType == textStr || segType == "message" || segType == "part") {
+			segType == textStr || segType == "message" || segType == "parts") {
 			if lk == textStr || lk == contentStr {
 				out[k] = ommitedTextContentStr
 				continue

@@ -559,7 +559,7 @@ func TestGenerateCurlCommand_Basic(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			curl := generateCurlCommand(tc.detail)
+			curl := GenerateCurlCommand(tc.detail)
 
 			if !strings.HasPrefix(curl, "curl") {
 				t.Fatalf("curl command must start with 'curl', got: %q.", curl)
