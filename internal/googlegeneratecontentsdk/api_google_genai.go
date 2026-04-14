@@ -372,9 +372,21 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 ) (*spec.FetchCompletionResponse, *genai.GenerateContentResponse, error) {
 	resp := &spec.FetchCompletionResponse{}
 	streamCfg := sdkutil.ResolveStreamConfig(opts)
+	// Work around a Google GenAI SDK streaming timeout lifecycle bug:
+	// when HTTPOptions.Timeout is set, the SDK may create a derived request
+	// context inside sendStreamRequest() and defer cancel() there, even though
+	// the response body is consumed later by the returned iterator.
+	//
+	// To avoid premature cancellation, apply the timeout on our outer context
+	// for streaming and clear config.HTTPOptions.Timeout only in the cases
+	// where the SDK would otherwise derive its own timeout context.
+	streamCtx, streamCancel, streamConfig := prepareGoogleGenerateContentStreamCall(ctx, config)
+	if streamCancel != nil {
+		defer streamCancel()
+	}
 
 	emitText := func(chunk string) error {
-		if strings.TrimSpace(chunk) == "" {
+		if chunk == "" {
 			return nil
 		}
 		return sdkutil.SafeCallStreamHandler(opts.StreamHandler, spec.StreamEvent{
@@ -387,7 +399,7 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 	}
 
 	emitThinking := func(chunk string) error {
-		if strings.TrimSpace(chunk) == "" {
+		if chunk == "" {
 			return nil
 		}
 		return sdkutil.SafeCallStreamHandler(opts.StreamHandler, spec.StreamEvent{
@@ -417,7 +429,7 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 		streamWriteErr error
 		streamErr      error
 	)
-	stream := client.Models.GenerateContentStream(ctx, string(modelName), contents, config)
+	stream := client.Models.GenerateContentStream(streamCtx, string(modelName), contents, streamConfig)
 	for chunkResp, chunkErr := range stream {
 		if chunkErr != nil {
 			streamErr = chunkErr
@@ -535,6 +547,80 @@ func mergeGoogleGenerateContentGroundingMetadata(
 	out := *dst
 	out.WebSearchQueries = append(out.WebSearchQueries, src.WebSearchQueries...)
 	out.GroundingChunks = append(out.GroundingChunks, src.GroundingChunks...)
+	return &out
+}
+
+// prepareGoogleGenerateContentStreamCall applies the configured timeout on the
+// outer context for streaming and returns a config clone with HTTP timeout
+// cleared only when needed.
+//
+// This avoids a Google GenAI SDK issue where the SDK creates a derived timeout
+// context inside the request setup helper and defers cancel() there, even
+// though the returned iterator continues consuming the response body after that
+// helper has already returned.
+func prepareGoogleGenerateContentStreamCall(
+	ctx context.Context,
+	config *genai.GenerateContentConfig,
+) (streamCtx context.Context, cancel context.CancelFunc, streamConfig *genai.GenerateContentConfig) {
+	streamCtx = ctx
+	streamConfig = config
+
+	timeout, ok := googleGenerateContentStreamingTimeoutToApply(ctx, config)
+	if !ok {
+		return streamCtx, nil, streamConfig
+	}
+
+	streamCtx, cancel = context.WithTimeout(ctx, timeout)
+	streamConfig = cloneGoogleGenerateContentStreamConfigWithoutTimeout(config)
+	return streamCtx, cancel, streamConfig
+}
+
+// googleGenerateContentStreamingTimeoutToApply reports whether the stream call
+// should apply config.HTTPOptions.Timeout on the outer context instead of
+// passing it through to the SDK.
+//
+// We only do this when the SDK would otherwise derive a child timeout context:
+//   - timeout is set and > 0
+//   - and the parent context has no earlier/equal deadline
+func googleGenerateContentStreamingTimeoutToApply(
+	ctx context.Context,
+	config *genai.GenerateContentConfig,
+) (time.Duration, bool) {
+	if config == nil || config.HTTPOptions == nil || config.HTTPOptions.Timeout == nil {
+		return 0, false
+	}
+
+	timeout := *config.HTTPOptions.Timeout
+	if timeout <= 0 {
+		return 0, false
+	}
+
+	if deadline, ok := ctx.Deadline(); ok {
+		remaining := time.Until(deadline)
+		if remaining <= timeout {
+			return 0, false
+		}
+	}
+
+	return timeout, true
+}
+
+// cloneGoogleGenerateContentStreamConfigWithoutTimeout returns a shallow clone
+// of config with HTTPOptions.Timeout cleared. This is used only for streaming
+// after the timeout has been moved to the outer context.
+func cloneGoogleGenerateContentStreamConfigWithoutTimeout(
+	config *genai.GenerateContentConfig,
+) *genai.GenerateContentConfig {
+	if config == nil {
+		return nil
+	}
+
+	out := *config
+	if config.HTTPOptions != nil {
+		httpOpts := *config.HTTPOptions
+		httpOpts.Timeout = nil
+		out.HTTPOptions = &httpOpts
+	}
 	return &out
 }
 

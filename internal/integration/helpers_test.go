@@ -19,7 +19,7 @@ func newProviderSetWithDebug(level slog.Level) (*inference.ProviderSetAPI, error
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: level,
 	}))
-
+	slog.SetDefault(logger)
 	return inference.NewProviderSetAPI(
 		inference.WithLogger(logger),
 		inference.WithDebugClientBuilder(func(p spec.ProviderParam) spec.CompletionDebugger {

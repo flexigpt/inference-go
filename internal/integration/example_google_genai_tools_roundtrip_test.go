@@ -26,10 +26,11 @@ const testModelName = "gemini-2.5-flash"
 //     - extra user text
 //  5. model returns the final answer
 func Example_googleGenerateContent_functionToolRoundTrip() {
-	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
+	// Deadline greater than default timeout to simulate the sdk bug of context cancellation.
+	ctx, cancel := context.WithTimeout(context.Background(), 600*time.Second)
 	defer cancel()
 
-	ps, err := newProviderSetWithDebug(slog.LevelInfo)
+	ps, err := newProviderSetWithDebug(slog.LevelDebug)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return
