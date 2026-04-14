@@ -74,7 +74,7 @@ tasks:
 
   test:google:
     cmds:
-      - go test -count=1 -v ./internal/integration -run '^(Example_googleGenerateContent_basicConversation|Example_googleGenerateContent_functionToolRoundTrip|Example_googleGenerateContent_webSearchAndThinkingStreaming)$'
+      - go test -count=1 -v ./internal/integration -run '^(Example_googleGenerateContent_basicConversation|Example_googleGenerateContent_functionToolRoundTrip|Example_googleGenerateContent_webSearchAndThinkingStreaming|TestGoogleGenerateContent_FunctionToolRoundTripLoop)$'
 
   test:
     cmds:

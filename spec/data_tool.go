@@ -135,6 +135,7 @@ type ToolCall struct {
 	CallID                 string                       `json:"callID"`
 	Name                   string                       `json:"name"`
 	Arguments              string                       `json:"arguments,omitempty"`
+	Signature              string                       `json:"signature,omitzero"`
 	WebSearchToolCallItems []WebSearchToolCallItemUnion `json:"webSearchToolCallItems,omitempty"`
 }
 

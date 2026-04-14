@@ -10,6 +10,8 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const testModelName = "gemini-3-flash-preview"
+
 // Example_googleGenerateContent_functionToolRoundTrip demonstrates a full
 // Gemini function-tool round trip:
 //
@@ -78,8 +80,12 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 
 	firstReq := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gemini-3-flash-preview",
+			Name:            testModelName,
 			MaxOutputLength: 512,
+			Reasoning: &spec.ReasoningParam{
+				Type:  spec.ReasoningTypeSingleWithLevels,
+				Level: spec.ReasoningLevelLow,
+			},
 			SystemPrompt: "You are validating a Gemini function tool round trip. " +
 				"When the tool is forced, emit only the tool call in the first response.",
 		},
@@ -95,7 +101,7 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 	}
 
 	firstResp, err := ps.FetchCompletion(ctx, "google-tools", firstReq, &spec.FetchCompletionOptions{
-		CompletionKey: "gemini-3-flash-preview",
+		CompletionKey: testModelName,
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "first FetchCompletion error:", err)
@@ -122,25 +128,22 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 	}
 	fmt.Fprintf(os.Stderr, "tool result for %s: %s\n", toolOutput.CallID, firstToolOutputText(toolOutput))
 
+	history := make([]spec.InputUnion, 0, len(firstResp.Outputs)+2)
+	history = append(history, initialUser)
+	history = append(history, outputUnionsToInputs(firstResp.Outputs)...)
+	history = append(history, spec.InputUnion{
+		Kind:               spec.InputKindFunctionToolOutput,
+		FunctionToolOutput: toolOutput,
+	})
+
 	secondReq := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gemini-2.5-flash",
+			Name:            testModelName,
 			MaxOutputLength: 256,
 			SystemPrompt: "You have now received the tool result. " +
 				"Answer briefly in plain text. Do not call any tool again.",
 		},
-		Inputs: []spec.InputUnion{
-			initialUser,
-			{
-				Kind:             spec.InputKindFunctionToolCall,
-				FunctionToolCall: call,
-			},
-			{
-				Kind:               spec.InputKindFunctionToolOutput,
-				FunctionToolOutput: toolOutput,
-			},
-			newUserTextInput("Now finish in one short sentence."),
-		},
+		Inputs:      append(history, newUserTextInput("Now finish in one short sentence.")),
 		ToolChoices: []spec.ToolChoice{tool},
 		ToolPolicy: &spec.ToolPolicy{
 			Mode: spec.ToolPolicyModeNone,
@@ -148,7 +151,7 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 	}
 
 	secondResp, err := ps.FetchCompletion(ctx, "google-tools", secondReq, &spec.FetchCompletionOptions{
-		CompletionKey: "gemini-2.5-flash",
+		CompletionKey: testModelName,
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "second FetchCompletion error:", err)

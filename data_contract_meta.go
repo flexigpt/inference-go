@@ -32,7 +32,7 @@ var DataContractFiles = []string{
 // that they are running against the contract version they were built for.
 //
 // Format: "sha256:<hexstring>".
-const DataContractHash = "sha256:9dc446e30c6a72413300bb5cbf9e1b6f461192805226698e89ed4844756701b5"
+const DataContractHash = "sha256:6cfd869665378a3d165b4827b8f355003e82034199b412bf0831ded81200b7a3"
 
 // DataContractInfo is the public shape returned to callers who want to
 // validate they are compatible with this version of the contract.

@@ -87,6 +87,8 @@ Available repository examples:
 
 - Google
   - [Google Generate Content basic](internal/integration/example_google_genai_basic_test.go)
+  - [Google Generate Content function-tool round trip](internal/integration/example_google_genai_tools_roundtrip_test.go)
+  - [Google Generate Content web search + thinking + streaming](internal/integration/example_google_genai_websearch_streaming_test.go)
 
 - [Capability override example (get provider caps, override per-model)](./internal/integration/example_capability_override_test.go)
 
@@ -215,28 +217,29 @@ Normalization notes:
 
 ### Google Generate Content API
 
-| Area                  | Support | Notes                                                                                            |
-| --------------------- | ------- | ------------------------------------------------------------------------------------------------ |
-| Text input/output     | yes     | first candidate only is surfaced                                                                 |
-| Streaming text        | yes     |                                                                                                  |
-| Reasoning/thinking    | yes     | config + Google-native signed thought history                                                    |
-| Streaming thinking    | yes     | streams thought text when exposed by the API                                                     |
-| Output format         | partial | text and `jsonSchema`; currently only the raw schema payload is forwarded                        |
-| Output verbosity      | no      | dropped with warning by normalization                                                            |
-| Stop sequences        | yes     | normalized up to capability max                                                                  |
-| Images input          | yes     | inline bytes or URI                                                                              |
-| Files input           | yes     | inline bytes or URI                                                                              |
-| Function/custom tools | yes     | custom tool definitions are emitted as function declarations                                     |
-| Web search            | yes     | Google Search grounding normalized as web-search call/output                                     |
-| Tool policy           | partial | `auto`, `any`, `tool`, `none` for callable tools; web search cannot be forced as a callable tool |
-| Cache control         | no      | dropped with warning by normalization                                                            |
-| Citations             | partial | grounding is normalized as web-search tool outputs, not attached to text citations yet           |
-| Usage                 | yes     | input/output/cached/reasoning                                                                    |
+| Area                  | Support | Notes                                                                                                                             |
+| --------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Text input/output     | yes     | first candidate only is surfaced                                                                                                  |
+| Streaming text        | yes     |                                                                                                                                   |
+| Reasoning/thinking    | yes     | config + Google-native signed thought history; signatures on assistant text and function-tool-call parts are preserved for replay |
+| Streaming thinking    | yes     | streams thought text when exposed by the API                                                                                      |
+| Output format         | partial | text and `jsonSchema`; currently only the raw schema payload is forwarded                                                         |
+| Output verbosity      | no      | dropped with warning by normalization                                                                                             |
+| Stop sequences        | yes     | normalized up to capability max                                                                                                   |
+| Images input          | yes     | inline bytes or URI                                                                                                               |
+| Files input           | yes     | inline bytes or URI                                                                                                               |
+| Function/custom tools | yes     | custom tool definitions are emitted as function declarations                                                                      |
+| Web search            | yes     | Google Search grounding normalized as web-search call/output                                                                      |
+| Tool policy           | partial | `auto`, `any`, `tool`, `none` for callable tools; web search cannot be forced as a callable tool                                  |
+| Cache control         | no      | dropped with warning by normalization                                                                                             |
+| Citations             | partial | grounding is normalized as web-search tool outputs, not attached to text citations yet                                            |
+| Usage                 | yes     | input/output/cached/reasoning                                                                                                     |
 
 Normalization notes:
 
 - reasoning input history keeps only valid Google-native signed thoughts
 - non-Google reasoning history is sanitized out before request conversion
+- assistant text/tool-call signatures emitted by Gemini are preserved and passed back on follow-up turns
 - function tool output history is currently text-only
 - `ToolPolicy.DisableParallel` is not currently normalized for Google Generate Content
 

@@ -171,9 +171,16 @@ func contentItemsToGenAIParts(items []spec.InputOutputContentItemUnion) []*genai
 		switch it.Kind {
 		case spec.ContentItemKindText:
 			if it.TextItem != nil {
-				if t := strings.TrimSpace(it.TextItem.Text); t != "" {
-					out = append(out, genai.NewPartFromText(t))
+				txt := it.TextItem.Text
+				sig, hasSig := decodeThoughtSignature(it.TextItem.Signature)
+				if strings.TrimSpace(txt) == "" && !hasSig {
+					continue
 				}
+				p := &genai.Part{Text: txt}
+				if hasSig {
+					p.ThoughtSignature = sig
+				}
+				out = append(out, p)
 			}
 
 		case spec.ContentItemKindImage:
@@ -300,13 +307,18 @@ func toolCallToGenAIFunctionCallPart(call *spec.ToolCall) (*genai.Part, error) {
 		}
 	}
 
-	return &genai.Part{
+	p := &genai.Part{
 		FunctionCall: &genai.FunctionCall{
 			ID:   id,
 			Name: name,
 			Args: args,
 		},
-	}, nil
+	}
+
+	if sig, ok := decodeThoughtSignature(call.Signature); ok {
+		p.ThoughtSignature = sig
+	}
+	return p, nil
 }
 
 // toolOutputToGenAIFunctionResponsePart converts a ToolOutput to a genai
@@ -340,11 +352,15 @@ func toolOutputToGenAIFunctionResponsePart(output *spec.ToolOutput) *genai.Part 
 		response["output"] = text
 	}
 
-	return &genai.Part{
+	p := &genai.Part{
 		FunctionResponse: &genai.FunctionResponse{
 			ID:       strings.TrimSpace(output.CallID),
 			Name:     strings.TrimSpace(output.Name),
 			Response: response,
 		},
 	}
+	if sig, ok := decodeThoughtSignature(output.Signature); ok {
+		p.ThoughtSignature = sig
+	}
+	return p
 }

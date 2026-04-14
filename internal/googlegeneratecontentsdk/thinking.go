@@ -69,6 +69,10 @@ func applyGoogleGenerateContentThinkingPolicy(
 		}
 
 	case spec.ReasoningTypeSingleWithLevels:
+		if rp.Level == spec.ReasoningLevelNone {
+			config.ThinkingConfig = disabledGoogleGenerateContentThinkingConfig()
+			return nil
+		}
 		level, ok := googleThinkingLevelFromSpec(rp.Level)
 		if !ok {
 			return nil
@@ -161,9 +165,9 @@ func googleThinkingLevelFromSpec(level spec.ReasoningLevel) (genai.ThinkingLevel
 // sanitizeGoogleGenerateContentReasoningInputs enforces the Google GenAI policy for
 // reasoning history pass-back:
 //
-//   - Keep only Google-native signed thoughts: entries where both a non-empty
-//     Thinking text and a non-empty Signature are present (the model's own
-//     thought + ThoughtSignature bytes, base64-encoded into Signature).
+//   - Keep only Google-native signed thoughts: entries with a valid non-empty
+//     Signature. Visible thought text may be empty; signature-only reasoning
+//     parts still need to be passed back.
 //   - Drop everything else: Anthropic's RedactedThinking, OpenAI's
 //     EncryptedContent, or any unsigned/plain-text reasoning content from a
 //     different provider.
@@ -181,7 +185,7 @@ func sanitizeGoogleGenerateContentReasoningInputs(inputs []spec.InputUnion) []sp
 			continue
 		}
 
-		if sdkutil.IsInputUnionEmpty(in) || in.ReasoningMessage == nil {
+		if in.ReasoningMessage == nil {
 			dropped++
 			continue
 		}

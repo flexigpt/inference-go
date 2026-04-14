@@ -1,6 +1,10 @@
 package sdkutil
 
-import "github.com/flexigpt/inference-go/spec"
+import (
+	"strings"
+
+	"github.com/flexigpt/inference-go/spec"
+)
 
 // IsInputUnionEmpty reports whether an InputUnion has nothing "worth sending".
 // Metadata-only messages (e.g. only IDs/roles with no actual content) are
@@ -52,8 +56,12 @@ func isReasoningContentEmpty(r *spec.ReasoningContent) bool {
 	if r == nil {
 		return true
 	}
-	// Only reasoning text / encrypted content is considered "worth sending".
-	return len(r.Summary) == 0 &&
+
+	// A provider-issued reasoning signature is itself meaningful input.
+	// In particular, Google/Gemini thought signatures may be required on
+	// follow-up turns even when there is no visible reasoning text.
+	return strings.TrimSpace(r.Signature) == "" &&
+		len(r.Summary) == 0 &&
 		len(r.Thinking) == 0 &&
 		len(r.RedactedThinking) == 0 &&
 		len(r.EncryptedContent) == 0
@@ -65,7 +73,9 @@ func isContentItemEmpty(it spec.InputOutputContentItemUnion) bool {
 		if it.TextItem == nil {
 			return true
 		}
-		return it.TextItem.Text == "" && len(it.TextItem.Citations) == 0
+		return it.TextItem.Text == "" &&
+			it.TextItem.Signature == "" &&
+			len(it.TextItem.Citations) == 0
 
 	case spec.ContentItemKindRefusal:
 		if it.RefusalItem == nil {

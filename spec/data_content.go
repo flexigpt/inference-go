@@ -36,6 +36,7 @@ const (
 type ContentItemText struct {
 	Text      string     `json:"text"`
 	Citations []Citation `json:"citations,omitempty"`
+	Signature string     `json:"signature,omitzero"`
 }
 
 type ContentItemRefusal struct {

@@ -1,7 +1,6 @@
 package googlegeneratecontentsdk
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -560,83 +559,16 @@ func outputsFromGenAIResponse(
 	status := mapGenAIFinishReasonToStatus(cand.FinishReason)
 	respID := genResp.ResponseID
 
-	var outs []spec.OutputUnion
-
-	// Rolling text / thinking buffers – flushed on type-switch or function call.
-	var textBuf strings.Builder
-	var thinkBuf strings.Builder
-	var thinkSig []byte
-
-	flushText := func() {
-		if textBuf.Len() == 0 {
-			return
-		}
-		text := textBuf.String()
-		textBuf.Reset()
-		outs = append(outs, spec.OutputUnion{
-			Kind: spec.OutputKindOutputMessage,
-			OutputMessage: &spec.InputOutputContent{
-				ID:     respID,
-				Role:   spec.RoleAssistant,
-				Status: status,
-				Contents: []spec.InputOutputContentItemUnion{{
-					Kind:     spec.ContentItemKindText,
-					TextItem: &spec.ContentItemText{Text: text},
-				}},
-			},
-		})
-	}
-
-	flushThinking := func() {
-		if thinkBuf.Len() == 0 && len(thinkSig) == 0 {
-			return
-		}
-		msg := &spec.ReasoningContent{
-			ID:        respID,
-			Role:      spec.RoleAssistant,
-			Status:    status,
-			Signature: thoughtSignatureToString(thinkSig),
-		}
-		if thinkBuf.Len() > 0 {
-			msg.Thinking = []string{thinkBuf.String()}
-		}
-		thinkBuf.Reset()
-		thinkSig = nil
-		outs = append(outs, spec.OutputUnion{
-			Kind:             spec.OutputKindReasoningMessage,
-			ReasoningMessage: msg,
-		})
-	}
+	outs := make([]spec.OutputUnion, 0, len(cand.Content.Parts)+2)
 
 	for i, part := range cand.Content.Parts {
 		if part == nil {
 			continue
 		}
+		sig := thoughtSignatureToString(part.ThoughtSignature)
+
 		switch {
-		case part.Thought:
-			flushText()
-			if len(part.ThoughtSignature) > 0 &&
-				(thinkBuf.Len() > 0 || len(thinkSig) > 0) &&
-				!bytes.Equal(thinkSig, part.ThoughtSignature) {
-				flushThinking()
-			}
-
-			if part.Text != "" {
-				thinkBuf.WriteString(part.Text)
-			}
-			if len(part.ThoughtSignature) > 0 {
-				thinkSig = append([]byte(nil), part.ThoughtSignature...)
-			}
-
-		case part.Text != "" && !part.Thought:
-			// Regular text part – flush any pending thinking first.
-			flushThinking()
-			textBuf.WriteString(part.Text)
-
 		case part.FunctionCall != nil:
-			// Function call – flush pending text/thinking before emitting.
-			flushText()
-			flushThinking()
 
 			fc := part.FunctionCall
 			name := strings.TrimSpace(fc.Name)
@@ -670,6 +602,7 @@ func outputsFromGenAIResponse(
 				CallID:    id,
 				Name:      name,
 				Arguments: argsJSON,
+				Signature: sig,
 				Status:    status,
 			}
 
@@ -686,12 +619,41 @@ func outputsFromGenAIResponse(
 				out.FunctionToolCall = &call
 			}
 			outs = append(outs, out)
+		case part.Text != "" || len(part.ThoughtSignature) > 0:
+			if part.Thought {
+				msg := &spec.ReasoningContent{
+					ID:        respID,
+					Role:      spec.RoleAssistant,
+					Status:    status,
+					Signature: sig,
+				}
+				if part.Text != "" {
+					msg.Thinking = []string{part.Text}
+				}
+				outs = append(outs, spec.OutputUnion{
+					Kind:             spec.OutputKindReasoningMessage,
+					ReasoningMessage: msg,
+				})
+				continue
+			}
+
+			outs = append(outs, spec.OutputUnion{
+				Kind: spec.OutputKindOutputMessage,
+				OutputMessage: &spec.InputOutputContent{
+					ID:     respID,
+					Role:   spec.RoleAssistant,
+					Status: status,
+					Contents: []spec.InputOutputContentItemUnion{{
+						Kind: spec.ContentItemKindText,
+						TextItem: &spec.ContentItemText{
+							Text:      part.Text,
+							Signature: sig,
+						},
+					}},
+				},
+			})
 		}
 	}
-
-	// Flush any remaining buffered text / thinking.
-	flushText()
-	flushThinking()
 
 	// Grounding metadata → WebSearchToolCall + WebSearchToolOutput.
 	if webSearchChoiceID != "" && cand.GroundingMetadata != nil {
@@ -929,7 +891,7 @@ func buildGoogleGenerateContentToolConfig(
 				"googleGenerateContent: toolPolicy=tool requires exactly one callable (function/custom) tool; webSearch cannot be forced on Gemini GenerateContent",
 			)
 		}
-		fcc.AllowedFunctionNames = []string{resolved[0].Name}
+		fcc.AllowedFunctionNames = []string{callable[0].Name}
 
 	default:
 		return nil, fmt.Errorf("googleGenerateContent: unknown toolPolicy.mode %q", policy.Mode)
