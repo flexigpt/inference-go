@@ -55,6 +55,8 @@
 		"build.directoryFilters": ["-docs", "-scripts"]
 	},
 
+	"go.testEnvFile": "${workspaceFolder}/.env",
+
 	// --- Markdown ---
 	"markdown.extension.toc.levels": "2..4",
 	"markdownlint.config": {

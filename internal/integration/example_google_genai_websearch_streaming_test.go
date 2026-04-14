@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -21,7 +22,7 @@ func Example_googleGenerateContent_webSearchAndThinkingStreaming() {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
-	ps, err := newProviderSetWithDebug()
+	ps, err := newProviderSetWithDebug(slog.LevelInfo)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return
@@ -74,7 +75,9 @@ func Example_googleGenerateContent_webSearchAndThinkingStreaming() {
 			},
 		},
 		Inputs: []spec.InputUnion{
-			newUserTextInput("What is the latest stable Go release? If unknown, say unknown."),
+			newUserTextInput(
+				"What is the latest stable Go release? If unknown, say unknown. then list features. Then analyze and give its benefit over last release.",
+			),
 		},
 		ToolChoices: []spec.ToolChoice{webSearchTool},
 		ToolPolicy: &spec.ToolPolicy{
@@ -89,11 +92,11 @@ func Example_googleGenerateContent_webSearchAndThinkingStreaming() {
 			switch ev.Kind {
 			case spec.StreamContentKindThinking:
 				if ev.Thinking != nil {
-					fmt.Fprintf(os.Stderr, "[thinking] %s\n", ev.Thinking.Text)
+					fmt.Fprintf(os.Stderr, "\n\n#######[thinking] %s\n", ev.Thinking.Text)
 				}
 			case spec.StreamContentKindText:
 				if ev.Text != nil {
-					fmt.Fprint(os.Stderr, ev.Text.Text)
+					fmt.Fprintf(os.Stderr, "\n\n#######[text] %s\n", ev.Text.Text)
 				}
 			}
 			return nil

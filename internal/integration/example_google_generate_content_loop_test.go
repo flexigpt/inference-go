@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -24,7 +25,7 @@ func TestGoogleGenerateContent_FunctionToolRoundTripLoop(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 3*time.Minute)
 	defer cancel()
 
-	ps, err := newProviderSetWithDebug()
+	ps, err := newProviderSetWithDebug(slog.LevelDebug)
 	if err != nil {
 		t.Fatal(err)
 	}

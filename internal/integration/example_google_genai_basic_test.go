@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -16,7 +17,7 @@ func Example_googleGenerateContent_basicConversation() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	ps, err := newProviderSetWithDebug()
+	ps, err := newProviderSetWithDebug(slog.LevelDebug)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return

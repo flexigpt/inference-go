@@ -399,6 +399,7 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 		})
 	}
 
+	// Flush calls are for end cleaning not for continuation.
 	writeText, flushText := sdkutil.NewBufferedStreamer(emitText, streamCfg.FlushInterval, streamCfg.FlushChunkSize)
 	writeThinking, flushThinking := sdkutil.NewBufferedStreamer(
 		emitThinking,
@@ -416,8 +417,8 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 		streamWriteErr error
 		streamErr      error
 	)
-
-	for chunkResp, chunkErr := range client.Models.GenerateContentStream(ctx, string(modelName), contents, config) {
+	stream := client.Models.GenerateContentStream(ctx, string(modelName), contents, config)
+	for chunkResp, chunkErr := range stream {
 		if chunkErr != nil {
 			streamErr = chunkErr
 			break
@@ -454,28 +455,17 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 			accParts = append(accParts, part)
 
 			switch {
-			case part.FunctionCall != nil:
-				if flushText != nil {
-					flushText()
-				}
-				if flushThinking != nil {
-					flushThinking()
-				}
-
 			case part.Thought:
-				if flushText != nil {
-					flushText()
-				}
 				if part.Text == "" {
 					continue
 				}
 				streamWriteErr = writeThinking(part.Text)
+
+			case part.FunctionCall != nil:
+				// We dont stream function calls.
 			case part.Text != "":
 				if streamWriteErr != nil {
 					break
-				}
-				if flushThinking != nil {
-					flushThinking()
 				}
 				streamWriteErr = writeText(part.Text)
 			}
@@ -494,6 +484,15 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 	if flushThinking != nil {
 		flushThinking()
 	}
+
+	// Consolidate raw per-chunk stream parts into the canonical single-part-per-kind
+	// form that GenerateContent (non-streaming) returns: adjacent thought fragments are
+	// merged into one thought part and adjacent text fragments into one text part, with
+	// the last non-empty ThoughtSignature winning (signatures arrive on the final chunk).
+	// Without this, outputsFromGenAIResponse produces many tiny, mostly-unsigned
+	// ReasoningMessage / OutputMessage entries instead of the single signed entries that
+	// callers and the multi-turn round-trip path expect.
+	accParts = consolidateGoogleGenerateContentStreamParts(accParts)
 
 	combinedErr := errors.Join(streamErr, streamWriteErr)
 
@@ -537,6 +536,122 @@ func mergeGoogleGenerateContentGroundingMetadata(
 	out.WebSearchQueries = append(out.WebSearchQueries, src.WebSearchQueries...)
 	out.GroundingChunks = append(out.GroundingChunks, src.GroundingChunks...)
 	return &out
+}
+
+// consolidateGoogleGenerateContentStreamParts merges the raw per-chunk parts
+// accumulated during streaming into the canonical single-part-per-kind form that
+// GenerateContent (non-streaming) returns.
+//
+// Rules:
+//   - Adjacent thought parts are merged into one: texts are concatenated and the
+//     last non-empty ThoughtSignature wins (signatures arrive on the final chunk).
+//   - Adjacent plain-text (answer) parts are merged the same way.
+//   - FunctionCall parts are kept verbatim and act as group boundaries: a new
+//     text/thought accumulation starts after each function call.
+//
+// This makes resp.Outputs from the streaming path structurally identical to the
+// non-streaming path so that callers and the multi-turn signature round-trip work
+// correctly regardless of which path was used.
+func consolidateGoogleGenerateContentStreamParts(parts []*genai.Part) []*genai.Part {
+	if len(parts) == 0 {
+		return nil
+	}
+
+	type partKind uint8
+	const (
+		kindThought  partKind = iota // Thought == true, FunctionCall == nil
+		kindText                     // Thought == false, FunctionCall == nil
+		kindFuncCall                 // FunctionCall != nil
+	)
+
+	classOf := func(p *genai.Part) partKind {
+		if p.FunctionCall != nil {
+			return kindFuncCall
+		}
+		if p.Thought {
+			return kindThought
+		}
+		return kindText
+	}
+
+	type mergeGroup struct {
+		kind     partKind
+		textBuf  strings.Builder
+		sig      []byte
+		funcCall *genai.FunctionCall
+	}
+
+	var groups []*mergeGroup
+
+	for _, p := range parts {
+		if p == nil {
+			continue
+		}
+
+		k := classOf(p)
+
+		// Function calls always become their own group (never merged).
+		if k == kindFuncCall {
+			g := &mergeGroup{kind: kindFuncCall, funcCall: p.FunctionCall}
+			if len(p.ThoughtSignature) > 0 {
+				g.sig = p.ThoughtSignature
+			}
+			groups = append(groups, g)
+			continue
+		}
+
+		// Merge into the immediately preceding same-kind group when present.
+		if n := len(groups); n > 0 {
+			if last := groups[n-1]; last.kind == k {
+				if p.Text != "" {
+					last.textBuf.WriteString(p.Text)
+				}
+				if len(p.ThoughtSignature) > 0 {
+					last.sig = p.ThoughtSignature
+				}
+				continue
+			}
+		}
+
+		// Start a fresh group.
+		g := &mergeGroup{kind: k}
+		if p.Text != "" {
+			g.textBuf.WriteString(p.Text)
+		}
+		if len(p.ThoughtSignature) > 0 {
+			g.sig = p.ThoughtSignature
+		}
+		groups = append(groups, g)
+	}
+
+	if len(groups) == 0 {
+		return nil
+	}
+
+	out := make([]*genai.Part, 0, len(groups))
+	for _, g := range groups {
+		var p *genai.Part
+		switch g.kind {
+		case kindFuncCall:
+			p = &genai.Part{
+				FunctionCall:     g.funcCall,
+				ThoughtSignature: g.sig,
+			}
+		case kindThought:
+			p = &genai.Part{
+				Thought:          true,
+				Text:             g.textBuf.String(),
+				ThoughtSignature: g.sig,
+			}
+		default: // kindText
+			p = &genai.Part{
+				Text:             g.textBuf.String(),
+				ThoughtSignature: g.sig,
+			}
+		}
+		out = append(out, p)
+	}
+	return out
 }
 
 // outputsFromGenAIResponse converts a GenerateContentResponse to a slice of

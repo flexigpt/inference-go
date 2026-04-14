@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 	"time"
@@ -21,7 +22,7 @@ func Example_anthropic_toolsAndThinkingStreaming() {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
-	ps, err := newProviderSetWithDebug()
+	ps, err := newProviderSetWithDebug(slog.LevelDebug)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return
@@ -163,7 +164,7 @@ func Example_anthropic_functionToolRoundTrip() {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
-	ps, err := newProviderSetWithDebug()
+	ps, err := newProviderSetWithDebug(slog.LevelDebug)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return

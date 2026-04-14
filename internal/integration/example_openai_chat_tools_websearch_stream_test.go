@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -18,7 +19,7 @@ func Example_openAIChat_toolsAndJSONSchema() {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
-	ps, err := newProviderSetWithDebug()
+	ps, err := newProviderSetWithDebug(slog.LevelDebug)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return

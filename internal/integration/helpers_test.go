@@ -15,9 +15,9 @@ import (
 //   - an HTTPCompletionDebugger that logs HTTP request/response metadata
 //
 // The examples reuse this helper to keep them short.
-func newProviderSetWithDebug() (*inference.ProviderSetAPI, error) {
+func newProviderSetWithDebug(level slog.Level) (*inference.ProviderSetAPI, error) {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
+		Level: level,
 	}))
 
 	return inference.NewProviderSetAPI(

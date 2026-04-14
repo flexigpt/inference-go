@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const testModelName = "gemini-3-flash-preview"
+const testModelName = "gemini-2.5-flash"
 
 // Example_googleGenerateContent_functionToolRoundTrip demonstrates a full
 // Gemini function-tool round trip:
@@ -25,10 +26,10 @@ const testModelName = "gemini-3-flash-preview"
 //     - extra user text
 //  5. model returns the final answer
 func Example_googleGenerateContent_functionToolRoundTrip() {
-	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
 	defer cancel()
 
-	ps, err := newProviderSetWithDebug()
+	ps, err := newProviderSetWithDebug(slog.LevelInfo)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error creating ProviderSetAPI:", err)
 		return
@@ -75,16 +76,17 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 	}
 
 	initialUser := newUserTextInput(
-		`Use the echo_text tool with text "google tool round trip". Do not answer yet; only call the tool.`,
+		`this is a test. think about what 20 new words you can say and say that in text. then call the echo_text tool with that text.`,
 	)
 
 	firstReq := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
 			Name:            testModelName,
 			MaxOutputLength: 512,
+			Stream:          true,
 			Reasoning: &spec.ReasoningParam{
-				Type:  spec.ReasoningTypeSingleWithLevels,
-				Level: spec.ReasoningLevelLow,
+				Type:   spec.ReasoningTypeHybridWithTokens,
+				Tokens: 256,
 			},
 			SystemPrompt: "You are validating a Gemini function tool round trip. " +
 				"When the tool is forced, emit only the tool call in the first response.",
@@ -102,10 +104,28 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 
 	firstResp, err := ps.FetchCompletion(ctx, "google-tools", firstReq, &spec.FetchCompletionOptions{
 		CompletionKey: testModelName,
+		StreamHandler: func(ev spec.StreamEvent) error {
+			switch ev.Kind {
+			case spec.StreamContentKindThinking:
+				if ev.Thinking != nil {
+					fmt.Fprintf(os.Stderr, "\n\n#######[thinking 1] %s\n", ev.Thinking.Text)
+				}
+			case spec.StreamContentKindText:
+				if ev.Text != nil {
+					fmt.Fprintf(os.Stderr, "\n\n#######[text 1] %s\n", ev.Text.Text)
+				}
+			}
+			return nil
+		},
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "first FetchCompletion error:", err)
 		return
+	}
+
+	firstText := responseText(firstResp)
+	if firstText != "" {
+		fmt.Fprintln(os.Stderr, "FIRST assistant text:", firstText)
 	}
 
 	call, err := firstFunctionToolCall(firstResp)
@@ -115,7 +135,7 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 	}
 	fmt.Fprintf(
 		os.Stderr,
-		"tool call: name=%s id=%s args=%s\n",
+		"\ntool call 1: name=%s id=%s args=%s\n",
 		call.Name,
 		nonEmpty(call.CallID, call.ID),
 		call.Arguments,
@@ -126,7 +146,7 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 		fmt.Fprintln(os.Stderr, "error executing local tool:", err)
 		return
 	}
-	fmt.Fprintf(os.Stderr, "tool result for %s: %s\n", toolOutput.CallID, firstToolOutputText(toolOutput))
+	fmt.Fprintf(os.Stderr, "\ntool result 1 for %s: %s\n", toolOutput.CallID, firstToolOutputText(toolOutput))
 
 	history := make([]spec.InputUnion, 0, len(firstResp.Outputs)+2)
 	history = append(history, initialUser)
@@ -140,8 +160,13 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 		ModelParam: spec.ModelParam{
 			Name:            testModelName,
 			MaxOutputLength: 256,
+			Stream:          true,
+			Reasoning: &spec.ReasoningParam{
+				Type:   spec.ReasoningTypeHybridWithTokens,
+				Tokens: 256,
+			},
 			SystemPrompt: "You have now received the tool result. " +
-				"Answer briefly in plain text. Do not call any tool again.",
+				"Answer with a sonnet of it. Do not call any tool again.",
 		},
 		Inputs:      append(history, newUserTextInput("Now finish in one short sentence.")),
 		ToolChoices: []spec.ToolChoice{tool},
@@ -152,6 +177,19 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 
 	secondResp, err := ps.FetchCompletion(ctx, "google-tools", secondReq, &spec.FetchCompletionOptions{
 		CompletionKey: testModelName,
+		StreamHandler: func(ev spec.StreamEvent) error {
+			switch ev.Kind {
+			case spec.StreamContentKindThinking:
+				if ev.Thinking != nil {
+					fmt.Fprintf(os.Stderr, "\n\n#######[thinking 2] %s\n", ev.Thinking.Text)
+				}
+			case spec.StreamContentKindText:
+				if ev.Text != nil {
+					fmt.Fprintf(os.Stderr, "\n\n#######[text 2] %s\n", ev.Text.Text)
+				}
+			}
+			return nil
+		},
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "second FetchCompletion error:", err)
@@ -160,7 +198,7 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 
 	finalText := responseText(secondResp)
 	if finalText != "" {
-		fmt.Fprintln(os.Stderr, "final assistant text:", finalText)
+		fmt.Fprintln(os.Stderr, "\nFINAL assistant text:", finalText)
 	}
 
 	fmt.Println("OK")
