@@ -236,7 +236,7 @@ func applyAnthropicThinkingPolicy(
 	}
 
 	// Derive the requested thinking config from ModelParam.Reasoning.
-	requestedEnabled, requestedAdaptive, requestedBudget := requestedAnthropicThinking(mp)
+	requestedEnabled, requestedAdaptive, requestedBudget := requestedAnthropicThinking(mp, params.MaxTokens)
 	effectiveEnabled := requestedEnabled
 	effectiveAdaptive := requestedAdaptive
 	effectiveBudget := requestedBudget
@@ -310,7 +310,7 @@ func applyAnthropicThinkingPolicy(
 	}
 }
 
-func requestedAnthropicThinking(mp *spec.ModelParam) (enabled, adaptive bool, budget int64) {
+func requestedAnthropicThinking(mp *spec.ModelParam, derivedMaxToken int64) (enabled, adaptive bool, budget int64) {
 	if mp == nil || mp.Reasoning == nil {
 		return false, false, 0
 	}
@@ -318,7 +318,7 @@ func requestedAnthropicThinking(mp *spec.ModelParam) (enabled, adaptive bool, bu
 	switch rp.Type {
 	case spec.ReasoningTypeHybridWithTokens:
 		// Enforce minimum budget if requested.
-		return true, false, int64(max(rp.Tokens, int(anthropicDefaultThinkingBudget)))
+		return true, false, int64(min(max(rp.Tokens, int(anthropicDefaultThinkingBudget)), int(derivedMaxToken)-1))
 
 	case spec.ReasoningTypeSingleWithLevels:
 		// Map qualitative levels to token budgets; ignore rp.Tokens.

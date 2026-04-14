@@ -589,9 +589,13 @@ func applyAnthropicToolPolicy(
 			)
 		}
 
+		name := resolvedTools[0].Name
+		if resolvedTools[0].Type == spec.ToolTypeWebSearch {
+			name = "web_search"
+		}
 		params.ToolChoice = anthropic.ToolChoiceUnionParam{
 			OfTool: &anthropic.ToolChoiceToolParam{
-				Name:                   resolvedTools[0].Name,
+				Name:                   name,
 				DisableParallelToolUse: anthropic.Bool(disableParallel),
 			},
 		}

@@ -121,10 +121,6 @@ func ResolveAllowedTools(
 					continue
 				}
 			}
-			if tc.Type != spec.ToolTypeFunction && tc.Type != spec.ToolTypeCustom {
-				// Skip unsupported tool types for "allowed tools" resolution.
-				continue
-			}
 			resolvedTools = append(resolvedTools, ResolvedAllowedTool{
 				Type: tc.Type,
 				Name: apiName,
