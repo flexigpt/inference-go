@@ -1,7 +1,9 @@
 package googlegeneratecontentsdk
 
 import (
+	"context"
 	"encoding/base64"
+	"fmt"
 	"strings"
 
 	"google.golang.org/genai"
@@ -11,25 +13,56 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+func resolveGoogleGenerateContentReasoningCapabilities(
+	ctx context.Context,
+	opts *spec.FetchCompletionOptions,
+	modelName spec.ModelName,
+) *spec.ReasoningCapabilities {
+	if opts == nil || opts.CapabilityResolver == nil || strings.TrimSpace(string(modelName)) == "" {
+		return nil
+	}
+
+	caps, err := opts.CapabilityResolver.ResolveModelCapabilities(ctx, spec.ResolveModelCapabilitiesRequest{
+		ProviderSDKType: spec.ProviderSDKTypeGoogleGenerateContent,
+		ModelName:       modelName,
+		CompletionKey:   opts.CompletionKey,
+	})
+	if err != nil {
+		logutil.Debug(
+			"googleGenerateContent: failed to resolve model capabilities for reasoning policy",
+			"model", modelName,
+			"err", err,
+		)
+		return nil
+	}
+	if caps == nil {
+		return nil
+	}
+	return caps.ReasoningCapabilities
+}
+
 // applyGoogleGenerateContentThinkingPolicy sets ThinkingConfig in GenerateContentConfig
-// based on ModelParam.Reasoning.
-//
-//   - ReasoningTypeHybridWithTokens  → fixed ThinkingBudget (token count).
-//   - ReasoningTypeSingleWithLevels  → qualitative ThinkingLevel; None means
-//     no ThinkingConfig (thinking disabled).
+// based on ModelParam.Reasoning and optional model-specific capabilities.
 func applyGoogleGenerateContentThinkingPolicy(
 	config *genai.GenerateContentConfig,
 	mp *spec.ModelParam,
-) {
+	caps *spec.ReasoningCapabilities,
+) error {
 	if config == nil || mp == nil || mp.Reasoning == nil {
-		return
+		return nil
 	}
 	rp := mp.Reasoning
 
 	switch rp.Type {
 	case spec.ReasoningTypeHybridWithTokens:
-		tokens := sdkutil.ClampIntToInt32(rp.Tokens)
-		budget := max(tokens, 1)
+		budget, err := validateGoogleThinkingBudget(rp.Tokens, caps, mp.Name)
+		if err != nil {
+			return err
+		}
+		if budget == 0 {
+			config.ThinkingConfig = disabledGoogleGenerateContentThinkingConfig()
+			return nil
+		}
 		config.ThinkingConfig = &genai.ThinkingConfig{
 			IncludeThoughts: true,
 			ThinkingBudget:  &budget,
@@ -38,17 +71,69 @@ func applyGoogleGenerateContentThinkingPolicy(
 	case spec.ReasoningTypeSingleWithLevels:
 		level, ok := googleThinkingLevelFromSpec(rp.Level)
 		if !ok {
-			// Spec.ReasoningLevelNone or unknown → no ThinkingConfig.
-			return
+			return nil
 		}
 		config.ThinkingConfig = &genai.ThinkingConfig{
 			IncludeThoughts: true,
 			ThinkingLevel:   level,
 		}
-
 	default:
 		// Unknown reasoning type → no ThinkingConfig.
 	}
+	return nil
+}
+
+func disabledGoogleGenerateContentThinkingConfig() *genai.ThinkingConfig {
+	zero := int32(0)
+	return &genai.ThinkingConfig{
+		IncludeThoughts: false,
+		ThinkingBudget:  &zero,
+	}
+}
+
+func validateGoogleThinkingBudget(
+	tokens int,
+	caps *spec.ReasoningCapabilities,
+	modelName spec.ModelName,
+) (int32, error) {
+	budget := sdkutil.ClampIntToInt32(tokens)
+
+	var budgetCaps *spec.ReasoningTokenBudgetCapabilities
+	if caps != nil {
+		budgetCaps = caps.HybridTokenBudgetCapabilities
+	}
+
+	switch {
+	case budget < -1:
+		return 0, fmt.Errorf("googleGenerateContent: reasoning tokens must be >= -1 for model %q", modelName)
+	case budget == -1:
+		if budgetCaps != nil && !budgetCaps.MinusOneAllowed {
+			return 0, fmt.Errorf("googleGenerateContent: reasoning tokens=-1 is not allowed for model %q", modelName)
+		}
+	case budget == 0:
+		if budgetCaps != nil && !budgetCaps.ZeroAllowed {
+			return 0, fmt.Errorf("googleGenerateContent: reasoning tokens=0 is not allowed for model %q", modelName)
+		}
+	default:
+		if budgetCaps != nil && budgetCaps.MinAllowed > 0 && int(budget) < budgetCaps.MinAllowed {
+			return 0, fmt.Errorf(
+				"googleGenerateContent: reasoning tokens=%d is below minAllowed=%d for model %q",
+				budget,
+				budgetCaps.MinAllowed,
+				modelName,
+			)
+		}
+		if budgetCaps != nil && budgetCaps.MaxAllowed > 0 && int(budget) > budgetCaps.MaxAllowed {
+			return 0, fmt.Errorf(
+				"googleGenerateContent: reasoning tokens=%d exceeds maxAllowed=%d for model %q",
+				budget,
+				budgetCaps.MaxAllowed,
+				modelName,
+			)
+		}
+	}
+
+	return budget, nil
 }
 
 // googleThinkingLevelFromSpec maps a spec.ReasoningLevel to the
@@ -101,7 +186,7 @@ func sanitizeGoogleGenerateContentReasoningInputs(inputs []spec.InputUnion) []sp
 			continue
 		}
 
-		if !isGoogleNativeReasoning(in.ReasoningMessage) {
+		if _, ok := decodeThoughtSignature(in.ReasoningMessage.Signature); !ok {
 			dropped++
 			continue
 		}
@@ -117,24 +202,6 @@ func sanitizeGoogleGenerateContentReasoningInputs(inputs []spec.InputUnion) []sp
 	}
 
 	return out
-}
-
-// isGoogleNativeReasoning returns true when the ReasoningContent carries a
-// Google-native thought: at least one non-empty Thinking string AND a
-// non-empty Signature (base64-encoded ThoughtSignature bytes).
-func isGoogleNativeReasoning(r *spec.ReasoningContent) bool {
-	if r == nil {
-		return false
-	}
-	if _, ok := decodeThoughtSignature(r.Signature); !ok {
-		return false
-	}
-	for _, t := range r.Thinking {
-		if strings.TrimSpace(t) != "" {
-			return true
-		}
-	}
-	return false
 }
 
 // thoughtSignatureToString base64-encodes the raw ThoughtSignature bytes

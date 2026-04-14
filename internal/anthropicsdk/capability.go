@@ -20,6 +20,11 @@ var anthropicsdkCapability = spec.ModelCapabilities{
 			spec.ReasoningLevelHigh,
 			spec.ReasoningLevelXHigh,
 		},
+		HybridTokenBudgetCapabilities: &spec.ReasoningTokenBudgetCapabilities{
+			MinAllowed:      1024,
+			ZeroAllowed:     false,
+			MinusOneAllowed: false,
+		},
 		SupportsSummaryStyle: false,
 
 		SupportsEncryptedReasoningInput:  false,

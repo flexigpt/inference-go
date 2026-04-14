@@ -256,30 +256,24 @@ func contentItemFileToGenAIPart(fileItem *spec.ContentItemFile) *genai.Part {
 
 // reasoningContentToGenAIPart converts a spec.ReasoningContent to a genai
 // thought Part for history pass-back.
-// Only Google-native reasoning (Thinking text + Signature) is converted;
-// all other forms (EncryptedContent, RedactedThinking, Summary) are silently
-// skipped since they originate from other providers.
+// Google-native signed thoughts are replayed even when the visible thought
+// text is empty; signature-only parts still need to be passed back.
 func reasoningContentToGenAIPart(r *spec.ReasoningContent) *genai.Part {
 	if r == nil {
 		return nil
 	}
-	// Google-native: signed thought.
-	if strings.TrimSpace(r.Signature) != "" {
-		text := strings.TrimSpace(strings.Join(r.Thinking, " "))
-		if text == "" {
-			return nil
-		}
-		sig, ok := decodeThoughtSignature(r.Signature)
-		if !ok {
-			return nil
-		}
-		return &genai.Part{
-			Text:             text,
-			Thought:          true,
-			ThoughtSignature: sig,
-		}
+	sig, ok := decodeThoughtSignature(r.Signature)
+	if !ok {
+		return nil
 	}
-	return nil
+	p := &genai.Part{
+		Thought:          true,
+		ThoughtSignature: sig,
+	}
+	if text := strings.TrimSpace(strings.Join(r.Thinking, "\n")); text != "" {
+		p.Text = text
+	}
+	return p
 }
 
 // toolCallToGenAIFunctionCallPart converts a ToolCall to a genai FunctionCall

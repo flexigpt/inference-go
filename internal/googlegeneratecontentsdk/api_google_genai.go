@@ -1,6 +1,7 @@
 package googlegeneratecontentsdk
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -223,7 +224,13 @@ func (api *GoogleGenerateContentAPI) FetchCompletion(
 	}
 
 	// Thinking / reasoning.
-	applyGoogleGenerateContentThinkingPolicy(config, &req.ModelParam)
+	reasoningCaps := googleGenerateContentSDKCapability.ReasoningCapabilities
+	if resolved := resolveGoogleGenerateContentReasoningCapabilities(ctx, opts, req.ModelParam.Name); resolved != nil {
+		reasoningCaps = resolved
+	}
+	if err := applyGoogleGenerateContentThinkingPolicy(config, &req.ModelParam, reasoningCaps); err != nil {
+		return nil, err
+	}
 
 	// Output format.
 	if req.ModelParam.OutputParam != nil {
@@ -435,7 +442,7 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 			accFinish = cand.FinishReason
 		}
 		if cand.GroundingMetadata != nil {
-			accGrounding = cand.GroundingMetadata
+			accGrounding = mergeGoogleGenerateContentGroundingMetadata(accGrounding, cand.GroundingMetadata)
 		}
 		if cand.Content == nil {
 			continue
@@ -447,12 +454,30 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 			}
 			accParts = append(accParts, part)
 
-			if part.Text == "" {
-				continue
-			}
-			if part.Thought {
+			switch {
+			case part.FunctionCall != nil:
+				if flushText != nil {
+					flushText()
+				}
+				if flushThinking != nil {
+					flushThinking()
+				}
+
+			case part.Thought:
+				if flushText != nil {
+					flushText()
+				}
+				if part.Text == "" {
+					continue
+				}
 				streamWriteErr = writeThinking(part.Text)
-			} else {
+			case part.Text != "":
+				if streamWriteErr != nil {
+					break
+				}
+				if flushThinking != nil {
+					flushThinking()
+				}
 				streamWriteErr = writeText(part.Text)
 			}
 			if streamWriteErr != nil {
@@ -497,6 +522,22 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 	resp.Outputs = outputsFromGenAIResponse(synthResp, toolChoiceNameMap, webSearchChoiceID)
 
 	return resp, synthResp, combinedErr
+}
+
+func mergeGoogleGenerateContentGroundingMetadata(
+	dst *genai.GroundingMetadata,
+	src *genai.GroundingMetadata,
+) *genai.GroundingMetadata {
+	if dst == nil {
+		return src
+	}
+	if src == nil {
+		return dst
+	}
+	out := *dst
+	out.WebSearchQueries = append(out.WebSearchQueries, src.WebSearchQueries...)
+	out.GroundingChunks = append(out.GroundingChunks, src.GroundingChunks...)
+	return &out
 }
 
 // outputsFromGenAIResponse converts a GenerateContentResponse to a slice of
@@ -547,22 +588,23 @@ func outputsFromGenAIResponse(
 	}
 
 	flushThinking := func() {
-		if thinkBuf.Len() == 0 {
+		if thinkBuf.Len() == 0 && len(thinkSig) == 0 {
 			return
 		}
-		thinking := thinkBuf.String()
-		sig := thoughtSignatureToString(thinkSig)
+		msg := &spec.ReasoningContent{
+			ID:        respID,
+			Role:      spec.RoleAssistant,
+			Status:    status,
+			Signature: thoughtSignatureToString(thinkSig),
+		}
+		if thinkBuf.Len() > 0 {
+			msg.Thinking = []string{thinkBuf.String()}
+		}
 		thinkBuf.Reset()
 		thinkSig = nil
 		outs = append(outs, spec.OutputUnion{
-			Kind: spec.OutputKindReasoningMessage,
-			ReasoningMessage: &spec.ReasoningContent{
-				ID:        respID,
-				Role:      spec.RoleAssistant,
-				Status:    status,
-				Signature: sig,
-				Thinking:  []string{thinking},
-			},
+			Kind:             spec.OutputKindReasoningMessage,
+			ReasoningMessage: msg,
 		})
 	}
 
@@ -571,12 +613,19 @@ func outputsFromGenAIResponse(
 			continue
 		}
 		switch {
-		case part.Text != "" && part.Thought:
-			// Thinking / reasoning part – flush any pending regular text first.
+		case part.Thought:
 			flushText()
-			thinkBuf.WriteString(part.Text)
+			if len(part.ThoughtSignature) > 0 &&
+				(thinkBuf.Len() > 0 || len(thinkSig) > 0) &&
+				!bytes.Equal(thinkSig, part.ThoughtSignature) {
+				flushThinking()
+			}
+
+			if part.Text != "" {
+				thinkBuf.WriteString(part.Text)
+			}
 			if len(part.ThoughtSignature) > 0 {
-				thinkSig = part.ThoughtSignature
+				thinkSig = append([]byte(nil), part.ThoughtSignature...)
 			}
 
 		case part.Text != "" && !part.Thought:
@@ -653,23 +702,6 @@ func outputsFromGenAIResponse(
 		return nil
 	}
 	return outs
-}
-
-func filterGoogleGenerateContentCallableToolChoices(toolChoices []spec.ToolChoice) []spec.ToolChoice {
-	if len(toolChoices) == 0 {
-		return nil
-	}
-
-	out := make([]spec.ToolChoice, 0, len(toolChoices))
-	for _, tc := range toolChoices {
-		switch tc.Type {
-		case spec.ToolTypeFunction, spec.ToolTypeCustom:
-			out = append(out, tc)
-		default:
-			// Fall.
-		}
-	}
-	return out
 }
 
 // groundingToWebSearchOutputs converts Google grounding metadata to spec
@@ -871,15 +903,16 @@ func buildGoogleGenerateContentToolConfig(
 		// Optionally restrict to a named subset.
 		if len(policy.AllowedTools) > 0 {
 			resolved, err := sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
-			if err != nil || len(resolved) == 0 {
+			if err != nil {
+				return nil, err
+			}
+			callable := filterGoogleGenerateContentCallableResolvedAllowedTool(resolved)
+			if len(callable) == 0 {
 				return nil, errors.New(
-					"googleGenerateContent: toolPolicy=any requires allowedTools with at least one resolvable function/custom tool",
+					"googleGenerateContent: toolPolicy=any cannot be satisfied with empty or webSearch-only allowedTools; provide at least one function/custom tool or use auto",
 				)
 			}
-			for _, t := range resolved {
-				if t.Type == spec.ToolTypeWebSearch {
-					continue
-				}
+			for _, t := range callable {
 				fcc.AllowedFunctionNames = append(fcc.AllowedFunctionNames, t.Name)
 			}
 		}
@@ -887,12 +920,11 @@ func buildGoogleGenerateContentToolConfig(
 	case spec.ToolPolicyModeTool:
 		fcc.Mode = genai.FunctionCallingConfigModeAny
 		resolved, err := sdkutil.ResolveAllowedTools(policy.AllowedTools, toolChoiceNameMap)
-		if err != nil || len(resolved) == 0 {
-			return nil, errors.New(
-				"googleGenerateContent: toolPolicy=tool requires exactly one resolvable function/custom tool in allowedTools",
-			)
+		if err != nil {
+			return nil, err
 		}
-		if len(resolved) != 1 {
+		callable := filterGoogleGenerateContentCallableResolvedAllowedTool(resolved)
+		if len(callable) != 1 {
 			return nil, errors.New(
 				"googleGenerateContent: toolPolicy=tool requires exactly one callable (function/custom) tool; webSearch cannot be forced on Gemini GenerateContent",
 			)
@@ -904,6 +936,42 @@ func buildGoogleGenerateContentToolConfig(
 	}
 
 	return &genai.ToolConfig{FunctionCallingConfig: fcc}, nil
+}
+
+func filterGoogleGenerateContentCallableResolvedAllowedTool(
+	tools []sdkutil.ResolvedAllowedTool,
+) []sdkutil.ResolvedAllowedTool {
+	if len(tools) == 0 {
+		return nil
+	}
+
+	out := make([]sdkutil.ResolvedAllowedTool, 0, len(tools))
+	for _, tc := range tools {
+		switch tc.Type {
+		case spec.ToolTypeFunction, spec.ToolTypeCustom:
+			out = append(out, tc)
+		default:
+			// Fall.
+		}
+	}
+	return out
+}
+
+func filterGoogleGenerateContentCallableToolChoices(toolChoices []spec.ToolChoice) []spec.ToolChoice {
+	if len(toolChoices) == 0 {
+		return nil
+	}
+
+	out := make([]spec.ToolChoice, 0, len(toolChoices))
+	for _, tc := range toolChoices {
+		switch tc.Type {
+		case spec.ToolTypeFunction, spec.ToolTypeCustom:
+			out = append(out, tc)
+		default:
+			// Fall.
+		}
+	}
+	return out
 }
 
 func applyGoogleGenerateContentOutputParam(

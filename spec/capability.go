@@ -17,12 +17,24 @@ const (
 	ModalityVideoOut Modality = "videoOut"
 )
 
+// ReasoningTokenBudgetCapabilities applies to ReasoningTypeHybridWithTokens.
+// MinAllowed/MaxAllowed apply to positive token budgets only.
+// Special values 0 and -1 are governed separately because some providers/models
+// support them as distinct control values.
+type ReasoningTokenBudgetCapabilities struct {
+	MinAllowed      int  `json:"minAllowed,omitempty"`
+	MaxAllowed      int  `json:"maxAllowed,omitempty"`
+	ZeroAllowed     bool `json:"zeroAllowed,omitempty"`
+	MinusOneAllowed bool `json:"minusOneAllowed,omitempty"`
+}
+
 type ReasoningCapabilities struct {
-	SupportedReasoningTypes          []ReasoningType  `json:"supportedReasoningTypes"`
-	SupportedReasoningLevels         []ReasoningLevel `json:"supportedReasoningLevels"`
-	SupportsSummaryStyle             bool             `json:"supportsSummaryStyle"`
-	SupportsEncryptedReasoningInput  bool             `json:"supportsEncryptedReasoningInput"`
-	TemperatureDisallowedWhenEnabled bool             `json:"temperatureDisallowedWhenEnabled"`
+	SupportedReasoningTypes          []ReasoningType                   `json:"supportedReasoningTypes"`
+	SupportedReasoningLevels         []ReasoningLevel                  `json:"supportedReasoningLevels"`
+	HybridTokenBudgetCapabilities    *ReasoningTokenBudgetCapabilities `json:"hybridTokenBudgetCapabilities,omitempty"`
+	SupportsSummaryStyle             bool                              `json:"supportsSummaryStyle"`
+	SupportsEncryptedReasoningInput  bool                              `json:"supportsEncryptedReasoningInput"`
+	TemperatureDisallowedWhenEnabled bool                              `json:"temperatureDisallowedWhenEnabled"`
 }
 
 type StopSequenceCapabilities struct {
