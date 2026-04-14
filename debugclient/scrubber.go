@@ -102,7 +102,7 @@ func (s *scrubber) scrubMap(m map[string]any, depth int, ctx scrubContext) any {
 	insideMessage := ctx.insideMessage
 	if roleRaw, ok := m["role"].(string); ok {
 		role := strings.ToLower(strings.TrimSpace(roleRaw))
-		if role == "user" || role == "assistant" {
+		if role == "user" || role == "assistant" || role == "model" {
 			insideMessage = true
 		}
 	}
@@ -129,7 +129,7 @@ func (s *scrubber) scrubMap(m map[string]any, depth int, ctx scrubContext) any {
 		}
 
 		// Strip top-level LLM text fields like "input", "prompt", "query".
-		if !s.cfg.DisableContentStripping && (lk == "input" || lk == "prompt" || lk == "query") {
+		if !s.cfg.DisableContentStripping && (lk == "input" || lk == "prompt" || lk == "query" || lk == "parts") {
 			out[k] = s.scrubTopLevelText(val, depth+1, childCtx)
 			continue
 		}
@@ -229,7 +229,7 @@ func (s *scrubber) scrubContentSegment(seg map[string]any, depth int) any {
 
 		// Textual segments: drop text/content.
 		if !s.cfg.DisableContentStripping && (segType == "input_text" || segType == "output_text" ||
-			segType == textStr || segType == "message") {
+			segType == textStr || segType == "message" || segType == "part") {
 			if lk == textStr || lk == contentStr {
 				out[k] = ommitedTextContentStr
 				continue
