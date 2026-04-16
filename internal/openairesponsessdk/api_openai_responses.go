@@ -1321,8 +1321,7 @@ func toolChoicesToOpenAIResponseTools(
 				continue
 			}
 			fn := responses.WebSearchToolParam{
-				Type:              responses.WebSearchToolTypeWebSearch,
-				SearchContextSize: responses.WebSearchToolSearchContextSizeMedium,
+				Type: responses.WebSearchToolTypeWebSearch,
 			}
 			if len(tc.WebSearchArguments.AllowedDomains) != 0 {
 				fn.Filters = responses.WebSearchToolFiltersParam{AllowedDomains: tc.WebSearchArguments.AllowedDomains}
@@ -1341,8 +1340,10 @@ func toolChoicesToOpenAIResponseTools(
 				fn.SearchContextSize = responses.WebSearchToolSearchContextSizeLow
 			case spec.WebSearchContextSizeHigh:
 				fn.SearchContextSize = responses.WebSearchToolSearchContextSizeHigh
-			default:
+			case spec.WebSearchContextSizeMedium:
 				fn.SearchContextSize = responses.WebSearchToolSearchContextSizeMedium
+			default:
+				// Don't set. Most providers default to medium.
 			}
 
 			out = append(out, responses.ToolUnionParam{OfWebSearch: &fn})

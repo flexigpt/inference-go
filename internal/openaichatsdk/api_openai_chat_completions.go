@@ -956,8 +956,7 @@ func applyOpenAIChatWebSearchOptions(
 	case spec.WebSearchContextSizeLow, spec.WebSearchContextSizeMedium, spec.WebSearchContextSizeHigh:
 		opt.SearchContextSize = string(ws.SearchContextSize)
 	default:
-		// Default to "medium" if unset/invalid.
-		opt.SearchContextSize = "medium"
+		// Don't set. Most providers default to medium.
 	}
 
 	if ws.UserLocation != nil {
