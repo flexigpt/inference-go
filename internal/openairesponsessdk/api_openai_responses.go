@@ -1065,16 +1065,6 @@ func toolOutputToOpenAIResponses(
 	}
 	switch toolOutput.Type {
 	case spec.ToolTypeFunction:
-		var status responses.ResponseFunctionToolCallStatus
-		switch toolOutput.Status {
-		case fromOpenAIStatus(string(responses.ResponseFunctionToolCallStatusCompleted)):
-			status = responses.ResponseFunctionToolCallStatusCompleted
-		case fromOpenAIStatus(string(responses.ResponseFunctionToolCallStatusIncomplete)):
-			status = responses.ResponseFunctionToolCallStatusIncomplete
-		case fromOpenAIStatus(string(responses.ResponseFunctionToolCallStatusInProgress)):
-			status = responses.ResponseFunctionToolCallStatusInProgress
-		default:
-		}
 
 		items, err := contentItemsToOpenAIFunctionCallOutputContent(toolOutput.Contents)
 		if err != nil {
@@ -1083,13 +1073,11 @@ func toolOutputToOpenAIResponses(
 		if len(items) > 0 {
 			return &responses.ResponseInputItemUnionParam{
 				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-					ID:     param.NewOpt(toolOutput.ID),
 					CallID: toolOutput.CallID,
 					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 						OfResponseFunctionCallOutputItemArray: items,
 					},
-					Status: string(status),
-					Type:   openaiSharedConstant.FunctionCallOutput("").Default(),
+					Type: openaiSharedConstant.FunctionCallOutput("").Default(),
 				},
 			}
 		}
@@ -1134,7 +1122,6 @@ func toolOutputToOpenAIResponses(
 			if len(items) > 0 {
 				return &responses.ResponseInputItemUnionParam{
 					OfCustomToolCallOutput: &responses.ResponseCustomToolCallOutputParam{
-						ID:     param.NewOpt(toolOutput.ID),
 						CallID: toolOutput.CallID,
 						Output: responses.ResponseCustomToolCallOutputOutputUnionParam{
 							OfOutputContentList: items,
@@ -1146,7 +1133,7 @@ func toolOutputToOpenAIResponses(
 		}
 
 	case spec.ToolTypeWebSearch:
-		// OpenAI doesn't have web search tool output object.
+		// OpenAI responses API doesn't have web search tool output object.
 	}
 	return nil
 }
