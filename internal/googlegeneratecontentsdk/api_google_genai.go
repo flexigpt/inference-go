@@ -181,7 +181,7 @@ func (api *GoogleGenerateContentAPI) FetchCompletion(
 		return nil, errors.New("google genai api LLM: empty completion data")
 	}
 
-	req, warns, err := sdkutil.NormalizeRequestForSDK(
+	req, _, warns, err := sdkutil.NormalizeRequestForSDK(
 		ctx, inReq, opts, spec.ProviderSDKTypeGoogleGenerateContent, googleGenerateContentSDKCapability,
 	)
 	if err != nil {

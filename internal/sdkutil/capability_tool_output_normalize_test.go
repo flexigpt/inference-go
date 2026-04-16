@@ -43,7 +43,7 @@ func TestNormalizeRequestForSDK_CollapsesRichClientToolOutputsWhenStringOnly(t *
 		},
 	}
 
-	got, warns, err := NormalizeRequestForSDK(
+	got, _, warns, err := NormalizeRequestForSDK(
 		t.Context(),
 		req,
 		nil,
@@ -108,7 +108,7 @@ func TestNormalizeRequestForSDK_LeavesSingleTextToolOutputUntouchedWhenStringOnl
 		},
 	}
 
-	got, _, err := NormalizeRequestForSDK(t.Context(), req, nil, spec.ProviderSDKTypeOpenAIResponses, caps)
+	got, _, _, err := NormalizeRequestForSDK(t.Context(), req, nil, spec.ProviderSDKTypeOpenAIResponses, caps)
 	if err != nil {
 		t.Fatalf("NormalizeRequestForSDK error: %v", err)
 	}

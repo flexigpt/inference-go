@@ -183,7 +183,7 @@ func (api *AnthropicMessagesAPI) FetchCompletion(
 	if inReq == nil || len(inReq.Inputs) == 0 || inReq.ModelParam.Name == "" {
 		return nil, errors.New("anthropic messages api LLM: empty completion data")
 	}
-	req, warns, err := sdkutil.NormalizeRequestForSDK(
+	req, _, warns, err := sdkutil.NormalizeRequestForSDK(
 		ctx, inReq, opts, spec.ProviderSDKTypeAnthropic, anthropicsdkCapability,
 	)
 	if err != nil {

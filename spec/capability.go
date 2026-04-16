@@ -17,6 +17,27 @@ const (
 	ModalityVideoOut Modality = "videoOut"
 )
 
+type MaxOutputTokensParamName string
+
+const (
+	MaxOutputTokensParamNameMaxCompletionTokens MaxOutputTokensParamName = "maxCompletionTokens"
+	MaxOutputTokensParamNameMaxTokens           MaxOutputTokensParamName = "maxTokens"
+)
+
+type ToolChoiceParamStyle string
+
+const (
+	ToolChoiceParamStyleAllowedTools  ToolChoiceParamStyle = "allowedTools"
+	ToolChoiceParamStyleRequiredNamed ToolChoiceParamStyle = "requiredNamed"
+)
+
+type OpenAIChatCompletionsParamDialect struct{}
+
+type ParamDialect struct {
+	MaxOutputTokensParamName MaxOutputTokensParamName `json:"maxOutputTokensParamName,omitempty"`
+	ToolChoiceParamStyle     ToolChoiceParamStyle     `json:"toolChoiceParamStyle,omitempty"`
+}
+
 // ReasoningTokenBudgetCapabilities applies to ReasoningTypeHybridWithTokens.
 // MinAllowed/MaxAllowed apply to positive token budgets only.
 // Special values 0 and -1 are governed separately because some providers/models
@@ -97,6 +118,7 @@ type ModelCapabilities struct {
 	OutputCapabilities       *OutputCapabilities       `json:"outputCapabilities,omitempty"`
 	ToolCapabilities         *ToolCapabilities         `json:"toolCapabilities,omitempty"`
 	CacheCapabilities        *CacheCapabilities        `json:"cacheCapabilities,omitempty"`
+	ParamDialect             *ParamDialect             `json:"paramDialect,omitempty"`
 }
 
 type ResolveModelCapabilitiesRequest struct {

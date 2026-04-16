@@ -182,7 +182,7 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 	if inReq == nil || len(inReq.Inputs) == 0 || inReq.ModelParam.Name == "" {
 		return nil, errors.New("openai responses api LLM: invalid data")
 	}
-	req, warns, err := sdkutil.NormalizeRequestForSDK(
+	req, _, warns, err := sdkutil.NormalizeRequestForSDK(
 		ctx, inReq, opts, spec.ProviderSDKTypeOpenAIResponses, openairesponsessdkCapability,
 	)
 	if err != nil {

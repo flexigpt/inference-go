@@ -21,9 +21,9 @@ func NormalizeRequestForSDK(
 	opts *spec.FetchCompletionOptions,
 	sdkType spec.ProviderSDKType,
 	providerCapabilities spec.ModelCapabilities,
-) (cappedReq *spec.FetchCompletionRequest, warnings []spec.Warning, err error) {
+) (cappedReq *spec.FetchCompletionRequest, effectiveCapabilities *spec.ModelCapabilities, warnings []spec.Warning, err error) {
 	if req == nil {
-		return nil, nil, errors.New("nil request")
+		return nil, nil, nil, errors.New("nil request")
 	}
 
 	caps := &providerCapabilities
@@ -34,22 +34,22 @@ func NormalizeRequestForSDK(
 			CompletionKey:   opts.CompletionKey,
 		})
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 		if caps == nil {
-			return nil, nil, errors.New("capability resolver returned nil ModelCapabilities")
+			return nil, nil, nil, errors.New("capability resolver returned nil ModelCapabilities")
 		}
 	}
 
 	nreq, err := CloneFetchCompletionRequest(req)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// Modalities validation (inferred from inputs).
 	used := getInputModalitiesForValidation(nreq.Inputs)
 	if err := requireModalities(used, caps.ModalitiesIn); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	// Reasoning validation / safe-dropping.
@@ -142,7 +142,11 @@ func NormalizeRequestForSDK(
 
 		if op.Format != nil {
 			if !supportsOutputFormat(op.Format.Kind, caps.OutputCapabilities.SupportedOutputFormats) {
-				return nil, warnings, fmt.Errorf("output format %q unsupported for sdkType=%s", op.Format.Kind, sdkType)
+				return nil, caps, warnings, fmt.Errorf(
+					"output format %q unsupported for sdkType=%s",
+					op.Format.Kind,
+					sdkType,
+				)
 			}
 		}
 
@@ -160,7 +164,7 @@ func NormalizeRequestForSDK(
 	// OutputParam: if caps.OutputCapabilities is nil, treat format as unsupported and verbosity as droppable.
 	if nreq.ModelParam.OutputParam != nil && caps.OutputCapabilities == nil {
 		if nreq.ModelParam.OutputParam.Format != nil {
-			return nil, warnings, errors.New(
+			return nil, caps, warnings, errors.New(
 				"outputParam.format requested but output capabilities are unavailable/unsupported for this SDK/model",
 			)
 		}
@@ -177,7 +181,9 @@ func NormalizeRequestForSDK(
 
 	// Tools: validate ToolChoices / ToolPolicy against capabilities.
 	if (len(nreq.ToolChoices) > 0 || nreq.ToolPolicy != nil) && caps.ToolCapabilities == nil {
-		return nil, warnings, errors.New("tools/toolPolicy provided but tools are not supported by selected SDK/model")
+		return nil, caps, warnings, errors.New(
+			"tools/toolPolicy provided but tools are not supported by selected SDK/model",
+		)
 	}
 
 	if len(nreq.ToolChoices) > 0 && caps.ToolCapabilities != nil {
@@ -202,7 +208,7 @@ func NormalizeRequestForSDK(
 	if nreq.ToolPolicy != nil {
 		if caps.ToolCapabilities != nil &&
 			!supportsToolPolicyMode(nreq.ToolPolicy.Mode, caps.ToolCapabilities.SupportedToolPolicyModes) {
-			return nil, warnings, fmt.Errorf(
+			return nil, caps, warnings, fmt.Errorf(
 				"toolPolicy.mode %q unsupported for sdkType=%s",
 				nreq.ToolPolicy.Mode,
 				sdkType,
@@ -211,11 +217,11 @@ func NormalizeRequestForSDK(
 		if (nreq.ToolPolicy.Mode == spec.ToolPolicyModeAny ||
 			nreq.ToolPolicy.Mode == spec.ToolPolicyModeTool) &&
 			len(nreq.ToolChoices) == 0 {
-			return nil, warnings, fmt.Errorf("toolPolicy.mode=%s requires toolChoices", nreq.ToolPolicy.Mode)
+			return nil, caps, warnings, fmt.Errorf("toolPolicy.mode=%s requires toolChoices", nreq.ToolPolicy.Mode)
 		}
 
 		if nreq.ToolPolicy.Mode == spec.ToolPolicyModeTool && len(nreq.ToolPolicy.AllowedTools) == 0 {
-			return nil, warnings, errors.New("toolPolicy.mode=tool requires allowedTools")
+			return nil, caps, warnings, errors.New("toolPolicy.mode=tool requires allowedTools")
 		}
 
 		// Forced tool count constraint (bestEffort: keep first N).
@@ -239,12 +245,12 @@ func NormalizeRequestForSDK(
 	// Client tool outputs: normalize according to SDK/model transport capability.
 	toolWarnings, err := normalizeClientToolOutputsForSDK(nreq, caps.ToolCapabilities)
 	if err != nil {
-		return nil, warnings, err
+		return nil, caps, warnings, err
 	}
 	warnings = append(warnings, toolWarnings...)
 	warnings = append(warnings, normalizeRequestCacheControls(nreq, caps.CacheCapabilities)...)
 
-	return nreq, warnings, nil
+	return nreq, caps, warnings, nil
 }
 
 func getInputModalitiesForValidation(inputs []spec.InputUnion) []spec.Modality {

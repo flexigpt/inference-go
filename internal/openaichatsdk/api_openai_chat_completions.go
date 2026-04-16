@@ -19,6 +19,11 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+type openAIChatNamedToolParam struct {
+	Name  string
+	Param openai.ChatCompletionToolUnionParam
+}
+
 // OpenAIChatCompletionsAPI struct that implements the CompletionProvider interface.
 type OpenAIChatCompletionsAPI struct {
 	ProviderParam *spec.ProviderParam
@@ -183,12 +188,13 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 	if inReq == nil || len(inReq.Inputs) == 0 || inReq.ModelParam.Name == "" {
 		return nil, errors.New("openai chat completions api LLM: empty completion data")
 	}
-	req, warns, err := sdkutil.NormalizeRequestForSDK(
+	req, effectiveCapabilities, warns, err := sdkutil.NormalizeRequestForSDK(
 		ctx, inReq, opts, spec.ProviderSDKTypeOpenAIChatCompletions, openaichatsdkCapability,
 	)
 	if err != nil {
 		return nil, err
 	}
+	dialect := resolveOpenAIChatParamDialect(effectiveCapabilities)
 
 	// Build OpenAI chat messages.
 	msgs, err := toOpenAIChatMessages(
@@ -206,9 +212,9 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 		Model:    shared.ChatModel(req.ModelParam.Name),
 		Messages: msgs,
 	}
-	if req.ModelParam.MaxOutputLength > 0 {
-		params.MaxCompletionTokens = openai.Int(int64(req.ModelParam.MaxOutputLength))
-	}
+
+	applyOpenAIChatMaxOutputLength(&params, req.ModelParam.MaxOutputLength, dialect)
+
 	if t := req.ModelParam.Temperature; t != nil {
 		params.Temperature = openai.Float(*t)
 	}
@@ -236,12 +242,6 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 	}
 	// Optional: stop sequences (Chat Completions supports up to 4).
 	if len(req.ModelParam.StopSequences) > 0 {
-		if len(req.ModelParam.StopSequences) > 4 {
-			return nil, fmt.Errorf(
-				"openai chat.completions: stopSequences supports up to 4 items (got %d)",
-				len(req.ModelParam.StopSequences),
-			)
-		}
 		// Note: some reasoning models reject stop; we only set it if caller explicitly requested it.
 		params.Stop = openai.ChatCompletionNewParamsStopUnion{OfStringArray: req.ModelParam.StopSequences}
 	}
@@ -253,9 +253,13 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 
 	var toolChoiceNameMap map[string]spec.ToolChoice
 	if len(req.ToolChoices) > 0 {
-		toolDefs, nameMap, err := toolChoicesToOpenAIChatTools(req.ToolChoices)
+		namedToolParams, nameMap, err := toolChoicesToOpenAIChatTools(req.ToolChoices)
 		if err != nil {
 			return nil, err
+		}
+		toolDefs := make([]openai.ChatCompletionToolUnionParam, 0, len(namedToolParams))
+		for _, item := range namedToolParams {
+			toolDefs = append(toolDefs, item.Param)
 		}
 		if len(toolDefs) > 0 {
 			params.Tools = toolDefs
@@ -264,7 +268,13 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 
 		// Optional: tool policy (tool_choice / parallel_tool_calls).
 		if req.ToolPolicy != nil {
-			if err := applyOpenAIChatToolPolicy(&params, req.ToolPolicy, toolChoiceNameMap); err != nil {
+			if err := applyOpenAIChatToolPolicy(
+				&params,
+				req.ToolPolicy,
+				toolChoiceNameMap,
+				namedToolParams,
+				dialect,
+			); err != nil {
 				return nil, err
 			}
 		}
@@ -496,6 +506,8 @@ func applyOpenAIChatToolPolicy(
 	params *openai.ChatCompletionNewParams,
 	policy *spec.ToolPolicy,
 	toolChoiceNameMap map[string]spec.ToolChoice,
+	namedToolParams []openAIChatNamedToolParam,
+	dialect spec.ParamDialect,
 ) error {
 	if params == nil || policy == nil || len(toolChoiceNameMap) == 0 {
 		return nil
@@ -512,11 +524,9 @@ func applyOpenAIChatToolPolicy(
 		return nil
 
 	case spec.ToolPolicyModeNone:
-		// "None" is not present in SDK union. Need to empty the available tool choices to simulate none.
-		params.Tools = []openai.ChatCompletionToolUnionParam{}
-		// "web_search_options" is not a "tool" in this API, but caller intent for toolPolicy=none is "no tool use at
-		// all", so clear it as well.
-		params.WebSearchOptions = openai.ChatCompletionNewParamsWebSearchOptions{}
+		params.ToolChoice = openai.ChatCompletionToolChoiceOptionUnionParam{
+			OfAuto: param.NewOpt("none"),
+		}
 		return nil
 
 	case spec.ToolPolicyModeAny, spec.ToolPolicyModeTool:
@@ -551,7 +561,43 @@ func applyOpenAIChatToolPolicy(
 			}
 		}
 
+		if dialect.ToolChoiceParamStyle == spec.ToolChoiceParamStyleRequiredNamed {
+			filtered := filterChatToolsByResolvedAllowed(namedToolParams, resolvedTools)
+			if len(filtered) == 0 {
+				return errors.New("openai chat.completions: resolved allowedTools contains no callable function tools")
+			}
+			params.Tools = filtered
+
+			if policy.Mode == spec.ToolPolicyModeTool {
+				if len(resolvedTools) != 1 {
+					return errors.New("openai chat.completions: toolPolicy=tool requires exactly one resolved tool")
+				}
+				t := resolvedTools[0]
+				if t.Type != spec.ToolTypeFunction {
+					return errors.New(
+						"openai chat.completions: requiredNamed tool forcing supports function tools only",
+					)
+				}
+
+				params.ToolChoice = openai.ChatCompletionToolChoiceOptionUnionParam{
+					OfFunctionToolChoice: &openai.ChatCompletionNamedToolChoiceParam{
+						Function: openai.ChatCompletionNamedToolChoiceFunctionParam{
+							Name: t.Name,
+						},
+					},
+				}
+				return nil
+			}
+
+			// Replace with exact generated "required" union field if your openai-go version differs.
+			params.ToolChoice = openai.ChatCompletionToolChoiceOptionUnionParam{
+				OfAuto: param.NewOpt("required"),
+			}
+			return nil
+		}
+
 		allowedChoices := make([]map[string]any, 0, len(resolvedTools))
+
 		for _, t := range resolvedTools {
 			if t.Type == spec.ToolTypeWebSearch {
 				// "web_search" isn't a tool-call in chat.completions.
@@ -593,6 +639,34 @@ func applyOpenAIChatToolPolicy(
 	default:
 		return fmt.Errorf("openai chat.completions: unknown toolPolicy.mode %q", policy.Mode)
 	}
+}
+
+func filterChatToolsByResolvedAllowed(
+	named []openAIChatNamedToolParam,
+	allowed []sdkutil.ResolvedAllowedTool,
+) []openai.ChatCompletionToolUnionParam {
+	if len(named) == 0 || len(allowed) == 0 {
+		return nil
+	}
+
+	want := make(map[string]struct{}, len(allowed))
+	for _, a := range allowed {
+		if a.Type != spec.ToolTypeFunction {
+			continue
+		}
+		if strings.TrimSpace(a.Name) == "" {
+			continue
+		}
+		want[a.Name] = struct{}{}
+	}
+
+	out := make([]openai.ChatCompletionToolUnionParam, 0, len(want))
+	for _, n := range named {
+		if _, ok := want[n.Name]; ok {
+			out = append(out, n.Param)
+		}
+	}
+	return out
 }
 
 func toOpenAIChatMessages(
@@ -888,13 +962,13 @@ func getOpenAIMessageFromSystemPrompt(
 
 func toolChoicesToOpenAIChatTools(
 	toolChoices []spec.ToolChoice,
-) ([]openai.ChatCompletionToolUnionParam, map[string]spec.ToolChoice, error) {
+) ([]openAIChatNamedToolParam, map[string]spec.ToolChoice, error) {
 	if len(toolChoices) == 0 {
-		return []openai.ChatCompletionToolUnionParam{}, nil, nil
+		return []openAIChatNamedToolParam{}, nil, nil
 	}
 
 	ordered, nameMap := sdkutil.BuildToolChoiceNameMapping(toolChoices)
-	out := make([]openai.ChatCompletionToolUnionParam, 0, len(ordered))
+	out := make([]openAIChatNamedToolParam, 0, len(ordered))
 
 	for _, tw := range ordered {
 		tc := tw.Choice
@@ -918,7 +992,11 @@ func toolChoicesToOpenAIChatTools(
 			if desc := sdkutil.ToolDescription(tc); desc != "" {
 				fn.Description = openai.String(desc)
 			}
-			out = append(out, openai.ChatCompletionFunctionTool(fn))
+			p := openai.ChatCompletionFunctionTool(fn)
+			out = append(out, openAIChatNamedToolParam{
+				Name:  name,
+				Param: p,
+			})
 
 		case spec.ToolTypeWebSearch:
 			// Web search is not exposed as a Chat Completions tool; handled via top-level web_search_options instead.
@@ -927,7 +1005,7 @@ func toolChoicesToOpenAIChatTools(
 	}
 
 	if len(out) == 0 {
-		return []openai.ChatCompletionToolUnionParam{}, nil, nil
+		return []openAIChatNamedToolParam{}, nil, nil
 	}
 	return out, nameMap, nil
 }

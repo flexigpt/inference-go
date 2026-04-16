@@ -57,7 +57,7 @@ func TestNormalizeRequestForSDK_OpenAIChat_PreservesWebSearchToolChoice(t *testi
 		}},
 	}
 
-	nreq, warns, err := sdkutil.NormalizeRequestForSDK(
+	nreq, _, warns, err := sdkutil.NormalizeRequestForSDK(
 		t.Context(),
 		req,
 		&spec.FetchCompletionOptions{},
@@ -124,7 +124,7 @@ func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 		}},
 	}
 
-	nreq, warns, err := sdkutil.NormalizeRequestForSDK(
+	nreq, _, warns, err := sdkutil.NormalizeRequestForSDK(
 		t.Context(),
 		req,
 		&spec.FetchCompletionOptions{

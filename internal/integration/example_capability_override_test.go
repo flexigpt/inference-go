@@ -106,7 +106,7 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 			}},
 		}
 
-		_, _, err := sdkutil.NormalizeRequestForSDK(
+		_, _, _, err := sdkutil.NormalizeRequestForSDK(
 			ctx,
 			req,
 			&spec.FetchCompletionOptions{
@@ -141,7 +141,7 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 			}},
 		}
 
-		capped, warns, err := sdkutil.NormalizeRequestForSDK(
+		capped, _, warns, err := sdkutil.NormalizeRequestForSDK(
 			ctx,
 			req,
 			&spec.FetchCompletionOptions{
@@ -202,7 +202,7 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 			}},
 		}
 
-		capped, warns, err := sdkutil.NormalizeRequestForSDK(
+		capped, _, warns, err := sdkutil.NormalizeRequestForSDK(
 			ctx,
 			req,
 			&spec.FetchCompletionOptions{
