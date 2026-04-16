@@ -59,6 +59,9 @@ var googleGenerateContentSDKCapability = spec.ModelCapabilities{
 		},
 		SupportsParallelToolCalls: true,
 		MaxForcedTools:            1,
+		SupportedClientToolOutputFormats: []spec.ToolOutputFormatKind{
+			spec.ToolOutputFormatKindString,
+		},
 	},
 
 	// Google GenAI does not support per-message cache_control parameters.

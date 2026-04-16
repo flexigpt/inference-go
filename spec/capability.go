@@ -52,11 +52,21 @@ type OutputCapabilities struct {
 	SupportsVerbosity      bool               `json:"supportsVerbosity"`
 }
 
+// ToolOutputFormatKind describes how caller-supplied tool outputs
+// (FunctionToolOutput / CustomToolOutput) may be sent back to the model.
+type ToolOutputFormatKind string
+
+const (
+	ToolOutputFormatKindString          ToolOutputFormatKind = "string"
+	ToolOutputFormatKindContentItemList ToolOutputFormatKind = "contentItemList"
+)
+
 type ToolCapabilities struct {
-	SupportedToolTypes        []ToolType       `json:"supportedToolTypes"`
-	SupportedToolPolicyModes  []ToolPolicyMode `json:"supportedToolPolicyModes"`
-	SupportsParallelToolCalls bool             `json:"supportsParallelToolCalls"`
-	MaxForcedTools            int              `json:"maxForcedTools"`
+	SupportedToolTypes               []ToolType             `json:"supportedToolTypes"`
+	SupportedToolPolicyModes         []ToolPolicyMode       `json:"supportedToolPolicyModes"`
+	SupportsParallelToolCalls        bool                   `json:"supportsParallelToolCalls"`
+	MaxForcedTools                   int                    `json:"maxForcedTools"`
+	SupportedClientToolOutputFormats []ToolOutputFormatKind `json:"supportedClientToolOutputFormats,omitempty"`
 }
 
 type CacheControlCapabilities struct {

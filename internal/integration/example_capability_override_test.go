@@ -73,6 +73,12 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 		}
 	}
 
+	if override.ToolCapabilities != nil {
+		override.ToolCapabilities.SupportedClientToolOutputFormats = []spec.ToolOutputFormatKind{
+			spec.ToolOutputFormatKindString,
+		}
+	}
+
 	resolver := overrideResolver{
 		byModel: map[spec.ModelName]*spec.ModelCapabilities{
 			"gpt-5-mini": &override,
@@ -160,6 +166,70 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 		}
 		if !found {
 			t.Fatalf("expected reasoning_dropped_invalid_level warning; got %#v", warns)
+		}
+	})
+
+	t.Run("tool outputs: rich function output collapses to string when resolver says string-only", func(t *testing.T) {
+		newOverride := override
+		newOverride.ModalitiesIn = []spec.Modality{spec.ModalityTextIn, spec.ModalityImageIn, spec.ModalityFileIn}
+		newResolver := overrideResolver{
+			byModel: map[spec.ModelName]*spec.ModelCapabilities{
+				"gpt-5-mini": &newOverride,
+			},
+		}
+		req := &spec.FetchCompletionRequest{
+			ModelParam: spec.ModelParam{Name: "gpt-5-mini"},
+			Inputs: []spec.InputUnion{{
+				Kind: spec.InputKindFunctionToolOutput,
+				FunctionToolOutput: &spec.ToolOutput{
+					Type:   spec.ToolTypeFunction,
+					CallID: "call_1",
+					Name:   "tool",
+					Contents: []spec.ToolOutputItemUnion{
+						{
+							Kind:     spec.ContentItemKindText,
+							TextItem: &spec.ContentItemText{Text: "hello"},
+						},
+						{
+							Kind: spec.ContentItemKindFile,
+							FileItem: &spec.ContentItemFile{
+								FileURL:  "https://example.com/a.pdf",
+								FileMIME: "application/pdf",
+							},
+						},
+					},
+				},
+			}},
+		}
+
+		capped, warns, err := sdkutil.NormalizeRequestForSDK(
+			ctx,
+			req,
+			&spec.FetchCompletionOptions{
+				CompletionKey:      "gpt5mini",
+				CapabilityResolver: newResolver,
+			},
+			spec.ProviderSDKTypeOpenAIResponses,
+			baseCaps,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		out := capped.Inputs[0].FunctionToolOutput
+		if out == nil || len(out.Contents) != 1 || out.Contents[0].Kind != spec.ContentItemKindText {
+			t.Fatalf("expected collapsed single text tool output; got %#v", out)
+		}
+
+		found := false
+		for _, w := range warns {
+			if w.Code == "toolOutput_collapsed_to_string" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Fatalf("expected toolOutput_collapsed_to_string warning; got %#v", warns)
 		}
 	})
 }

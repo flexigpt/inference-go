@@ -236,6 +236,12 @@ func NormalizeRequestForSDK(
 		}
 	}
 
+	// Client tool outputs: normalize according to SDK/model transport capability.
+	toolWarnings, err := normalizeClientToolOutputsForSDK(nreq, caps.ToolCapabilities)
+	if err != nil {
+		return nil, warnings, err
+	}
+	warnings = append(warnings, toolWarnings...)
 	warnings = append(warnings, normalizeRequestCacheControls(nreq, caps.CacheCapabilities)...)
 
 	return nreq, warnings, nil

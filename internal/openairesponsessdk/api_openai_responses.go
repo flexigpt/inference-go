@@ -1065,6 +1065,17 @@ func toolOutputToOpenAIResponses(
 	}
 	switch toolOutput.Type {
 	case spec.ToolTypeFunction:
+		if s, ok := toolOutputAsSingleString(toolOutput); ok {
+			return &responses.ResponseInputItemUnionParam{
+				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
+					CallID: toolOutput.CallID,
+					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
+						OfString: param.NewOpt(s),
+					},
+					Type: openaiSharedConstant.FunctionCallOutput("").Default(),
+				},
+			}
+		}
 
 		items, err := contentItemsToOpenAIFunctionCallOutputContent(toolOutput.Contents)
 		if err != nil {
@@ -1083,6 +1094,18 @@ func toolOutputToOpenAIResponses(
 		}
 
 	case spec.ToolTypeCustom:
+		if s, ok := toolOutputAsSingleString(toolOutput); ok {
+			return &responses.ResponseInputItemUnionParam{
+				OfCustomToolCallOutput: &responses.ResponseCustomToolCallOutputParam{
+					CallID: toolOutput.CallID,
+					Output: responses.ResponseCustomToolCallOutputOutputUnionParam{
+						OfString: param.NewOpt(s),
+					},
+					Type: openaiSharedConstant.CustomToolCallOutput("").Default(),
+				},
+			}
+		}
+
 		fcItems, err := contentItemsToOpenAIFunctionCallOutputContent(toolOutput.Contents)
 		if err != nil {
 			return nil
@@ -1136,6 +1159,20 @@ func toolOutputToOpenAIResponses(
 		// OpenAI responses API doesn't have web search tool output object.
 	}
 	return nil
+}
+
+func toolOutputAsSingleString(toolOutput *spec.ToolOutput) (string, bool) {
+	if toolOutput == nil || len(toolOutput.Contents) != 1 {
+		return "", false
+	}
+	item := toolOutput.Contents[0]
+	if item.Kind != spec.ContentItemKindText || item.TextItem == nil {
+		return "", false
+	}
+	if item.TextItem.Text == "" {
+		return "", false
+	}
+	return item.TextItem.Text, true
 }
 
 // contentItemsToOpenAI converts spec.Content items to OpenAI input message parts.

@@ -44,6 +44,10 @@ var openairesponsessdkCapability = spec.ModelCapabilities{
 		},
 		SupportsParallelToolCalls: true,
 		MaxForcedTools:            1,
+		SupportedClientToolOutputFormats: []spec.ToolOutputFormatKind{
+			spec.ToolOutputFormatKindString,
+			spec.ToolOutputFormatKindContentItemList,
+		},
 	},
 
 	CacheCapabilities: &spec.CacheCapabilities{

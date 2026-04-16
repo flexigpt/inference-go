@@ -52,6 +52,10 @@ var anthropicsdkCapability = spec.ModelCapabilities{
 		},
 		SupportsParallelToolCalls: true,
 		MaxForcedTools:            1,
+
+		SupportedClientToolOutputFormats: []spec.ToolOutputFormatKind{
+			spec.ToolOutputFormatKindContentItemList,
+		},
 	},
 
 	CacheCapabilities: &spec.CacheCapabilities{

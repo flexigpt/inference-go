@@ -44,6 +44,9 @@ var openaichatsdkCapability = spec.ModelCapabilities{
 		},
 		SupportsParallelToolCalls: true,
 		MaxForcedTools:            1,
+		SupportedClientToolOutputFormats: []spec.ToolOutputFormatKind{
+			spec.ToolOutputFormatKindString,
+		},
 	},
 
 	CacheCapabilities: &spec.CacheCapabilities{
