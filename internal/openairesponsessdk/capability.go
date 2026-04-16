@@ -7,6 +7,7 @@ var openairesponsessdkCapability = spec.ModelCapabilities{
 	ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
 
 	ReasoningCapabilities: &spec.ReasoningCapabilities{
+		SupportsReasoningConfig: true,
 		SupportedReasoningTypes: []spec.ReasoningType{spec.ReasoningTypeSingleWithLevels},
 		SupportedReasoningLevels: []spec.ReasoningLevel{
 			spec.ReasoningLevelNone,
@@ -48,6 +49,7 @@ var openairesponsessdkCapability = spec.ModelCapabilities{
 	CacheCapabilities: &spec.CacheCapabilities{
 		SupportsAutomaticCaching: true,
 		TopLevel: &spec.CacheControlCapabilities{
+			SupportsTTL:    true,
 			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
 			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTLInMemory, spec.CacheControlTTL24h},
 			SupportsKey:    true,

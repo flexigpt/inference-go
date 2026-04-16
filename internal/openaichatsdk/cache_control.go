@@ -22,10 +22,12 @@ func applyOpenAIChatCacheControl(
 		params.PromptCacheKey = openai.String(key)
 	}
 
-	switch cc.TTL {
-	case spec.CacheControlTTL24h:
-		params.PromptCacheRetention = openai.ChatCompletionNewParamsPromptCacheRetention("24h")
-	default:
-		params.PromptCacheRetention = openai.ChatCompletionNewParamsPromptCacheRetention("in-memory")
+	if cc.TTL != "" {
+		switch cc.TTL {
+		case spec.CacheControlTTL24h:
+			params.PromptCacheRetention = openai.ChatCompletionNewParamsPromptCacheRetention("24h")
+		default:
+			params.PromptCacheRetention = openai.ChatCompletionNewParamsPromptCacheRetention("in-memory")
+		}
 	}
 }

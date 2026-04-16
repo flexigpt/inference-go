@@ -29,6 +29,10 @@ type ReasoningTokenBudgetCapabilities struct {
 }
 
 type ReasoningCapabilities struct {
+	// Top-level gate: whether request-side reasoning config is supported at all.
+	// If false, ModelParam.Reasoning must not be sent.
+	SupportsReasoningConfig bool `json:"supportsReasoningConfig"`
+
 	SupportedReasoningTypes          []ReasoningType                   `json:"supportedReasoningTypes"`
 	SupportedReasoningLevels         []ReasoningLevel                  `json:"supportedReasoningLevels"`
 	HybridTokenBudgetCapabilities    *ReasoningTokenBudgetCapabilities `json:"hybridTokenBudgetCapabilities,omitempty"`
@@ -56,6 +60,8 @@ type ToolCapabilities struct {
 }
 
 type CacheControlCapabilities struct {
+	// Top-level gate: whether request-side TTL/retention is supported at all.
+	SupportsTTL    bool               `json:"supportsTTL"`
 	SupportedKinds []CacheControlKind `json:"supportedKinds,omitempty"`
 	SupportedTTLs  []CacheControlTTL  `json:"supportedTTLs,omitempty"`
 	SupportsKey    bool               `json:"supportsKey"`

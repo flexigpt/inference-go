@@ -7,6 +7,7 @@ var anthropicsdkCapability = spec.ModelCapabilities{
 	ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
 
 	ReasoningCapabilities: &spec.ReasoningCapabilities{
+		SupportsReasoningConfig: true,
 		SupportedReasoningTypes: []spec.ReasoningType{
 			spec.ReasoningTypeHybridWithTokens,
 			spec.ReasoningTypeSingleWithLevels,
@@ -56,26 +57,31 @@ var anthropicsdkCapability = spec.ModelCapabilities{
 	CacheCapabilities: &spec.CacheCapabilities{
 		SupportsAutomaticCaching: false,
 		TopLevel: &spec.CacheControlCapabilities{
+			SupportsTTL:    true,
 			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
 			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTL5m, spec.CacheControlTTL1h},
 			SupportsKey:    false,
 		},
 		InputOutputContent: &spec.CacheControlCapabilities{
+			SupportsTTL:    true,
 			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
 			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTL5m, spec.CacheControlTTL1h},
 			SupportsKey:    false,
 		},
 		ToolChoice: &spec.CacheControlCapabilities{
+			SupportsTTL:    true,
 			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
 			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTL5m, spec.CacheControlTTL1h},
 			SupportsKey:    false,
 		},
 		ToolCall: &spec.CacheControlCapabilities{
+			SupportsTTL:    true,
 			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
 			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTL5m, spec.CacheControlTTL1h},
 			SupportsKey:    false,
 		},
 		ToolOutput: &spec.CacheControlCapabilities{
+			SupportsTTL:    true,
 			SupportedKinds: []spec.CacheControlKind{spec.CacheControlKindEphemeral},
 			SupportedTTLs:  []spec.CacheControlTTL{spec.CacheControlTTL5m, spec.CacheControlTTL1h},
 			SupportsKey:    false,

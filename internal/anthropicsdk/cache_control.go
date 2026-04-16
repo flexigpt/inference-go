@@ -117,11 +117,13 @@ func anthropicCacheControlParam(cc *spec.CacheControl) *anthropic.CacheControlEp
 		Type: "ephemeral",
 	}
 
-	switch cc.TTL {
-	case spec.CacheControlTTL1h:
-		out.TTL = anthropic.CacheControlEphemeralTTLTTL1h
-	default:
-		out.TTL = anthropic.CacheControlEphemeralTTLTTL5m
+	if cc.TTL != "" {
+		switch cc.TTL {
+		case spec.CacheControlTTL1h:
+			out.TTL = anthropic.CacheControlEphemeralTTLTTL1h
+		default:
+			out.TTL = anthropic.CacheControlEphemeralTTLTTL5m
+		}
 	}
 
 	return &out

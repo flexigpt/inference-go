@@ -7,6 +7,7 @@ var googleGenerateContentSDKCapability = spec.ModelCapabilities{
 	ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
 
 	ReasoningCapabilities: &spec.ReasoningCapabilities{
+		SupportsReasoningConfig: true,
 		SupportedReasoningTypes: []spec.ReasoningType{
 			spec.ReasoningTypeHybridWithTokens,
 			spec.ReasoningTypeSingleWithLevels,

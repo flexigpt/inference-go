@@ -92,6 +92,7 @@ func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 	// Example: model does NOT allow reasoning level none/xhigh (per your prompt).
 	custom := baseCaps
 	custom.ReasoningCapabilities = &spec.ReasoningCapabilities{
+		SupportsReasoningConfig: true,
 		SupportedReasoningTypes: []spec.ReasoningType{spec.ReasoningTypeSingleWithLevels},
 		SupportedReasoningLevels: []spec.ReasoningLevel{
 			spec.ReasoningLevelLow,

@@ -54,7 +54,7 @@ func NormalizeRequestForSDK(
 
 	// Reasoning validation / safe-dropping.
 	if nreq.ModelParam.Reasoning != nil {
-		if caps.ReasoningCapabilities == nil ||
+		if caps.ReasoningCapabilities == nil || !caps.ReasoningCapabilities.SupportsReasoningConfig ||
 			!supportsReasoningType(*nreq.ModelParam.Reasoning, caps.ReasoningCapabilities) {
 			warnings = append(warnings, spec.Warning{
 				Code:    "reasoning_dropped_unsupported",

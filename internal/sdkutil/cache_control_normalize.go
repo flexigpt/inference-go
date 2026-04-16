@@ -158,15 +158,9 @@ func normalizeCacheControlForScope(
 		return nil, warnings
 	}
 
-	if out.TTL != "" && (len(scopeCaps.SupportedTTLs) == 0 || !slices.Contains(scopeCaps.SupportedTTLs, out.TTL)) {
-		warnings = append(warnings, spec.Warning{
-			Code: "cacheControl_ttl_dropped_unsupported",
-			Message: fmt.Sprintf(
-				"%s.ttl %q was dropped because it is unsupported by this SDK/model.",
-				scopePath,
-				out.TTL,
-			),
-		})
+	if out.TTL != "" && (!scopeCaps.SupportsTTL ||
+		(len(scopeCaps.SupportedTTLs) > 0 && !slices.Contains(scopeCaps.SupportedTTLs, out.TTL))) {
+		warnings = append(warnings, getCacheTTLWarning(scopePath, out.TTL))
 		out.TTL = ""
 	}
 
@@ -183,6 +177,17 @@ func normalizeCacheControlForScope(
 	}
 
 	return &out, warnings
+}
+
+func getCacheTTLWarning(scopePath string, ttl spec.CacheControlTTL) spec.Warning {
+	return spec.Warning{
+		Code: "cacheControl_ttl_dropped_unsupported",
+		Message: fmt.Sprintf(
+			"%s.ttl %q was dropped because cache TTL/retention is unsupported by this SDK/model.",
+			scopePath,
+			ttl,
+		),
+	}
 }
 
 func cacheControlScope(

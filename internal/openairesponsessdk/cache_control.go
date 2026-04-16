@@ -23,10 +23,12 @@ func applyOpenAIResponsesCacheControl(
 		params.PromptCacheKey = openai.String(key)
 	}
 
-	switch cc.TTL {
-	case spec.CacheControlTTL24h:
-		params.PromptCacheRetention = responses.ResponseNewParamsPromptCacheRetention("24h")
-	default:
-		params.PromptCacheRetention = responses.ResponseNewParamsPromptCacheRetention("in-memory")
+	if cc.TTL != "" {
+		switch cc.TTL {
+		case spec.CacheControlTTL24h:
+			params.PromptCacheRetention = responses.ResponseNewParamsPromptCacheRetention("24h")
+		default:
+			params.PromptCacheRetention = responses.ResponseNewParamsPromptCacheRetention("in-memory")
+		}
 	}
 }
