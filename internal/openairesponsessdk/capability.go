@@ -16,6 +16,7 @@ var openairesponsessdkCapability = spec.ModelCapabilities{
 			spec.ReasoningLevelMedium,
 			spec.ReasoningLevelHigh,
 			spec.ReasoningLevelXHigh,
+			spec.ReasoningLevelMax,
 		},
 		SupportsSummaryStyle: true,
 

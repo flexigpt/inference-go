@@ -152,10 +152,7 @@ func googleThinkingLevelFromSpec(level spec.ReasoningLevel) (genai.ThinkingLevel
 		return genai.ThinkingLevelLow, true
 	case spec.ReasoningLevelMedium:
 		return genai.ThinkingLevelMedium, true
-	case spec.ReasoningLevelHigh:
-		return genai.ThinkingLevelHigh, true
-	case spec.ReasoningLevelXHigh:
-		// The genai SDK has no XHigh level; map to the highest available.
+	case spec.ReasoningLevelHigh, spec.ReasoningLevelXHigh, spec.ReasoningLevelMax:
 		return genai.ThinkingLevelHigh, true
 	default:
 		return "", false

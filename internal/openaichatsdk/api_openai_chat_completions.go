@@ -231,6 +231,8 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 			spec.ReasoningLevelHigh,
 			spec.ReasoningLevelXHigh:
 			params.ReasoningEffort = shared.ReasoningEffort(string(rp.Level))
+		case spec.ReasoningLevelMax:
+			params.ReasoningEffort = shared.ReasoningEffortXhigh
 		default:
 			return nil, fmt.Errorf("invalid level %q for singleWithLevels", rp.Level)
 
@@ -458,7 +460,7 @@ func applyOpenAIChatOutputParam(params *openai.ChatCompletionNewParams, op *spec
 		switch *op.Verbosity {
 		case spec.OutputVerbosityHigh, spec.OutputVerbosityMedium, spec.OutputVerbosityLow:
 			params.Verbosity = openai.ChatCompletionNewParamsVerbosity(*op.Verbosity)
-		case spec.OutputVerbosityMax:
+		case spec.OutputVerbosityXHigh, spec.OutputVerbosityMax:
 			params.Verbosity = openai.ChatCompletionNewParamsVerbosity(spec.OutputVerbosityHigh)
 		default:
 			// No valid verbosity specified.

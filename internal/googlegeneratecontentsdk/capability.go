@@ -19,6 +19,7 @@ var googleGenerateContentSDKCapability = spec.ModelCapabilities{
 			spec.ReasoningLevelMedium,
 			spec.ReasoningLevelHigh,
 			spec.ReasoningLevelXHigh, // mapped to ThinkingLevelHigh
+			spec.ReasoningLevelMax,   // mapped to ThinkingLevelHigh
 		},
 		HybridTokenBudgetCapabilities: &spec.ReasoningTokenBudgetCapabilities{
 			MinAllowed:      1,

@@ -333,6 +333,8 @@ func requestedAnthropicThinking(mp *spec.ModelParam, derivedMaxToken int64) (ena
 			return true, true, 8192
 		case spec.ReasoningLevelXHigh:
 			return true, true, 16384
+		case spec.ReasoningLevelMax:
+			return true, true, 32768
 		default:
 			// Unknown => treat as not requested.
 			return false, false, 0
@@ -374,6 +376,8 @@ func anthropicEffortFromReasoningLevel(level spec.ReasoningLevel) (anthropic.Out
 	case spec.ReasoningLevelHigh:
 		return anthropic.OutputConfigEffort("high"), true
 	case spec.ReasoningLevelXHigh:
+		return anthropic.OutputConfigEffort("xhigh"), true
+	case spec.ReasoningLevelMax:
 		return anthropic.OutputConfigEffort("max"), true
 	default:
 		// None / Unknown.

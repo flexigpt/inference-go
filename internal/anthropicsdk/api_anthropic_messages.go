@@ -499,7 +499,11 @@ func applyAnthropicOutputParam(params *anthropic.MessageNewParams, op *spec.Outp
 	// Only set when explicitly provided.
 	if op.Verbosity != nil {
 		switch *op.Verbosity {
-		case spec.OutputVerbosityHigh, spec.OutputVerbosityMedium, spec.OutputVerbosityLow, spec.OutputVerbosityMax:
+		case spec.OutputVerbosityHigh,
+			spec.OutputVerbosityMedium,
+			spec.OutputVerbosityLow,
+			spec.OutputVerbosityXHigh,
+			spec.OutputVerbosityMax:
 			effort = string(*op.Verbosity)
 		default:
 			// No valid verbosity specified.

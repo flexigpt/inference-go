@@ -222,6 +222,7 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 	applyOpenAIResponsesCacheControl(&params, req.ModelParam.CacheControl)
 	if rp := req.ModelParam.Reasoning; rp != nil &&
 		rp.Type == spec.ReasoningTypeSingleWithLevels {
+		r := shared.ReasoningParam{}
 		switch rp.Level {
 		case
 			spec.ReasoningLevelNone,
@@ -230,27 +231,28 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 			spec.ReasoningLevelMedium,
 			spec.ReasoningLevelHigh,
 			spec.ReasoningLevelXHigh:
-			r := shared.ReasoningParam{Effort: shared.ReasoningEffort(string(rp.Level))}
-
-			if rp.SummaryStyle != nil {
-				switch *rp.SummaryStyle {
-				case spec.ReasoningSummaryStyleAuto:
-					r.Summary = shared.ReasoningSummaryAuto
-				case spec.ReasoningSummaryStyleConcise:
-					r.Summary = shared.ReasoningSummaryConcise
-				case spec.ReasoningSummaryStyleDetailed:
-					r.Summary = shared.ReasoningSummaryDetailed
-				default:
-					r.Summary = shared.ReasoningSummaryAuto
-				}
-			} else {
-				r.Summary = shared.ReasoningSummaryAuto
-			}
-			params.Reasoning = r
-
+			r.Effort = shared.ReasoningEffort(string(rp.Level))
+		case spec.ReasoningLevelMax:
+			r.Effort = shared.ReasoningEffortXhigh
 		default:
 			return nil, fmt.Errorf("invalid reasoning level %q for singleWithLevels", rp.Level)
 		}
+
+		if rp.SummaryStyle != nil {
+			switch *rp.SummaryStyle {
+			case spec.ReasoningSummaryStyleAuto:
+				r.Summary = shared.ReasoningSummaryAuto
+			case spec.ReasoningSummaryStyleConcise:
+				r.Summary = shared.ReasoningSummaryConcise
+			case spec.ReasoningSummaryStyleDetailed:
+				r.Summary = shared.ReasoningSummaryDetailed
+			default:
+				r.Summary = shared.ReasoningSummaryAuto
+			}
+		} else {
+			r.Summary = shared.ReasoningSummaryAuto
+		}
+		params.Reasoning = r
 	}
 
 	timeout := spec.DefaultAPITimeout
@@ -508,7 +510,7 @@ func applyOpenAIResponsesOutputParam(params *responses.ResponseNewParams, op *sp
 		case spec.OutputVerbosityHigh, spec.OutputVerbosityMedium, spec.OutputVerbosityLow:
 			text.Verbosity = responses.ResponseTextConfigVerbosity(*op.Verbosity)
 			textSet = true
-		case spec.OutputVerbosityMax:
+		case spec.OutputVerbosityXHigh, spec.OutputVerbosityMax:
 			text.Verbosity = responses.ResponseTextConfigVerbosity(spec.OutputVerbosityHigh)
 			textSet = true
 		default:

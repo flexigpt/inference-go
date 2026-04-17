@@ -20,6 +20,7 @@ const (
 	ReasoningLevelMedium  ReasoningLevel = "medium"
 	ReasoningLevelHigh    ReasoningLevel = "high"
 	ReasoningLevelXHigh   ReasoningLevel = "xhigh"
+	ReasoningLevelMax     ReasoningLevel = "max"
 )
 
 type ReasoningSummaryStyle string
@@ -47,6 +48,7 @@ const (
 	OutputVerbosityLow    OutputVerbosity = "low"
 	OutputVerbosityMedium OutputVerbosity = "medium"
 	OutputVerbosityHigh   OutputVerbosity = "high"
+	OutputVerbosityXHigh  OutputVerbosity = "xhigh"
 	OutputVerbosityMax    OutputVerbosity = "max"
 )
 
