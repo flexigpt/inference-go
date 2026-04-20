@@ -24,6 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        go-version-file: [ "go.mod", ".tool-versions" ]
         include:
           - os: ubuntu-24.04
             coverage: true
@@ -43,7 +44,7 @@ jobs:
       - name: Set-up Go
         uses: actions/setup-go@v6
         with:
-          go-version-file: "go.mod"
+          go-version-file: ${{ matrix.go-version-file }}
 
       - name: test
         run: |
