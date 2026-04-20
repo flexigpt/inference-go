@@ -6,9 +6,9 @@ on:
       - main
   pull_request:
 
-#
-# Cancel outdated runs for the same branch / PR
-#
+    #
+    # Cancel outdated runs for the same branch / PR
+    #
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
