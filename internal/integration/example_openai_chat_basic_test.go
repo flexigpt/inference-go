@@ -11,6 +11,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	openAIChatBasicProviderName  = "openai-chat"
+	openAIChatBasicModelName     = "gpt-4.1-mini"
+	openAIChatBasicCompletionKey = "gpt41"
+)
+
 // Example_openAIChat_basicConversation demonstrates a minimal non-streaming
 // call to OpenAI's Chat Completions API.
 func Example_openAIChat_basicConversation() {
@@ -23,7 +29,7 @@ func Example_openAIChat_basicConversation() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "openai-chat", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, openAIChatBasicProviderName, &inference.AddProviderConfig{
 		SDKType:                  spec.ProviderSDKTypeOpenAIChatCompletions,
 		Origin:                   spec.DefaultOpenAIOrigin,
 		ChatCompletionPathPrefix: spec.DefaultOpenAIChatCompletionsPrefix,
@@ -41,14 +47,14 @@ func Example_openAIChat_basicConversation() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "openai-chat", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, openAIChatBasicProviderName, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
 	}
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gpt-4.1-mini",
+			Name:            openAIChatBasicModelName,
 			Stream:          false,
 			MaxPromptLength: 4096,
 			MaxOutputLength: 256,
@@ -72,7 +78,12 @@ func Example_openAIChat_basicConversation() {
 		},
 	}
 
-	resp, err := ps.FetchCompletion(ctx, "openai-chat", req, &spec.FetchCompletionOptions{CompletionKey: "gpt41"})
+	resp, err := ps.FetchCompletion(
+		ctx,
+		openAIChatBasicProviderName,
+		req,
+		&spec.FetchCompletionOptions{CompletionKey: openAIChatBasicCompletionKey},
+	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {

@@ -16,6 +16,10 @@ const (
 	deltaStr                   = "delta"
 	ommitedTextContentStr      = "[omitted: llm text content]"
 	ommitedEncryptedContentStr = "[omitted: encrypted content]"
+
+	roleUser      = "user"
+	roleAssistant = "assistant"
+	roleModel     = "model"
 )
 
 // Sensitive keys to filter in headers and bodies.
@@ -102,7 +106,7 @@ func (s *scrubber) scrubMap(m map[string]any, depth int, ctx scrubContext) any {
 	insideMessage := ctx.insideMessage
 	if roleRaw, ok := m["role"].(string); ok {
 		role := strings.ToLower(strings.TrimSpace(roleRaw))
-		if role == "user" || role == "assistant" || role == "model" {
+		if role == roleUser || role == roleAssistant || role == roleModel {
 			insideMessage = true
 		}
 	}

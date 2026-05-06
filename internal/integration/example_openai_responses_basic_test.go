@@ -11,6 +11,13 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	openAIResponsesBasicProviderName  = "openai-responses"
+	openAIResponsesBasicPathPrefix    = "/v1/responses"
+	openAIResponsesBasicModelName     = "gpt-5-mini"
+	openAIResponsesBasicCompletionKey = "gpt5mini"
+)
+
 // Example_openAIResponses_basicConversation demonstrates a minimal non-streaming
 // call to OpenAI's Responses API using text-only input.
 func Example_openAIResponses_basicConversation() {
@@ -23,11 +30,11 @@ func Example_openAIResponses_basicConversation() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "openai-responses", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, openAIResponsesBasicProviderName, &inference.AddProviderConfig{
 		SDKType: spec.ProviderSDKTypeOpenAIResponses,
 		Origin:  spec.DefaultOpenAIOrigin,
 		// Only used when Origin is overridden; kept here for clarity.
-		ChatCompletionPathPrefix: "/v1/responses",
+		ChatCompletionPathPrefix: openAIResponsesBasicPathPrefix,
 		APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
 	})
 	if err != nil {
@@ -41,14 +48,14 @@ func Example_openAIResponses_basicConversation() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "openai-responses", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, openAIResponsesBasicProviderName, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
 	}
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gpt-5-mini",
+			Name:            openAIResponsesBasicModelName,
 			Stream:          false,
 			MaxPromptLength: 4096,
 			MaxOutputLength: 256,
@@ -78,9 +85,9 @@ func Example_openAIResponses_basicConversation() {
 
 	resp, err := ps.FetchCompletion(
 		ctx,
-		"openai-responses",
+		openAIResponsesBasicProviderName,
 		req,
-		&spec.FetchCompletionOptions{CompletionKey: "gpt5mini"},
+		&spec.FetchCompletionOptions{CompletionKey: openAIResponsesBasicCompletionKey},
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)

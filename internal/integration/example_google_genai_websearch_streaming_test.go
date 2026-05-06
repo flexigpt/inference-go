@@ -11,6 +11,14 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	googleWebSearchProviderName    = "google-search"
+	googleWebSearchModelName       = "gemini-3-flash-preview"
+	googleWebSearchCompletionKey   = "gemini-search"
+	googleWebSearchToolID          = "google-web-search"
+	googleWebSearchToolDescription = "Search the web for recent information."
+)
+
 // Example_googleGenerateContent_webSearchAndThinkingStreaming demonstrates:
 //   - server-side Google web search grounding
 //   - streaming text + thinking
@@ -28,7 +36,7 @@ func Example_googleGenerateContent_webSearchAndThinkingStreaming() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "google-search", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, googleWebSearchProviderName, &inference.AddProviderConfig{
 		SDKType: spec.ProviderSDKTypeGoogleGenerateContent,
 		Origin:  spec.DefaultGoogleGenerateContentOrigin,
 	})
@@ -46,16 +54,16 @@ func Example_googleGenerateContent_webSearchAndThinkingStreaming() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "google-search", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, googleWebSearchProviderName, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting Google GenAI API key:", err)
 		return
 	}
 
 	webSearchTool := spec.ToolChoice{
 		Type:               spec.ToolTypeWebSearch,
-		ID:                 "google-web-search",
+		ID:                 googleWebSearchToolID,
 		Name:               spec.DefaultWebSearchToolName,
-		Description:        "Search the web for recent information.",
+		Description:        googleWebSearchToolDescription,
 		WebSearchArguments: &spec.WebSearchToolChoiceItem{
 			// Intentionally minimal here. The Gemini adapter currently exposes
 			// web search primarily as an enable/disable capability.
@@ -64,7 +72,7 @@ func Example_googleGenerateContent_webSearchAndThinkingStreaming() {
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gemini-3-flash-preview",
+			Name:            googleWebSearchModelName,
 			Stream:          true,
 			MaxOutputLength: 512,
 			SystemPrompt: "Use web search when helpful. Keep the final answer short. " +
@@ -86,8 +94,8 @@ func Example_googleGenerateContent_webSearchAndThinkingStreaming() {
 		},
 	}
 
-	resp, err := ps.FetchCompletion(ctx, "google-search", req, &spec.FetchCompletionOptions{
-		CompletionKey: "gemini-search",
+	resp, err := ps.FetchCompletion(ctx, googleWebSearchProviderName, req, &spec.FetchCompletionOptions{
+		CompletionKey: googleWebSearchCompletionKey,
 		StreamHandler: func(ev spec.StreamEvent) error {
 			switch ev.Kind {
 			case spec.StreamContentKindThinking:

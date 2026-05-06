@@ -9,6 +9,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	testCallID        = "call-1"
+	testCallNameValue = "echo_text"
+	testHello         = "hello"
+)
+
 func TestOutputsFromGenAIResponse_PreservesPartBoundariesAndSignatures(t *testing.T) {
 	t.Parallel()
 
@@ -26,8 +32,8 @@ func TestOutputsFromGenAIResponse_PreservesPartBoundariesAndSignatures(t *testin
 					{Text: "second"},
 					{
 						FunctionCall: &genai.FunctionCall{
-							ID:   "call-1",
-							Name: "echo_text",
+							ID:   testCallID,
+							Name: testCallNameValue,
 							Args: map[string]any{"text": "hi"},
 						},
 						ThoughtSignature: callSig,
@@ -38,10 +44,10 @@ func TestOutputsFromGenAIResponse_PreservesPartBoundariesAndSignatures(t *testin
 	}
 
 	outs := outputsFromGenAIResponse(resp, map[string]spec.ToolChoice{
-		"echo_text": {
+		testCallNameValue: {
 			ID:   "echo-tool",
 			Type: spec.ToolTypeFunction,
-			Name: "echo_text",
+			Name: testCallNameValue,
 		},
 	}, "")
 
@@ -76,7 +82,7 @@ func TestConsolidateGoogleGenerateContentStreamParts(t *testing.T) {
 
 	sig1 := []byte("sig-1")
 	sig2 := []byte("sig-2")
-	fc := &genai.FunctionCall{Name: "echo_text", Args: map[string]any{"text": "hi"}}
+	fc := &genai.FunctionCall{Name: testCallNameValue, Args: map[string]any{"text": "hi"}}
 
 	tests := []struct {
 		name     string
@@ -96,11 +102,11 @@ func TestConsolidateGoogleGenerateContentStreamParts(t *testing.T) {
 		},
 		{
 			name:    "single text part unchanged",
-			in:      []*genai.Part{{Text: "hello"}},
+			in:      []*genai.Part{{Text: testHello}},
 			wantLen: 1,
 			validate: func(t *testing.T, out []*genai.Part) {
 				t.Helper()
-				if out[0].Text != "hello" {
+				if out[0].Text != testHello {
 					t.Errorf("text = %q, want hello", out[0].Text)
 				}
 			},
@@ -108,7 +114,7 @@ func TestConsolidateGoogleGenerateContentStreamParts(t *testing.T) {
 		{
 			name: "adjacent text parts merged with last signature",
 			in: []*genai.Part{
-				{Text: "hello"},
+				{Text: testHello},
 				{Text: " world"},
 				{Text: "!", ThoughtSignature: sig1},
 			},
@@ -176,7 +182,7 @@ func TestConsolidateGoogleGenerateContentStreamParts(t *testing.T) {
 				if out[0].Text != "before1before2" {
 					t.Errorf("[0].Text = %q", out[0].Text)
 				}
-				if out[1].FunctionCall == nil || out[1].FunctionCall.Name != "echo_text" {
+				if out[1].FunctionCall == nil || out[1].FunctionCall.Name != testCallNameValue {
 					t.Errorf("[1] FunctionCall = %v", out[1].FunctionCall)
 				}
 				if out[2].Text != "after1after2" {

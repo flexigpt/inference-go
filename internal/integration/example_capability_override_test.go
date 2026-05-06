@@ -10,6 +10,13 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	capOverrideOpenAIResponsesProviderName = "openai-responses"
+	capOverrideOpenAIResponsesPathPrefix   = "/v1/responses"
+	capOverrideModelName                   = "gpt-5-mini"
+	capOverrideCompletionKey               = "gpt5mini"
+)
+
 // overrideResolver is a minimal ModelCapabilityResolver example used in tests.
 // In a real app you might:
 //   - keep a per-model capability table,
@@ -40,10 +47,10 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = ps.AddProvider(ctx, "openai-responses", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, capOverrideOpenAIResponsesProviderName, &inference.AddProviderConfig{
 		SDKType:                  spec.ProviderSDKTypeOpenAIResponses,
 		Origin:                   spec.DefaultOpenAIOrigin,
-		ChatCompletionPathPrefix: "/v1/responses",
+		ChatCompletionPathPrefix: capOverrideOpenAIResponsesPathPrefix,
 		APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
 	})
 	if err != nil {
@@ -51,7 +58,7 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 	}
 
 	// 1) Get SDK-wide default capabilities programmatically.
-	baseCaps, err := ps.GetProviderCapability(ctx, "openai-responses")
+	baseCaps, err := ps.GetProviderCapability(ctx, capOverrideOpenAIResponsesProviderName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,13 +88,13 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 
 	resolver := overrideResolver{
 		byModel: map[spec.ModelName]*spec.ModelCapabilities{
-			"gpt-5-mini": &override,
+			capOverrideModelName: &override,
 		},
 	}
 
 	t.Run("modalities: file input rejected when fileIn unsupported", func(t *testing.T) {
 		req := &spec.FetchCompletionRequest{
-			ModelParam: spec.ModelParam{Name: "gpt-5-mini"},
+			ModelParam: spec.ModelParam{Name: capOverrideModelName},
 			Inputs: []spec.InputUnion{{
 				Kind: spec.InputKindInputMessage,
 				InputMessage: &spec.InputOutputContent{
@@ -110,7 +117,7 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 			ctx,
 			req,
 			&spec.FetchCompletionOptions{
-				CompletionKey:      "gpt5mini",
+				CompletionKey:      capOverrideCompletionKey,
 				CapabilityResolver: resolver,
 			},
 			spec.ProviderSDKTypeOpenAIResponses,
@@ -124,7 +131,7 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 	t.Run("reasoning: unsupported level dropped with warning", func(t *testing.T) {
 		req := &spec.FetchCompletionRequest{
 			ModelParam: spec.ModelParam{
-				Name: "gpt-5-mini",
+				Name: capOverrideModelName,
 				Reasoning: &spec.ReasoningParam{
 					Type:  spec.ReasoningTypeSingleWithLevels,
 					Level: spec.ReasoningLevelXHigh,
@@ -145,7 +152,7 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 			ctx,
 			req,
 			&spec.FetchCompletionOptions{
-				CompletionKey:      "gpt5mini",
+				CompletionKey:      capOverrideCompletionKey,
 				CapabilityResolver: resolver,
 			},
 			spec.ProviderSDKTypeOpenAIResponses,
@@ -174,11 +181,11 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 		newOverride.ModalitiesIn = []spec.Modality{spec.ModalityTextIn, spec.ModalityImageIn, spec.ModalityFileIn}
 		newResolver := overrideResolver{
 			byModel: map[spec.ModelName]*spec.ModelCapabilities{
-				"gpt-5-mini": &newOverride,
+				capOverrideModelName: &newOverride,
 			},
 		}
 		req := &spec.FetchCompletionRequest{
-			ModelParam: spec.ModelParam{Name: "gpt-5-mini"},
+			ModelParam: spec.ModelParam{Name: capOverrideModelName},
 			Inputs: []spec.InputUnion{{
 				Kind: spec.InputKindFunctionToolOutput,
 				FunctionToolOutput: &spec.ToolOutput{
@@ -206,7 +213,7 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 			ctx,
 			req,
 			&spec.FetchCompletionOptions{
-				CompletionKey:      "gpt5mini",
+				CompletionKey:      capOverrideCompletionKey,
 				CapabilityResolver: newResolver,
 			},
 			spec.ProviderSDKTypeOpenAIResponses,

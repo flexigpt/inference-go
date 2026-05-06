@@ -13,6 +13,21 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	googleGenerateContentLoopProviderName                = "google-loop"
+	googleGenerateContentLoopModelName                   = "gemini-2.5-flash"
+	googleGenerateContentLoopToolID                      = "echo-tool"
+	googleGenerateContentLoopToolName                    = "echo_text"
+	googleGenerateContentLoopToolDescription             = "Echo the provided text back in a deterministic tool result."
+	googleGenerateContentLoopJSONKeyType                 = "type"
+	googleGenerateContentLoopJSONValueObject             = "object"
+	googleGenerateContentLoopJSONKeyProperties           = "properties"
+	googleGenerateContentLoopJSONKeyText                 = "text"
+	googleGenerateContentLoopJSONValueString             = "string"
+	googleGenerateContentLoopJSONKeyRequired             = "required"
+	googleGenerateContentLoopJSONKeyAdditionalProperties = "additionalProperties"
+)
+
 func TestGoogleGenerateContent_FunctionToolRoundTripLoop(t *testing.T) {
 	apiKey := os.Getenv("GEMINI_API_KEY")
 	if apiKey == "" {
@@ -30,21 +45,25 @@ func TestGoogleGenerateContent_FunctionToolRoundTripLoop(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	const providerName = "google-loop"
-	_, err = ps.AddProvider(ctx, providerName, &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, googleGenerateContentLoopProviderName, &inference.AddProviderConfig{
 		SDKType: spec.ProviderSDKTypeGoogleGenerateContent,
 		Origin:  spec.DefaultGoogleGenerateContentOrigin,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := ps.SetProviderAPIKey(ctx, providerName, apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, googleGenerateContentLoopProviderName, apiKey); err != nil {
 		t.Fatal(err)
 	}
 
 	sawSignedReasoning := false
 	for i := range 3 {
-		saw, err := runGoogleGenerateContentEchoRoundTrip(ctx, ps, providerName, fmt.Sprintf("google loop %d", i))
+		saw, err := runGoogleGenerateContentEchoRoundTrip(
+			ctx,
+			ps,
+			googleGenerateContentLoopProviderName,
+			fmt.Sprintf("google loop %d", i),
+		)
 		if err != nil {
 			t.Fatalf("iteration %d failed: %v", i, err)
 		}
@@ -66,23 +85,24 @@ func runGoogleGenerateContentEchoRoundTrip(
 ) (bool, error) {
 	tool := spec.ToolChoice{
 		Type:        spec.ToolTypeFunction,
-		ID:          "echo-tool",
-		Name:        "echo_text",
-		Description: "Echo the provided text back in a deterministic tool result.",
+		ID:          googleGenerateContentLoopToolID,
+		Name:        googleGenerateContentLoopToolName,
+		Description: googleGenerateContentLoopToolDescription,
 		Arguments: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"text": map[string]any{"type": "string"},
+			googleGenerateContentLoopJSONKeyType: googleGenerateContentLoopJSONValueObject,
+			googleGenerateContentLoopJSONKeyProperties: map[string]any{
+				googleGenerateContentLoopJSONKeyText: map[string]any{"type": googleGenerateContentLoopJSONValueString},
 			},
-			"required":             []any{"text"},
-			"additionalProperties": false,
+			googleGenerateContentLoopJSONKeyRequired:             []any{googleGenerateContentLoopJSONKeyText},
+			googleGenerateContentLoopJSONKeyAdditionalProperties: false,
 		},
 	}
 
 	history := []spec.InputUnion{
 		newUserTextInput(
 			fmt.Sprintf(
-				`Think briefly, then call echo_text with text %q. After the tool result arrives, answer in one short sentence.`,
+				`Think briefly, then call %s with text %q. After the tool result arrives, answer in one short sentence.`,
+				googleGenerateContentLoopToolName,
 				payload,
 			),
 		),
@@ -105,7 +125,7 @@ func runGoogleGenerateContentEchoRoundTrip(
 
 		resp, err := ps.FetchCompletion(ctx, providerName, &spec.FetchCompletionRequest{
 			ModelParam: spec.ModelParam{
-				Name:            "gemini-2.5-flash",
+				Name:            googleGenerateContentLoopModelName,
 				MaxOutputLength: 256,
 				SystemPrompt: "Preserve prior assistant reasoning/tool state across turns. " +
 					"After the tool result is available, answer plainly and do not call the tool again.",
@@ -118,7 +138,7 @@ func runGoogleGenerateContentEchoRoundTrip(
 			ToolChoices: []spec.ToolChoice{tool},
 			ToolPolicy:  policy,
 		}, &spec.FetchCompletionOptions{
-			CompletionKey: "gemini-2.5-flash",
+			CompletionKey: googleGenerateContentLoopModelName,
 		})
 		if err != nil {
 			return sawSignedReasoning, fmt.Errorf("turn %d fetch: %w", turn, err)

@@ -2,8 +2,6 @@ package integration
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -12,6 +10,30 @@ import (
 
 	"github.com/flexigpt/inference-go"
 	"github.com/flexigpt/inference-go/spec"
+)
+
+const (
+	anthropicToolsProviderName                    = "anthropic"
+	anthropicToolsExtractKeyPointsToolID          = "extract-key-points"
+	anthropicToolsExtractKeyPointsToolName        = "extract_key_points"
+	anthropicToolsExtractKeyPointsToolDescription = "Extract 3 key points from the provided text."
+	anthropicToolsJSONKeyType                     = "type"
+	anthropicToolsJSONValueObject                 = "object"
+	anthropicToolsJSONKeyProperties               = "properties"
+	anthropicToolsJSONKeyText                     = "text"
+	anthropicToolsJSONValueString                 = "string"
+	anthropicToolsJSONKeyRequired                 = "required"
+	anthropicToolsJSONKeyAdditionalProperties     = "additionalProperties"
+	anthropicToolsModelName                       = "claude-sonnet-4-6"
+	anthropicToolsJSONSchemaName                  = "answer"
+	anthropicToolsJSONKeySummary                  = "summary"
+	anthropicToolsJSONKeySourceUsed               = "source_used"
+	anthropicToolsJSONValueBoolean                = "boolean"
+	anthropicToolsCompletionKey                   = "sonnet46"
+	anthropicToolsWebSearchToolID                 = "web-search"
+	anthropicToolsEchoToolID                      = "echo-tool"
+	anthropicToolsEchoToolName                    = "echo_text"
+	anthropicToolsEchoToolDescription             = "Echo the provided text back in a deterministic tool result."
 )
 
 // Example_anthropic_toolsAndThinkingStreaming demonstrates:
@@ -28,7 +50,7 @@ func Example_anthropic_toolsAndThinkingStreaming() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "anthropic", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, anthropicToolsProviderName, &inference.AddProviderConfig{
 		SDKType:                  spec.ProviderSDKTypeAnthropic,
 		Origin:                   spec.DefaultAnthropicOrigin,
 		ChatCompletionPathPrefix: spec.DefaultAnthropicChatCompletionPrefix,
@@ -45,7 +67,7 @@ func Example_anthropic_toolsAndThinkingStreaming() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "anthropic", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, anthropicToolsProviderName, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting Anthropic API key:", err)
 		return
 	}
@@ -53,21 +75,21 @@ func Example_anthropic_toolsAndThinkingStreaming() {
 	tools := []spec.ToolChoice{
 		{
 			Type:        spec.ToolTypeFunction,
-			ID:          "extract-key-points",
-			Name:        "extract_key_points",
-			Description: "Extract 3 key points from the provided text.",
+			ID:          anthropicToolsExtractKeyPointsToolID,
+			Name:        anthropicToolsExtractKeyPointsToolName,
+			Description: anthropicToolsExtractKeyPointsToolDescription,
 			Arguments: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"text": map[string]any{"type": "string"},
+				anthropicToolsJSONKeyType: anthropicToolsJSONValueObject,
+				anthropicToolsJSONKeyProperties: map[string]any{
+					anthropicToolsJSONKeyText: map[string]any{anthropicToolsJSONKeyType: anthropicToolsJSONValueString},
 				},
-				"required":             []any{"text"},
-				"additionalProperties": false,
+				anthropicToolsJSONKeyRequired:             []any{anthropicToolsJSONKeyText},
+				anthropicToolsJSONKeyAdditionalProperties: false,
 			},
 		},
 		{
 			Type: spec.ToolTypeWebSearch,
-			ID:   "web-search",
+			ID:   anthropicToolsWebSearchToolID,
 			Name: spec.DefaultWebSearchToolName,
 			WebSearchArguments: &spec.WebSearchToolChoiceItem{
 				MaxUses:           1,
@@ -78,7 +100,7 @@ func Example_anthropic_toolsAndThinkingStreaming() {
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:         "claude-sonnet-4-6",
+			Name:         anthropicToolsModelName,
 			Stream:       true,
 			SystemPrompt: "Use tools when helpful. Keep the final answer short.",
 			Reasoning: &spec.ReasoningParam{
@@ -89,15 +111,22 @@ func Example_anthropic_toolsAndThinkingStreaming() {
 				Format: &spec.OutputFormat{
 					Kind: spec.OutputFormatKindJSONSchema,
 					JSONSchemaParam: &spec.JSONSchemaParam{
-						Name: "answer",
+						Name: anthropicToolsJSONSchemaName,
 						Schema: map[string]any{
-							"type": "object",
-							"properties": map[string]any{
-								"summary":     map[string]any{"type": "string"},
-								"source_used": map[string]any{"type": "boolean"},
+							anthropicToolsJSONKeyType: anthropicToolsJSONValueObject,
+							anthropicToolsJSONKeyProperties: map[string]any{
+								anthropicToolsJSONKeySummary: map[string]any{
+									anthropicToolsJSONKeyType: anthropicToolsJSONValueString,
+								},
+								anthropicToolsJSONKeySourceUsed: map[string]any{
+									anthropicToolsJSONKeyType: anthropicToolsJSONValueBoolean,
+								},
 							},
-							"required":             []any{"summary", "source_used"},
-							"additionalProperties": false,
+							anthropicToolsJSONKeyRequired: []any{
+								anthropicToolsJSONKeySummary,
+								anthropicToolsJSONKeySourceUsed,
+							},
+							anthropicToolsJSONKeyAdditionalProperties: false,
 						},
 					},
 				},
@@ -120,8 +149,8 @@ func Example_anthropic_toolsAndThinkingStreaming() {
 		},
 	}
 
-	_, err = ps.FetchCompletion(ctx, "anthropic", req, &spec.FetchCompletionOptions{
-		CompletionKey: "sonnet46",
+	_, err = ps.FetchCompletion(ctx, anthropicToolsProviderName, req, &spec.FetchCompletionOptions{
+		CompletionKey: anthropicToolsCompletionKey,
 		StreamHandler: func(ev spec.StreamEvent) error {
 			switch ev.Kind {
 			case spec.StreamContentKindThinking:
@@ -170,7 +199,7 @@ func Example_anthropic_functionToolRoundTrip() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "anthropic", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, anthropicToolsProviderName, &inference.AddProviderConfig{
 		SDKType:                  spec.ProviderSDKTypeAnthropic,
 		Origin:                   spec.DefaultAnthropicOrigin,
 		ChatCompletionPathPrefix: spec.DefaultAnthropicChatCompletionPrefix,
@@ -187,35 +216,39 @@ func Example_anthropic_functionToolRoundTrip() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "anthropic", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, anthropicToolsProviderName, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting Anthropic API key:", err)
 		return
 	}
 
 	tool := spec.ToolChoice{
 		Type:        spec.ToolTypeFunction,
-		ID:          "echo-tool",
-		Name:        "echo_text",
-		Description: "Echo the provided text back in a deterministic tool result.",
+		ID:          anthropicToolsEchoToolID,
+		Name:        anthropicToolsEchoToolName,
+		Description: anthropicToolsEchoToolDescription,
 		Arguments: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"text": map[string]any{
-					"type": "string",
+			anthropicToolsJSONKeyType: anthropicToolsJSONValueObject,
+			anthropicToolsJSONKeyProperties: map[string]any{
+				anthropicToolsJSONKeyText: map[string]any{
+					anthropicToolsJSONKeyType: anthropicToolsJSONValueString,
 				},
 			},
-			"required":             []any{"text"},
-			"additionalProperties": false,
+			anthropicToolsJSONKeyRequired:             []any{anthropicToolsJSONKeyText},
+			anthropicToolsJSONKeyAdditionalProperties: false,
 		},
 	}
 
 	initialUser := newUserTextInput(
-		`Use the echo_text tool with text "anthropic tool round trip". Do not answer yet; just call the tool.`,
+		fmt.Sprintf(
+			`Use the %s tool with text %q. Do not answer yet; just call the tool.`,
+			anthropicToolsEchoToolName,
+			"anthropic tool round trip",
+		),
 	)
 
 	firstReq := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "claude-sonnet-4-6",
+			Name:            anthropicToolsModelName,
 			MaxOutputLength: 512,
 			SystemPrompt: strings.Join([]string{
 				"You are validating a client tool round trip.",
@@ -234,8 +267,8 @@ func Example_anthropic_functionToolRoundTrip() {
 		},
 	}
 
-	firstResp, err := ps.FetchCompletion(ctx, "anthropic", firstReq, &spec.FetchCompletionOptions{
-		CompletionKey: "sonnet46",
+	firstResp, err := ps.FetchCompletion(ctx, anthropicToolsProviderName, firstReq, &spec.FetchCompletionOptions{
+		CompletionKey: anthropicToolsCompletionKey,
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "first FetchCompletion error:", err)
@@ -272,7 +305,7 @@ func Example_anthropic_functionToolRoundTrip() {
 	// user turn, with tool_result first and user text after it.
 	secondReq := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "claude-sonnet-4-6",
+			Name:            anthropicToolsModelName,
 			MaxOutputLength: 256,
 			SystemPrompt: strings.Join([]string{
 				"You have now received the tool result.",
@@ -298,8 +331,8 @@ func Example_anthropic_functionToolRoundTrip() {
 		},
 	}
 
-	secondResp, err := ps.FetchCompletion(ctx, "anthropic", secondReq, &spec.FetchCompletionOptions{
-		CompletionKey: "sonnet46",
+	secondResp, err := ps.FetchCompletion(ctx, anthropicToolsProviderName, secondReq, &spec.FetchCompletionOptions{
+		CompletionKey: anthropicToolsCompletionKey,
 	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "second FetchCompletion error:", err)
@@ -313,112 +346,4 @@ func Example_anthropic_functionToolRoundTrip() {
 
 	fmt.Println("OK")
 	// Output: OK
-}
-
-func newUserTextInput(text string) spec.InputUnion {
-	return spec.InputUnion{
-		Kind: spec.InputKindInputMessage,
-		InputMessage: &spec.InputOutputContent{
-			Role: spec.RoleUser,
-			Contents: []spec.InputOutputContentItemUnion{
-				{
-					Kind:     spec.ContentItemKindText,
-					TextItem: &spec.ContentItemText{Text: text},
-				},
-			},
-		},
-	}
-}
-
-func firstFunctionToolCall(resp *spec.FetchCompletionResponse) (*spec.ToolCall, error) {
-	if resp == nil {
-		return nil, errors.New("nil response")
-	}
-	for _, out := range resp.Outputs {
-		if out.Kind == spec.OutputKindFunctionToolCall && out.FunctionToolCall != nil {
-			return out.FunctionToolCall, nil
-		}
-	}
-	return nil, fmt.Errorf("no function tool call found in %d outputs", len(resp.Outputs))
-}
-
-func runEchoTool(call *spec.ToolCall) (*spec.ToolOutput, error) {
-	if call == nil {
-		return nil, errors.New("nil tool call")
-	}
-
-	callID := nonEmpty(call.CallID, call.ID)
-	if callID == "" {
-		return nil, errors.New("tool call missing call id")
-	}
-
-	var args struct {
-		Text string `json:"text"`
-	}
-	if err := json.Unmarshal([]byte(call.Arguments), &args); err != nil {
-		return nil, fmt.Errorf("decode tool arguments: %w", err)
-	}
-	if strings.TrimSpace(args.Text) == "" {
-		return nil, errors.New("tool argument text is empty")
-	}
-
-	result := "ECHO: " + args.Text
-
-	return &spec.ToolOutput{
-		Type:     call.Type,
-		ChoiceID: call.ChoiceID,
-		ID:       callID,
-		Role:     spec.RoleTool,
-		CallID:   callID,
-		Name:     call.Name,
-		Contents: []spec.ToolOutputItemUnion{
-			{
-				Kind:     spec.ContentItemKindText,
-				TextItem: &spec.ContentItemText{Text: result},
-			},
-		},
-	}, nil
-}
-
-func firstToolOutputText(out *spec.ToolOutput) string {
-	if out == nil {
-		return ""
-	}
-	for _, item := range out.Contents {
-		if item.Kind == spec.ContentItemKindText && item.TextItem != nil {
-			return item.TextItem.Text
-		}
-	}
-	return ""
-}
-
-func responseText(resp *spec.FetchCompletionResponse) string {
-	if resp == nil {
-		return ""
-	}
-
-	var b strings.Builder
-	for _, out := range resp.Outputs {
-		if out.Kind != spec.OutputKindOutputMessage || out.OutputMessage == nil {
-			continue
-		}
-		for _, item := range out.OutputMessage.Contents {
-			if item.Kind == spec.ContentItemKindText && item.TextItem != nil {
-				if b.Len() > 0 {
-					b.WriteString(" ")
-				}
-				b.WriteString(item.TextItem.Text)
-			}
-		}
-	}
-	return strings.TrimSpace(b.String())
-}
-
-func nonEmpty(values ...string) string {
-	for _, v := range values {
-		if strings.TrimSpace(v) != "" {
-			return strings.TrimSpace(v)
-		}
-	}
-	return ""
 }

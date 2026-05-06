@@ -8,6 +8,18 @@ import (
 	"testing"
 )
 
+const (
+	testAuthorization     = "Authorization"
+	testApiKeyIsSensitive = "apiKey"
+	testModel             = "Model"
+	testMake              = "Make"
+	testVIN               = "VIN"
+	testHonda             = "Honda"
+	testCivic             = "Civic"
+	testMonkey            = "monkey"
+	testTurkey            = "turKey"
+)
+
 // TestContainsSensitiveKey verifies detection of sensitive keys.
 func TestContainsSensitiveKey(t *testing.T) {
 	t.Parallel()
@@ -18,12 +30,12 @@ func TestContainsSensitiveKey(t *testing.T) {
 		want bool
 	}{
 		{"EmptyKeyIsNotSensitive.", "", false},
-		{"AuthorizationIsSensitive.", "Authorization", true},
+		{"AuthorizationIsSensitive.", testAuthorization, true},
 		{"ProxyAuthorizationIsSensitive.", "Proxy-Authorization", true},
-		{"ApiKeyIsSensitive.", "apiKey", true},
+		{"ApiKeyIsSensitive.", testApiKeyIsSensitive, true},
 		{"XApiKeyIsSensitive.", "X-API-KEY", true},
-		{"SubstringKeyIsSensitive_Monkey.", "monkey", false},
-		{"SubstringKeyIsSensitive_TurKey.", "turKey", false},
+		{"SubstringKeyIsSensitive_Monkey.", testMonkey, false},
+		{"SubstringKeyIsSensitive_TurKey.", testTurkey, false},
 		{"UnrelatedKeyIsNotSensitive.", "NotSensitive", false},
 	}
 
@@ -95,35 +107,35 @@ func TestRedactHeaders_BasicRedaction(t *testing.T) {
 		{
 			name: "NoSensitiveKeysRemainUnchanged.",
 			in: map[string]any{
-				"Make":  "Honda",
-				"Model": "Civic",
-				"Year":  2020,
-				"New":   true,
+				testMake:  testHonda,
+				testModel: testCivic,
+				"Year":    2020,
+				"New":     true,
 			},
 			want: map[string]any{
-				"Make":  "Honda",
-				"Model": "Civic",
-				"Year":  2020,
-				"New":   true,
+				testMake:  testHonda,
+				testModel: testCivic,
+				"Year":    2020,
+				"New":     true,
 			},
 		},
 		{
 			name: "SensitiveKeysAreMaskedCaseInsensitiveAndSubstring.",
 			in: map[string]any{
-				"Authorization": "Bearer secret",
-				"apiKey":        "abc123",
-				"monkey":        "banana",
-				"turKey":        "sandwich",
-				"VIN":           "JH4DA9350LS000001",
-				"Spare":         nil,
+				testAuthorization:     "Bearer secret",
+				testApiKeyIsSensitive: "abc123",
+				testMonkey:            "banana",
+				testTurkey:            "sandwich",
+				testVIN:               "JH4DA9350LS000001",
+				"Spare":               nil,
 			},
 			want: map[string]any{
-				"Authorization": maskToken,
-				"apiKey":        maskToken,
-				"monkey":        "banana",
-				"turKey":        "sandwich",
-				"VIN":           "JH4DA9350LS000001",
-				"Spare":         nil,
+				testAuthorization:     maskToken,
+				testApiKeyIsSensitive: maskToken,
+				testMonkey:            "banana",
+				testTurkey:            "sandwich",
+				testVIN:               "JH4DA9350LS000001",
+				"Spare":               nil,
 			},
 		},
 	}
@@ -229,7 +241,7 @@ func TestSanitizeBodyForDebug_JSON_SensitiveKeys(t *testing.T) {
 	}
 
 	want := map[string]any{
-		"apiKey": maskToken,
+		testApiKeyIsSensitive: maskToken,
 		"nested": map[string]any{
 			"authorization": maskToken,
 			// JSON numbers unmarshal as float64.
@@ -333,7 +345,7 @@ func TestSanitizeBodyForDebug_JSON_StructuredContent(t *testing.T) {
 
 	// Build JSON from a Go value to avoid float64 surprises.
 	input := map[string]any{
-		"role": "assistant",
+		"role": roleAssistant,
 		contentStr: []any{
 			map[string]any{
 				"type":  textStr,
@@ -362,8 +374,8 @@ func TestSanitizeBodyForDebug_JSON_StructuredContent(t *testing.T) {
 	}
 
 	// Check role.
-	if role, _ := gotMap["role"].(string); role != "assistant" {
-		t.Fatalf("role got = %q, want = %q.", role, "assistant")
+	if role, _ := gotMap["role"].(string); role != roleAssistant {
+		t.Fatalf("role got = %q, want = %q.", role, roleAssistant)
 	}
 
 	contentAny, ok := gotMap[contentStr]
@@ -424,17 +436,17 @@ func TestScrubber_Cycles(t *testing.T) {
 			name: "MapSelfCycleYieldsCycleToken.",
 			in: func() map[string]any {
 				vehicle := map[string]any{
-					"Make": "Toyota",
-					"VIN":  "JT2JA82J1R0000001",
+					testMake: "Toyota",
+					testVIN:  "JT2JA82J1R0000001",
 				}
 				vehicle["Self"] = vehicle
 				return map[string]any{"Vehicle": vehicle}
 			},
 			want: map[string]any{
 				"Vehicle": map[string]any{
-					"Make": "Toyota",
-					"VIN":  "JT2JA82J1R0000001",
-					"Self": cycleToken,
+					testMake: "Toyota",
+					testVIN:  "JT2JA82J1R0000001",
+					"Self":   cycleToken,
 				},
 			},
 		},
@@ -483,8 +495,8 @@ func TestScrubber_Immutability(t *testing.T) {
 			in: func() map[string]any {
 				return map[string]any{
 					"Car": map[string]any{
-						"Make":  "Honda",
-						"Model": "Civic",
+						testMake:  testHonda,
+						testModel: testCivic,
 					},
 				}
 			},
@@ -505,17 +517,17 @@ func TestScrubber_Immutability(t *testing.T) {
 
 			// Mutate original after sanitization.
 			origCar, _ := orig["Car"].(map[string]any)
-			origCar["Model"] = "Accord"
+			origCar[testModel] = "Accord"
 
 			// Ensure the sanitized copy did not change.
 			cleanCar, _ := clean["Car"].(map[string]any)
-			if got, want := cleanCar["Model"], any("Civic"); got != want {
+			if got, want := cleanCar[testModel], any(testCivic); got != want {
 				t.Fatalf("sanitized copy mutated: Model got = %v, want = %v.", got, want)
 			}
 
 			// Mutate the sanitized copy and ensure the original did not change.
-			cleanCar["Model"] = "Integra"
-			if got, want := origCar["Model"], any("Accord"); got != want {
+			cleanCar[testModel] = "Integra"
+			if got, want := origCar[testModel], any("Accord"); got != want {
 				t.Fatalf(
 					"original mutated by changing sanitized copy: got = %v, want = %v.",
 					got,
@@ -544,8 +556,8 @@ func TestGenerateCurlCommand_Basic(t *testing.T) {
 					URL:    &urlStr,
 					Method: &method,
 					Headers: map[string]any{
-						"Authorization": maskToken, // Already redacted.
-						"X-Custom":      "value",
+						testAuthorization: maskToken, // Already redacted.
+						"X-Custom":        "value",
 					},
 					Data: map[string]any{
 						"foo": "bar",

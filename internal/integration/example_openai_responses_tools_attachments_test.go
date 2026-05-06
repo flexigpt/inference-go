@@ -11,6 +11,32 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	openAIResponsesExtendedProviderName                = "openai-responses-extended"
+	openAIResponsesExtendedPathPrefix                  = "/v1/responses"
+	openAIResponsesExtendedSummarizeToolID             = "summarize-document"
+	openAIResponsesExtendedSummarizeToolName           = "summarize_document"
+	openAIResponsesExtendedSummarizeToolDescription    = "Summarize a document with an optional focus."
+	openAIResponsesExtendedWebSearchToolID             = "web-search"
+	openAIResponsesExtendedWebSearchToolName           = "web_search"
+	openAIResponsesExtendedWebSearchToolDescription    = "Search the web for recent information."
+	openAIResponsesExtendedJSONKeyType                 = "type"
+	openAIResponsesExtendedJSONValueObject             = "object"
+	openAIResponsesExtendedJSONKeyProperties           = "properties"
+	openAIResponsesExtendedJSONKeyDocument             = "document"
+	openAIResponsesExtendedJSONKeyFocus                = "focus"
+	openAIResponsesExtendedJSONKeyDescription          = "description"
+	openAIResponsesExtendedJSONValueString             = "string"
+	openAIResponsesExtendedJSONKeyRequired             = "required"
+	openAIResponsesExtendedJSONKeyAdditionalProperties = "additionalProperties"
+	openAIResponsesExtendedSchemaName                  = "final_answer"
+	openAIResponsesExtendedJSONImageDescriptionKey     = "image_description"
+	openAIResponsesExtendedJSONFileNameKey             = "file_name"
+	openAIResponsesExtendedJSONAnswerKey               = "answer"
+	openAIResponsesExtendedModelName                   = "gpt-5-mini"
+	openAIResponsesExtendedCompletionKey               = "gpt5mini"
+)
+
 const sendFile = true
 
 // Example_openAIResponses_toolsAndAttachments demonstrates a more advanced
@@ -33,10 +59,10 @@ func Example_openAIResponses_toolsAndAttachments() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "openai-responses-extended", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, openAIResponsesExtendedProviderName, &inference.AddProviderConfig{
 		SDKType:                  spec.ProviderSDKTypeOpenAIResponses,
 		Origin:                   spec.DefaultOpenAIOrigin,
-		ChatCompletionPathPrefix: "/v1/responses",
+		ChatCompletionPathPrefix: openAIResponsesExtendedPathPrefix,
 		APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
 	})
 	if err != nil {
@@ -50,7 +76,7 @@ func Example_openAIResponses_toolsAndAttachments() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "openai-responses-extended", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, openAIResponsesExtendedProviderName, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
 	}
@@ -58,32 +84,32 @@ func Example_openAIResponses_toolsAndAttachments() {
 	// Tool: summarize_document(document: string, focus: string).
 	summarizeTool := spec.ToolChoice{
 		Type:        spec.ToolTypeFunction,
-		ID:          "summarize-document",
-		Name:        "summarize_document",
-		Description: "Summarize a document with an optional focus.",
+		ID:          openAIResponsesExtendedSummarizeToolID,
+		Name:        openAIResponsesExtendedSummarizeToolName,
+		Description: openAIResponsesExtendedSummarizeToolDescription,
 		Arguments: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"document": map[string]any{
-					"type":        "string",
-					"description": "Full text of the document to summarize.",
+			openAIResponsesExtendedJSONKeyType: openAIResponsesExtendedJSONValueObject,
+			openAIResponsesExtendedJSONKeyProperties: map[string]any{
+				openAIResponsesExtendedJSONKeyDocument: map[string]any{
+					openAIResponsesExtendedJSONKeyType:        openAIResponsesExtendedJSONValueString,
+					openAIResponsesExtendedJSONKeyDescription: "Full text of the document to summarize.",
 				},
-				"focus": map[string]any{
-					"type":        "string",
-					"description": "Optional topic to focus on.",
+				openAIResponsesExtendedJSONKeyFocus: map[string]any{
+					openAIResponsesExtendedJSONKeyType:        openAIResponsesExtendedJSONValueString,
+					openAIResponsesExtendedJSONKeyDescription: "Optional topic to focus on.",
 				},
 			},
-			"required":             []any{"document"},
-			"additionalProperties": false,
+			openAIResponsesExtendedJSONKeyRequired:             []any{openAIResponsesExtendedJSONKeyDocument},
+			openAIResponsesExtendedJSONKeyAdditionalProperties: false,
 		},
 	}
 
 	// Web search tool: used for retrieving fresh information when needed.
 	webSearchTool := spec.ToolChoice{
 		Type:        spec.ToolTypeWebSearch,
-		ID:          "web-search",
-		Name:        "web_search",
-		Description: "Search the web for recent information.",
+		ID:          openAIResponsesExtendedWebSearchToolID,
+		Name:        openAIResponsesExtendedWebSearchToolName,
+		Description: openAIResponsesExtendedWebSearchToolDescription,
 		WebSearchArguments: &spec.WebSearchToolChoiceItem{
 			MaxUses:           2,
 			SearchContextSize: spec.WebSearchContextSizeMedium,
@@ -139,7 +165,7 @@ func Example_openAIResponses_toolsAndAttachments() {
 	}
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gpt-5-mini",
+			Name:            openAIResponsesExtendedModelName,
 			Stream:          true,
 			MaxPromptLength: 8192,
 			MaxOutputLength: 8192,
@@ -158,16 +184,26 @@ func Example_openAIResponses_toolsAndAttachments() {
 				Format: &spec.OutputFormat{
 					Kind: spec.OutputFormatKindJSONSchema,
 					JSONSchemaParam: &spec.JSONSchemaParam{
-						Name: "final_answer",
+						Name: openAIResponsesExtendedSchemaName,
 						Schema: map[string]any{
-							"type": "object",
-							"properties": map[string]any{
-								"image_description": map[string]any{"type": "string"},
-								"file_name":         map[string]any{"type": "string"},
-								"answer":            map[string]any{"type": "string"},
+							openAIResponsesExtendedJSONKeyType: openAIResponsesExtendedJSONValueObject,
+							openAIResponsesExtendedJSONKeyProperties: map[string]any{
+								openAIResponsesExtendedJSONImageDescriptionKey: map[string]any{
+									openAIResponsesExtendedJSONKeyType: openAIResponsesExtendedJSONValueString,
+								},
+								openAIResponsesExtendedJSONFileNameKey: map[string]any{
+									openAIResponsesExtendedJSONKeyType: openAIResponsesExtendedJSONValueString,
+								},
+								openAIResponsesExtendedJSONAnswerKey: map[string]any{
+									openAIResponsesExtendedJSONKeyType: openAIResponsesExtendedJSONValueString,
+								},
 							},
-							"required":             []any{"image_description", "answer", "file_name"},
-							"additionalProperties": false,
+							openAIResponsesExtendedJSONKeyRequired: []any{
+								openAIResponsesExtendedJSONImageDescriptionKey,
+								openAIResponsesExtendedJSONAnswerKey,
+								openAIResponsesExtendedJSONFileNameKey,
+							},
+							openAIResponsesExtendedJSONKeyAdditionalProperties: false,
 						},
 						Strict: true,
 					},
@@ -208,10 +244,10 @@ func Example_openAIResponses_toolsAndAttachments() {
 		StreamConfig: &spec.StreamConfig{
 			// Use library defaults; override here if you want.
 		},
-		CompletionKey: "gpt5mini",
+		CompletionKey: openAIResponsesExtendedCompletionKey,
 	}
 
-	resp, err := ps.FetchCompletion(ctx, "openai-responses-extended", req, opts)
+	resp, err := ps.FetchCompletion(ctx, openAIResponsesExtendedProviderName, req, opts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "\nFetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {

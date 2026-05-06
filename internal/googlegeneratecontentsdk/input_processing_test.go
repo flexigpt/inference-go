@@ -25,9 +25,9 @@ func TestToGoogleGenerateContentContents_PreservesSignedReasoningBeforeToolCall(
 			FunctionToolCall: &spec.ToolCall{
 				Type:      spec.ToolTypeFunction,
 				Role:      spec.RoleAssistant,
-				ID:        "call-1",
-				CallID:    "call-1",
-				Name:      "echo_text",
+				ID:        testCallID,
+				CallID:    testCallID,
+				Name:      testCallNameValue,
 				Arguments: `{"text":"hi"}`,
 			},
 		},
@@ -57,7 +57,7 @@ func TestToGoogleGenerateContentContents_PreservesSignedReasoningBeforeToolCall(
 	if contents[0].Parts[1].FunctionCall == nil {
 		t.Fatal("second part FunctionCall = nil")
 	}
-	if contents[0].Parts[1].FunctionCall.Name != "echo_text" {
+	if contents[0].Parts[1].FunctionCall.Name != testCallNameValue {
 		t.Fatalf("FunctionCall.Name = %q, want echo_text", contents[0].Parts[1].FunctionCall.Name)
 	}
 }

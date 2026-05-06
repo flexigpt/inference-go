@@ -11,6 +11,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	anthropicBasicProviderName  = "anthropic"
+	anthropicBasicModelName     = "claude-haiku-4-5-20251001"
+	anthropicBasicCompletionKey = "haiku45"
+)
+
 // Example_anthropic_basicConversation demonstrates a minimal non-streaming
 // call to Anthropic's Messages API using the normalized inference-go API.
 func Example_anthropic_basicConversation() {
@@ -23,7 +29,7 @@ func Example_anthropic_basicConversation() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "anthropic", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, anthropicBasicProviderName, &inference.AddProviderConfig{
 		SDKType:                  spec.ProviderSDKTypeAnthropic,
 		Origin:                   spec.DefaultAnthropicOrigin,
 		ChatCompletionPathPrefix: spec.DefaultAnthropicChatCompletionPrefix,
@@ -41,14 +47,14 @@ func Example_anthropic_basicConversation() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "anthropic", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, anthropicBasicProviderName, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting Anthropic API key:", err)
 		return
 	}
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "claude-haiku-4-5-20251001",
+			Name:            anthropicBasicModelName,
 			Stream:          false,
 			MaxPromptLength: 4096,
 			MaxOutputLength: 256,
@@ -72,7 +78,12 @@ func Example_anthropic_basicConversation() {
 		},
 	}
 
-	resp, err := ps.FetchCompletion(ctx, "anthropic", req, &spec.FetchCompletionOptions{CompletionKey: "haiku45"})
+	resp, err := ps.FetchCompletion(
+		ctx,
+		anthropicBasicProviderName,
+		req,
+		&spec.FetchCompletionOptions{CompletionKey: anthropicBasicCompletionKey},
+	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {

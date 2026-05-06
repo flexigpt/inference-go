@@ -10,6 +10,16 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	capNormOpenAIChatProviderName      = "openai-chat"
+	capNormOpenAIResponsesProviderName = "openai-responses"
+	capNormGPT5MiniModelName           = "gpt-5-mini"
+	capNormGPT5MiniCompletionKey       = "gpt5mini"
+	capNormUserText                    = "hi"
+	capNormWebSearchToolID             = "ws"
+	capNormWebSearchToolName           = "web_search"
+)
+
 type staticCapsResolver struct {
 	Caps *spec.ModelCapabilities
 }
@@ -23,7 +33,7 @@ func (r staticCapsResolver) ResolveModelCapabilities(
 
 func TestNormalizeRequestForSDK_OpenAIChat_PreservesWebSearchToolChoice(t *testing.T) {
 	api, err := openaichatsdk.NewOpenAIChatCompletionsAPI(spec.ProviderParam{
-		Name:    "openai-chat",
+		Name:    capNormOpenAIChatProviderName,
 		SDKType: spec.ProviderSDKTypeOpenAIChatCompletions,
 	}, nil)
 	if err != nil {
@@ -43,14 +53,14 @@ func TestNormalizeRequestForSDK_OpenAIChat_PreservesWebSearchToolChoice(t *testi
 				Role: spec.RoleUser,
 				Contents: []spec.InputOutputContentItemUnion{{
 					Kind:     spec.ContentItemKindText,
-					TextItem: &spec.ContentItemText{Text: "hi"},
+					TextItem: &spec.ContentItemText{Text: capNormUserText},
 				}},
 			},
 		}},
 		ToolChoices: []spec.ToolChoice{{
 			Type: spec.ToolTypeWebSearch,
-			ID:   "ws",
-			Name: "web_search",
+			ID:   capNormWebSearchToolID,
+			Name: capNormWebSearchToolName,
 			WebSearchArguments: &spec.WebSearchToolChoiceItem{
 				SearchContextSize: spec.WebSearchContextSizeMedium,
 			},
@@ -77,7 +87,7 @@ func TestNormalizeRequestForSDK_OpenAIChat_PreservesWebSearchToolChoice(t *testi
 
 func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 	api, err := openairesponsessdk.NewOpenAIResponsesAPI(spec.ProviderParam{
-		Name:    "openai-responses",
+		Name:    capNormOpenAIResponsesProviderName,
 		SDKType: spec.ProviderSDKTypeOpenAIResponses,
 	}, nil)
 	if err != nil {
@@ -106,7 +116,7 @@ func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name: "gpt-5-mini",
+			Name: capNormGPT5MiniModelName,
 			Reasoning: &spec.ReasoningParam{
 				Type:  spec.ReasoningTypeSingleWithLevels,
 				Level: spec.ReasoningLevelXHigh,
@@ -118,7 +128,7 @@ func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 				Role: spec.RoleUser,
 				Contents: []spec.InputOutputContentItemUnion{{
 					Kind:     spec.ContentItemKindText,
-					TextItem: &spec.ContentItemText{Text: "hi"},
+					TextItem: &spec.ContentItemText{Text: capNormUserText},
 				}},
 			},
 		}},
@@ -129,7 +139,7 @@ func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 		req,
 		&spec.FetchCompletionOptions{
 			CapabilityResolver: staticCapsResolver{Caps: &custom},
-			CompletionKey:      "gpt5mini",
+			CompletionKey:      capNormGPT5MiniCompletionKey,
 		},
 		spec.ProviderSDKTypeOpenAIResponses,
 		baseCaps,

@@ -11,6 +11,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	googleBasicProviderName  = "google"
+	googleBasicModelName     = "gemini-3-flash-preview"
+	googleBasicCompletionKey = "gemini-flash"
+)
+
 // Example_googleGenerateContent_basicConversation demonstrates a minimal non-streaming
 // call to Google's Generative AI API (Gemini) using the normalized inference-go API.
 func Example_googleGenerateContent_basicConversation() {
@@ -23,7 +29,7 @@ func Example_googleGenerateContent_basicConversation() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "google", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, googleBasicProviderName, &inference.AddProviderConfig{
 		SDKType: spec.ProviderSDKTypeGoogleGenerateContent,
 		Origin:  spec.DefaultGoogleGenerateContentOrigin,
 	})
@@ -41,14 +47,14 @@ func Example_googleGenerateContent_basicConversation() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "google", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, googleBasicProviderName, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting Google GenAI API key:", err)
 		return
 	}
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            "gemini-3-flash-preview",
+			Name:            googleBasicModelName,
 			Stream:          false,
 			MaxPromptLength: 4096,
 			MaxOutputLength: 256,
@@ -73,8 +79,8 @@ func Example_googleGenerateContent_basicConversation() {
 	}
 
 	resp, err := ps.FetchCompletion(
-		ctx, "google", req,
-		&spec.FetchCompletionOptions{CompletionKey: "gemini-flash"},
+		ctx, googleBasicProviderName, req,
+		&spec.FetchCompletionOptions{CompletionKey: googleBasicCompletionKey},
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)

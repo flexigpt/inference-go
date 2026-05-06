@@ -9,6 +9,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	testText       = "text"
+	testToolUse    = "tool_use"
+	testToolResult = "tool_result"
+)
+
 func TestToAnthropicMessagesInput_SuccessCases(t *testing.T) {
 	t.Parallel()
 
@@ -35,11 +41,11 @@ func TestToAnthropicMessagesInput_SuccessCases(t *testing.T) {
 				userText("Please summarize briefly."),
 				functionToolOutput("toolu_1", "get_weather", "72F and sunny"),
 			},
-			wantRoles: []string{"user", "assistant", "user"},
+			wantRoles: []string{string(spec.RoleUser), string(spec.RoleAssistant), string(spec.RoleUser)},
 			wantTypes: [][]string{
-				{"text"},
-				{"text", "tool_use"},
-				{"tool_result", "text"},
+				{testText},
+				{testText, testToolUse},
+				{testToolResult, testText},
 			},
 			check: func(t *testing.T, msgs []map[string]any, sysText string) {
 				t.Helper()
@@ -68,11 +74,11 @@ func TestToAnthropicMessagesInput_SuccessCases(t *testing.T) {
 				functionToolOutput("toolu_a", "tool_a", "result a"),
 				functionToolOutput("toolu_b", "tool_b", "result b"),
 			},
-			wantRoles: []string{"user", "assistant", "user"},
+			wantRoles: []string{string(spec.RoleUser), string(spec.RoleAssistant), string(spec.RoleUser)},
 			wantTypes: [][]string{
-				{"text"},
-				{"tool_use", "tool_use"},
-				{"tool_result", "tool_result"},
+				{testText},
+				{testToolUse, testToolUse},
+				{testToolResult, testToolResult},
 			},
 			check: func(t *testing.T, msgs []map[string]any, _ string) {
 				t.Helper()
@@ -95,9 +101,9 @@ func TestToAnthropicMessagesInput_SuccessCases(t *testing.T) {
 				}),
 				webSearchToolOutput("wsu_1", "https://go.dev/doc/devel/release", "Go release notes", "enc1"),
 			},
-			wantRoles: []string{"user", "assistant"},
+			wantRoles: []string{string(spec.RoleUser), string(spec.RoleAssistant)},
 			wantTypes: [][]string{
-				{"text"},
+				{testText},
 				{"server_tool_use", "web_search_tool_result"},
 			},
 			check: func(t *testing.T, msgs []map[string]any, _ string) {

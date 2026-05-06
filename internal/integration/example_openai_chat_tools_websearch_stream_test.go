@@ -11,6 +11,23 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	openAIChatToolsProviderName                = "openai-chat"
+	openAIChatToolsFunctionToolID              = "math"
+	openAIChatToolsFunctionToolName            = "multiply"
+	openAIChatToolsFunctionToolDescription     = "Multiply two integers."
+	openAIChatToolsJSONKeyType                 = "type"
+	openAIChatToolsJSONValueObject             = "object"
+	openAIChatToolsJSONKeyProperties           = "properties"
+	openAIChatToolsJSONKeyRequired             = "required"
+	openAIChatToolsJSONKeyAdditionalProperties = "additionalProperties"
+	openAIChatToolsJSONAnswerKey               = "answer"
+	openAIChatToolsSchemaName                  = "result"
+	openAIChatToolsModelName                   = "gpt-4.1"
+	openAIChatToolsCompletionKey               = "gpt41"
+	openAIChatToolsSystemPrompt                = "answer directly"
+)
+
 // Example_openAIChat_toolsAndJSONSchema demonstrates:
 //   - streaming text
 //   - JSON schema output (response_format=json_schema)
@@ -25,7 +42,7 @@ func Example_openAIChat_toolsAndJSONSchema() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "openai-chat", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, openAIChatToolsProviderName, &inference.AddProviderConfig{
 		SDKType:                  spec.ProviderSDKTypeOpenAIChatCompletions,
 		Origin:                   spec.DefaultOpenAIOrigin,
 		ChatCompletionPathPrefix: spec.DefaultOpenAIChatCompletionsPrefix,
@@ -43,7 +60,7 @@ func Example_openAIChat_toolsAndJSONSchema() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "openai-chat", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, openAIChatToolsProviderName, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
 	}
@@ -51,38 +68,38 @@ func Example_openAIChat_toolsAndJSONSchema() {
 	tools := []spec.ToolChoice{
 		{
 			Type:        spec.ToolTypeFunction,
-			ID:          "math",
-			Name:        "multiply",
-			Description: "Multiply two integers.",
+			ID:          openAIChatToolsFunctionToolID,
+			Name:        openAIChatToolsFunctionToolName,
+			Description: openAIChatToolsFunctionToolDescription,
 			Arguments: map[string]any{
-				"type": "object",
-				"properties": map[string]any{
-					"a": map[string]any{"type": "integer"},
-					"b": map[string]any{"type": "integer"},
+				openAIChatToolsJSONKeyType: openAIChatToolsJSONValueObject,
+				openAIChatToolsJSONKeyProperties: map[string]any{
+					"a": map[string]any{openAIChatToolsJSONKeyType: "integer"},
+					"b": map[string]any{openAIChatToolsJSONKeyType: "integer"},
 				},
-				"required":             []any{"a", "b"},
-				"additionalProperties": false,
+				openAIChatToolsJSONKeyRequired:             []any{"a", "b"},
+				openAIChatToolsJSONKeyAdditionalProperties: false,
 			},
 		},
 	}
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:         "gpt-4.1",
+			Name:         openAIChatToolsModelName,
 			Stream:       true,
-			SystemPrompt: "answer directly",
+			SystemPrompt: openAIChatToolsSystemPrompt,
 			OutputParam: &spec.OutputParam{
 				Format: &spec.OutputFormat{
 					Kind: spec.OutputFormatKindJSONSchema,
 					JSONSchemaParam: &spec.JSONSchemaParam{
-						Name: "result",
+						Name: openAIChatToolsSchemaName,
 						Schema: map[string]any{
-							"type": "object",
-							"properties": map[string]any{
-								"answer": map[string]any{"type": "string"},
+							openAIChatToolsJSONKeyType: openAIChatToolsJSONValueObject,
+							openAIChatToolsJSONKeyProperties: map[string]any{
+								openAIChatToolsJSONAnswerKey: map[string]any{openAIChatToolsJSONKeyType: "string"},
 							},
-							"required":             []any{"answer"},
-							"additionalProperties": false,
+							openAIChatToolsJSONKeyRequired:             []any{openAIChatToolsJSONAnswerKey},
+							openAIChatToolsJSONKeyAdditionalProperties: false,
 						},
 						Strict: true,
 					},
@@ -108,8 +125,8 @@ func Example_openAIChat_toolsAndJSONSchema() {
 		},
 	}
 
-	_, err = ps.FetchCompletion(ctx, "openai-chat", req, &spec.FetchCompletionOptions{
-		CompletionKey: "gpt41",
+	_, err = ps.FetchCompletion(ctx, openAIChatToolsProviderName, req, &spec.FetchCompletionOptions{
+		CompletionKey: openAIChatToolsCompletionKey,
 		StreamHandler: func(ev spec.StreamEvent) error {
 			if ev.Kind == spec.StreamContentKindText && ev.Text != nil {
 				fmt.Fprint(os.Stderr, ev.Text.Text)

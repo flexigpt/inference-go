@@ -11,7 +11,20 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const testModelName = "gemini-2.5-flash"
+const (
+	googleToolsRoundTripProviderName                = "google-tools"
+	googleToolsRoundTripModelName                   = "gemini-2.5-flash"
+	googleToolsRoundTripToolID                      = "echo-tool"
+	googleToolsRoundTripToolName                    = "echo_text"
+	googleToolsRoundTripToolDescription             = "Echo the provided text back in a deterministic tool result."
+	googleToolsRoundTripJSONKeyType                 = "type"
+	googleToolsRoundTripJSONValueObject             = "object"
+	googleToolsRoundTripJSONKeyProperties           = "properties"
+	googleToolsRoundTripJSONKeyText                 = "text"
+	googleToolsRoundTripJSONValueString             = "string"
+	googleToolsRoundTripJSONKeyRequired             = "required"
+	googleToolsRoundTripJSONKeyAdditionalProperties = "additionalProperties"
+)
 
 // Example_googleGenerateContent_functionToolRoundTrip demonstrates a full
 // Gemini function-tool round trip:
@@ -36,7 +49,7 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, "google-tools", &inference.AddProviderConfig{
+	_, err = ps.AddProvider(ctx, googleToolsRoundTripProviderName, &inference.AddProviderConfig{
 		SDKType: spec.ProviderSDKTypeGoogleGenerateContent,
 		Origin:  spec.DefaultGoogleGenerateContentOrigin,
 	})
@@ -54,35 +67,38 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, "google-tools", apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, googleToolsRoundTripProviderName, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting Google GenAI API key:", err)
 		return
 	}
 
 	tool := spec.ToolChoice{
 		Type:        spec.ToolTypeFunction,
-		ID:          "echo-tool",
-		Name:        "echo_text",
-		Description: "Echo the provided text back in a deterministic tool result.",
+		ID:          googleToolsRoundTripToolID,
+		Name:        googleToolsRoundTripToolName,
+		Description: googleToolsRoundTripToolDescription,
 		Arguments: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"text": map[string]any{
-					"type": "string",
+			googleToolsRoundTripJSONKeyType: googleToolsRoundTripJSONValueObject,
+			googleToolsRoundTripJSONKeyProperties: map[string]any{
+				googleToolsRoundTripJSONKeyText: map[string]any{
+					googleToolsRoundTripJSONKeyType: googleToolsRoundTripJSONValueString,
 				},
 			},
-			"required":             []any{"text"},
-			"additionalProperties": false,
+			googleToolsRoundTripJSONKeyRequired:             []any{googleToolsRoundTripJSONKeyText},
+			googleToolsRoundTripJSONKeyAdditionalProperties: false,
 		},
 	}
 
 	initialUser := newUserTextInput(
-		`this is a test. think about what 20 new words you can say and say that in text. then call the echo_text tool with that text.`,
+		fmt.Sprintf(
+			`this is a test. think about what 20 new words you can say and say that in text. then call the %s tool with that text.`,
+			googleToolsRoundTripToolName,
+		),
 	)
 
 	firstReq := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            testModelName,
+			Name:            googleToolsRoundTripModelName,
 			MaxOutputLength: 512,
 			Stream:          true,
 			Reasoning: &spec.ReasoningParam{
@@ -103,8 +119,8 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 		},
 	}
 
-	firstResp, err := ps.FetchCompletion(ctx, "google-tools", firstReq, &spec.FetchCompletionOptions{
-		CompletionKey: testModelName,
+	firstResp, err := ps.FetchCompletion(ctx, googleToolsRoundTripProviderName, firstReq, &spec.FetchCompletionOptions{
+		CompletionKey: googleToolsRoundTripModelName,
 		StreamHandler: func(ev spec.StreamEvent) error {
 			switch ev.Kind {
 			case spec.StreamContentKindThinking:
@@ -159,7 +175,7 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 
 	secondReq := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name:            testModelName,
+			Name:            googleToolsRoundTripModelName,
 			MaxOutputLength: 256,
 			Stream:          true,
 			Reasoning: &spec.ReasoningParam{
@@ -176,22 +192,27 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 		},
 	}
 
-	secondResp, err := ps.FetchCompletion(ctx, "google-tools", secondReq, &spec.FetchCompletionOptions{
-		CompletionKey: testModelName,
-		StreamHandler: func(ev spec.StreamEvent) error {
-			switch ev.Kind {
-			case spec.StreamContentKindThinking:
-				if ev.Thinking != nil {
-					fmt.Fprintf(os.Stderr, "\n\n#######[thinking 2] %s\n", ev.Thinking.Text)
+	secondResp, err := ps.FetchCompletion(
+		ctx,
+		googleToolsRoundTripProviderName,
+		secondReq,
+		&spec.FetchCompletionOptions{
+			CompletionKey: googleToolsRoundTripModelName,
+			StreamHandler: func(ev spec.StreamEvent) error {
+				switch ev.Kind {
+				case spec.StreamContentKindThinking:
+					if ev.Thinking != nil {
+						fmt.Fprintf(os.Stderr, "\n\n#######[thinking 2] %s\n", ev.Thinking.Text)
+					}
+				case spec.StreamContentKindText:
+					if ev.Text != nil {
+						fmt.Fprintf(os.Stderr, "\n\n#######[text 2] %s\n", ev.Text.Text)
+					}
 				}
-			case spec.StreamContentKindText:
-				if ev.Text != nil {
-					fmt.Fprintf(os.Stderr, "\n\n#######[text 2] %s\n", ev.Text.Text)
-				}
-			}
-			return nil
+				return nil
+			},
 		},
-	})
+	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "second FetchCompletion error:", err)
 		return

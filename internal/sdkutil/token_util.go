@@ -2,6 +2,7 @@ package sdkutil
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/flexigpt/inference-go/internal/logutil"
@@ -20,8 +21,8 @@ func FilterMessagesByTokenCount(
 	var filtered []spec.InputUnion
 
 	// 1) Basic token-based filtering, newest-first.
-	for i := len(messages) - 1; i >= 0; i-- {
-		msg := messages[i]
+	for _, v := range slices.Backward(messages) {
+		msg := v
 		tokensInMsg := countHeuristicTokensInInputUnion(msg)
 
 		if totalTokens+tokensInMsg <= maxTokenCount || len(filtered) == 0 {

@@ -9,6 +9,8 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const toolOutputCollapsedToString = "toolOutput_collapsed_to_string"
+
 func normalizeClientToolOutputsForSDK(
 	req *spec.FetchCompletionRequest,
 	toolCaps *spec.ToolCapabilities,
@@ -54,7 +56,7 @@ func normalizeClientToolOutputsForSDK(
 			}
 			if changed {
 				warnings = append(warnings, spec.Warning{
-					Code: "toolOutput_collapsed_to_string",
+					Code: toolOutputCollapsedToString,
 					Message: fmt.Sprintf(
 						"inputs[%d].functionToolOutput was collapsed to a single string because this SDK/model only supports string client tool outputs.",
 						i,
@@ -72,7 +74,7 @@ func normalizeClientToolOutputsForSDK(
 			}
 			if changed {
 				warnings = append(warnings, spec.Warning{
-					Code: "toolOutput_collapsed_to_string",
+					Code: toolOutputCollapsedToString,
 					Message: fmt.Sprintf(
 						"inputs[%d].customToolOutput was collapsed to a single string because this SDK/model only supports string client tool outputs.",
 						i,

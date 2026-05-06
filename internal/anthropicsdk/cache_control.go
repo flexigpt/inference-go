@@ -1,6 +1,8 @@
 package anthropicsdk
 
 import (
+	"slices"
+
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/flexigpt/inference-go/spec"
 )
@@ -28,16 +30,16 @@ func applyAnthropicContentBlockCacheControl(
 		return blocks
 	}
 
-	for i := len(blocks) - 1; i >= 0; i-- {
+	for _, v := range slices.Backward(blocks) {
 		switch {
-		case blocks[i].OfText != nil:
-			blocks[i].OfText.CacheControl = *cache
+		case v.OfText != nil:
+			v.OfText.CacheControl = *cache
 			return blocks
-		case blocks[i].OfImage != nil:
-			blocks[i].OfImage.CacheControl = *cache
+		case v.OfImage != nil:
+			v.OfImage.CacheControl = *cache
 			return blocks
-		case blocks[i].OfDocument != nil:
-			blocks[i].OfDocument.CacheControl = *cache
+		case v.OfDocument != nil:
+			v.OfDocument.CacheControl = *cache
 			return blocks
 		}
 	}

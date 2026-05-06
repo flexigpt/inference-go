@@ -70,7 +70,7 @@ func TestNormalizeRequestForSDK_CollapsesRichClientToolOutputsWhenStringOnly(t *
 
 	found := false
 	for _, w := range warns {
-		if w.Code == "toolOutput_collapsed_to_string" {
+		if w.Code == toolOutputCollapsedToString {
 			found = true
 			break
 		}

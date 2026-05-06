@@ -1,6 +1,7 @@
 package anthropicsdk
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -112,8 +113,8 @@ func analyzeAnthropicThinkingBehavior(inputs []spec.InputUnion) anthropicThinkin
 // interleaved input list (user InputMessage or function/custom tool output).
 // It returns (idx, isToolResult).
 func findLastUserMessageIndex(inputs []spec.InputUnion) (int, bool) {
-	for i := len(inputs) - 1; i >= 0; i-- {
-		in := inputs[i]
+	for i, v := range slices.Backward(inputs) {
+		in := v
 		if sdkutil.IsInputUnionEmpty(in) {
 			continue
 		}
