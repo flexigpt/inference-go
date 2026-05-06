@@ -1,6 +1,6 @@
 module github.com/flexigpt/inference-go
 
-go 1.25
+go 1.26
 
 require (
 	github.com/anthropics/anthropic-sdk-go v1.40.0

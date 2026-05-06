@@ -58,7 +58,7 @@ A single normalized Go interface for LLM inference across multiple providers, us
 ## Installation
 
 ```bash
-# Go 1.25+
+# Go 1.26+
 go get github.com/flexigpt/inference-go
 ```
 
