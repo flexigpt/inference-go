@@ -21,7 +21,7 @@ const (
 // Example_openAIResponses_basicConversation demonstrates a minimal non-streaming
 // call to OpenAI's Responses API using text-only input.
 func Example_openAIResponses_basicConversation() {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
 	ps, err := newProviderSetWithDebug(slog.LevelDebug)
