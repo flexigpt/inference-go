@@ -114,6 +114,10 @@ func TestCloneModelCapabilitiesOverrideTable(t *testing.T) {
 				if got.ReasoningCapabilities == fullIn.ReasoningCapabilities {
 					t.Fatal("expected different reasoning capabilities pointer")
 				}
+				if got.ReasoningCapabilities.HybridTokenBudgetCapabilities ==
+					fullIn.ReasoningCapabilities.HybridTokenBudgetCapabilities {
+					t.Fatal("expected different hybrid token budget capabilities pointer")
+				}
 				if got.ReasoningCapabilities.SupportsReasoningConfig ==
 					fullIn.ReasoningCapabilities.SupportsReasoningConfig {
 					t.Fatal("expected cloned reasoning bool pointer")
@@ -292,6 +296,10 @@ func mutateCapabilitiesOverrideForCloneTest(in *ModelCapabilitiesOverride) {
 	*in.ReasoningCapabilities.SupportsReasoningConfig = false
 	in.ReasoningCapabilities.SupportedReasoningTypes[0] = spec.ReasoningTypeSingleWithLevels
 	in.ReasoningCapabilities.SupportedReasoningLevels[0] = spec.ReasoningLevelHigh
+	*in.ReasoningCapabilities.HybridTokenBudgetCapabilities.MinAllowed = 99
+	*in.ReasoningCapabilities.HybridTokenBudgetCapabilities.MaxAllowed = 100
+	*in.ReasoningCapabilities.HybridTokenBudgetCapabilities.ZeroAllowed = false
+	*in.ReasoningCapabilities.HybridTokenBudgetCapabilities.MinusOneAllowed = false
 	*in.ReasoningCapabilities.SupportsSummaryStyle = false
 	*in.ReasoningCapabilities.SupportsEncryptedReasoningInput = false
 	*in.ReasoningCapabilities.TemperatureDisallowedWhenEnabled = false

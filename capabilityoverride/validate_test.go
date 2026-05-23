@@ -50,6 +50,39 @@ func TestValidateModelCapabilitiesOverrideTable(t *testing.T) {
 			},
 		},
 		{
+			name: "reasoning levels are valid without supported types in same patch",
+			override: &ModelCapabilitiesOverride{
+				ReasoningCapabilities: &ReasoningCapabilitiesOverride{
+					SupportedReasoningLevels: []spec.ReasoningLevel{
+						spec.ReasoningLevelLow,
+						spec.ReasoningLevelHigh,
+					},
+				},
+			},
+		},
+		{
+			name: "hybrid token budget is valid without supported types in same patch",
+			override: &ModelCapabilitiesOverride{
+				ReasoningCapabilities: &ReasoningCapabilitiesOverride{
+					HybridTokenBudgetCapabilities: &ReasoningTokenBudgetCapabilitiesOverride{
+						MinAllowed:      new(1),
+						MaxAllowed:      new(4096),
+						ZeroAllowed:     new(true),
+						MinusOneAllowed: new(false),
+					},
+				},
+			},
+		},
+		{
+			name: "reasoning supported types can be narrowed independently",
+			override: &ModelCapabilitiesOverride{
+				ReasoningCapabilities: &ReasoningCapabilitiesOverride{
+					SupportedReasoningTypes: []spec.ReasoningType{spec.ReasoningTypeHybridWithTokens},
+				},
+			},
+		},
+
+		{
 			name: "partial param dialect max only is valid",
 			override: &ModelCapabilitiesOverride{
 				ParamDialect: &ParamDialectOverride{
@@ -141,6 +174,41 @@ func TestValidateModelCapabilitiesOverrideTable(t *testing.T) {
 			},
 			wantErr: "supportedReasoningLevels[1] duplicate",
 		},
+		{
+			name: "reasoning token budget negative min",
+			override: &ModelCapabilitiesOverride{
+				ReasoningCapabilities: &ReasoningCapabilitiesOverride{
+					HybridTokenBudgetCapabilities: &ReasoningTokenBudgetCapabilitiesOverride{
+						MinAllowed: new(-1),
+					},
+				},
+			},
+			wantErr: "minAllowed must be >= 0",
+		},
+		{
+			name: "reasoning token budget negative max",
+			override: &ModelCapabilitiesOverride{
+				ReasoningCapabilities: &ReasoningCapabilitiesOverride{
+					HybridTokenBudgetCapabilities: &ReasoningTokenBudgetCapabilitiesOverride{
+						MaxAllowed: new(-1),
+					},
+				},
+			},
+			wantErr: "maxAllowed must be >= 0",
+		},
+		{
+			name: "reasoning token budget max below min",
+			override: &ModelCapabilitiesOverride{
+				ReasoningCapabilities: &ReasoningCapabilitiesOverride{
+					HybridTokenBudgetCapabilities: &ReasoningTokenBudgetCapabilitiesOverride{
+						MinAllowed: new(1),
+						MaxAllowed: new(0),
+					},
+				},
+			},
+			wantErr: "maxAllowed must be >= minAllowed",
+		},
+
 		{
 			name: "stop sequence negative max",
 			override: &ModelCapabilitiesOverride{

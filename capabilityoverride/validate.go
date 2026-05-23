@@ -126,17 +126,9 @@ func validateReasoningCapabilitiesOverride(o *ReasoningCapabilitiesOverride) err
 	}
 
 	if o.SupportedReasoningTypes != nil {
-		hasHybrid := false
-		hasSingle := false
 		seen := map[spec.ReasoningType]struct{}{}
 
 		for i, t := range o.SupportedReasoningTypes {
-			switch t {
-			case spec.ReasoningTypeHybridWithTokens:
-				hasHybrid = true
-			case spec.ReasoningTypeSingleWithLevels:
-				hasSingle = true
-			}
 			switch t {
 			case spec.ReasoningTypeHybridWithTokens,
 				spec.ReasoningTypeSingleWithLevels:
@@ -149,19 +141,6 @@ func validateReasoningCapabilitiesOverride(o *ReasoningCapabilitiesOverride) err
 			}
 			seen[t] = struct{}{}
 		}
-
-		if len(o.SupportedReasoningLevels) > 0 && !hasSingle {
-			return errors.New(
-				"supportedReasoningLevels provided but supportedReasoningTypes does not include singleWithLevels",
-			)
-		}
-
-		if hasReasoningTokenBudgetCapabilitiesOverride(o.HybridTokenBudgetCapabilities) && !hasHybrid {
-			return errors.New(
-				"hybridTokenBudgetCapabilities provided but supportedReasoningTypes does not include hybridWithTokens",
-			)
-		}
-
 	}
 
 	if o.SupportedReasoningLevels != nil {
@@ -209,8 +188,7 @@ func validateReasoningTokenBudgetCapabilitiesOverride(
 		return errors.New("maxAllowed must be >= 0")
 	}
 
-	if o.MinAllowed != nil && o.MaxAllowed != nil &&
-		*o.MinAllowed > 0 && *o.MaxAllowed > 0 && *o.MaxAllowed < *o.MinAllowed {
+	if o.MinAllowed != nil && o.MaxAllowed != nil && *o.MaxAllowed < *o.MinAllowed {
 		return errors.New("maxAllowed must be >= minAllowed")
 	}
 	return nil

@@ -72,6 +72,11 @@ type ParamDialectOverride struct {
 //
 // This struct is intended for storage and API transport as an override only.
 // The effective/derived capabilities should be computed at runtime and should not be stored.
+//
+// An override is not a complete capability object. It is a partial patch.
+// Fields may be supplied independently and then layered with provider/base/model capabilities.
+// Structural validation should validate: enum values, duplicates, non-negative numbers, local numeric consistency.
+// It should not require that one partial override is internally complete.
 type ModelCapabilitiesOverride struct {
 	ModalitiesIn  []spec.Modality `json:"modalitiesIn,omitempty"`
 	ModalitiesOut []spec.Modality `json:"modalitiesOut,omitempty"`

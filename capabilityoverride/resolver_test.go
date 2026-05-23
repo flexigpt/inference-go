@@ -19,10 +19,8 @@ func TestCompletionKeyResolverResolveModelCapabilitiesTable(t *testing.T) {
 		check    func(t *testing.T, got *spec.ModelCapabilities)
 	}{
 		{
-			name: "nil capabilities errors",
-			resolver: CompletionKeyResolver{
-				CompletionKey: testCompletionKey,
-			},
+			name:     "nil capabilities errors",
+			resolver: NewCompletionKeyResolver(testCompletionKey, nil),
 			req: spec.ResolveModelCapabilitiesRequest{
 				CompletionKey: testCompletionKey,
 			},
@@ -131,24 +129,24 @@ func TestCompletionKeyResolverClonesInputAndOutput(t *testing.T) {
 	if got1 == got2 {
 		t.Fatal("expected resolver to return a fresh capabilities pointer each time")
 	}
-	if got1 == resolver.Capabilities {
+	if got1 == resolver.Capabilities() {
 		t.Fatal("expected resolved capabilities not to share resolver internal pointer")
 	}
-	if got2 == resolver.Capabilities {
+	if got2 == resolver.Capabilities() {
 		t.Fatal("expected resolved capabilities not to share resolver internal pointer")
 	}
 
 	assertDeepEqual(t, *got2, want)
-	assertDeepEqual(t, *resolver.Capabilities, want)
+	assertDeepEqual(t, *resolver.Capabilities(), want)
 }
 
 func TestNewCompletionKeyResolverNilCapabilities(t *testing.T) {
 	resolver := NewCompletionKeyResolver(testCompletionKey, nil)
 
-	if resolver.CompletionKey != testCompletionKey {
-		t.Fatalf("unexpected completion key: %q", resolver.CompletionKey)
+	if resolver.CompletionKey() != testCompletionKey {
+		t.Fatalf("unexpected completion key: %q", resolver.CompletionKey())
 	}
-	if resolver.Capabilities != nil {
-		t.Fatalf("expected nil capabilities, got %#v", resolver.Capabilities)
+	if resolver.Capabilities() != nil {
+		t.Fatalf("expected nil capabilities, got %#v", resolver.Capabilities())
 	}
 }

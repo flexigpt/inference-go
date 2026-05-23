@@ -213,6 +213,12 @@ func fullCapabilitiesOverrideForTest() *ModelCapabilitiesOverride {
 				spec.ReasoningLevelXHigh,
 				spec.ReasoningLevelMax,
 			},
+			HybridTokenBudgetCapabilities: &ReasoningTokenBudgetCapabilitiesOverride{
+				MinAllowed:      new(1),
+				MaxAllowed:      new(4096),
+				ZeroAllowed:     new(true),
+				MinusOneAllowed: new(true),
+			},
 			SupportsSummaryStyle:             new(true),
 			SupportsEncryptedReasoningInput:  new(true),
 			TemperatureDisallowedWhenEnabled: new(true),

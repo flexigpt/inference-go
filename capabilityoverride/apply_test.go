@@ -96,6 +96,12 @@ func TestApplyModelCapabilitiesOverrideTable(t *testing.T) {
 						spec.ReasoningLevelMinimal,
 						spec.ReasoningLevelMax,
 					},
+					HybridTokenBudgetCapabilities: &ReasoningTokenBudgetCapabilitiesOverride{
+						MinAllowed:      new(2),
+						MaxAllowed:      new(8192),
+						ZeroAllowed:     new(false),
+						MinusOneAllowed: new(false),
+					},
 					SupportsSummaryStyle:             new(true),
 					SupportsEncryptedReasoningInput:  new(false),
 					TemperatureDisallowedWhenEnabled: new(true),
@@ -128,6 +134,35 @@ func TestApplyModelCapabilitiesOverrideTable(t *testing.T) {
 				if !rc.TemperatureDisallowedWhenEnabled {
 					t.Fatal("expected temperatureDisallowedWhenEnabled=true")
 				}
+				if rc.HybridTokenBudgetCapabilities == nil {
+					t.Fatal("expected hybrid token budget capabilities")
+				}
+				if rc.HybridTokenBudgetCapabilities.MinAllowed != 2 {
+					t.Fatalf("unexpected minAllowed: %d", rc.HybridTokenBudgetCapabilities.MinAllowed)
+				}
+				if rc.HybridTokenBudgetCapabilities.MaxAllowed != 8192 {
+					t.Fatalf("unexpected maxAllowed: %d", rc.HybridTokenBudgetCapabilities.MaxAllowed)
+				}
+				if rc.HybridTokenBudgetCapabilities.ZeroAllowed {
+					t.Fatal("expected zeroAllowed=false")
+				}
+				if rc.HybridTokenBudgetCapabilities.MinusOneAllowed {
+					t.Fatal("expected minusOneAllowed=false")
+				}
+			},
+		},
+		{
+			name: "reasoning override keeps base token budget when omitted",
+			base: baseCapabilitiesForTest(),
+			override: &ModelCapabilitiesOverride{
+				ReasoningCapabilities: &ReasoningCapabilitiesOverride{
+					SupportsSummaryStyle: new(true),
+				},
+			},
+			check: func(t *testing.T, got spec.ModelCapabilities) {
+				t.Helper()
+
+				rc := got.ReasoningCapabilities
 				if rc.HybridTokenBudgetCapabilities == nil {
 					t.Fatal("expected existing hybrid token budget capabilities to remain")
 				}

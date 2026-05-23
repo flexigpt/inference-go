@@ -9,8 +9,8 @@ import (
 )
 
 type CompletionKeyResolver struct {
-	CompletionKey string
-	Capabilities  *spec.ModelCapabilities
+	completionKey string
+	capabilities  *spec.ModelCapabilities
 }
 
 func NewCompletionKeyResolver(
@@ -19,15 +19,15 @@ func NewCompletionKeyResolver(
 ) CompletionKeyResolver {
 	if caps == nil {
 		return CompletionKeyResolver{
-			CompletionKey: completionKey,
+			completionKey: completionKey,
 		}
 	}
 
 	cloned := CloneModelCapabilities(*caps)
 
 	return CompletionKeyResolver{
-		CompletionKey: completionKey,
-		Capabilities:  &cloned,
+		completionKey: completionKey,
+		capabilities:  &cloned,
 	}
 }
 
@@ -35,14 +35,27 @@ func (r CompletionKeyResolver) ResolveModelCapabilities(
 	ctx context.Context,
 	req spec.ResolveModelCapabilitiesRequest,
 ) (*spec.ModelCapabilities, error) {
-	if r.Capabilities == nil {
+	if r.capabilities == nil {
 		return nil, errors.New("no model capabilities configured")
 	}
 
-	if r.CompletionKey != "" && req.CompletionKey != r.CompletionKey {
+	if r.completionKey != "" && req.CompletionKey != r.completionKey {
 		return nil, fmt.Errorf("capabilities not found for completionKey %q", req.CompletionKey)
 	}
 
-	out := CloneModelCapabilities(*r.Capabilities)
+	out := CloneModelCapabilities(*r.capabilities)
 	return &out, nil
+}
+
+func (r CompletionKeyResolver) CompletionKey() string {
+	return r.completionKey
+}
+
+func (r CompletionKeyResolver) Capabilities() *spec.ModelCapabilities {
+	if r.capabilities == nil {
+		return nil
+	}
+
+	out := CloneModelCapabilities(*r.capabilities)
+	return &out
 }
