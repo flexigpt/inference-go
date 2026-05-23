@@ -4,20 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/flexigpt/inference-go/capabilityoverride"
 	"github.com/flexigpt/inference-go/internal/openaichatsdk"
 	"github.com/flexigpt/inference-go/internal/openairesponsessdk"
 	"github.com/flexigpt/inference-go/internal/sdkutil"
+	"github.com/flexigpt/inference-go/modelpreset"
 	"github.com/flexigpt/inference-go/spec"
-)
-
-const (
-	capNormOpenAIChatProviderName      = "openai-chat"
-	capNormOpenAIResponsesProviderName = "openai-responses"
-	capNormGPT5MiniModelName           = "gpt-5-mini"
-	capNormGPT5MiniCompletionKey       = "gpt5mini"
-	capNormUserText                    = "hi"
-	capNormWebSearchToolID             = "ws"
-	capNormWebSearchToolName           = "web_search"
 )
 
 type staticCapsResolver struct {
@@ -33,7 +25,7 @@ func (r staticCapsResolver) ResolveModelCapabilities(
 
 func TestNormalizeRequestForSDK_OpenAIChat_PreservesWebSearchToolChoice(t *testing.T) {
 	api, err := openaichatsdk.NewOpenAIChatCompletionsAPI(spec.ProviderParam{
-		Name:    capNormOpenAIChatProviderName,
+		Name:    modelpreset.ProviderOpenAIChat,
 		SDKType: spec.ProviderSDKTypeOpenAIChatCompletions,
 	}, nil)
 	if err != nil {
@@ -46,21 +38,14 @@ func TestNormalizeRequestForSDK_OpenAIChat_PreservesWebSearchToolChoice(t *testi
 	}
 
 	req := &spec.FetchCompletionRequest{
-		ModelParam: spec.ModelParam{Name: "gpt-4.1-mini"},
-		Inputs: []spec.InputUnion{{
-			Kind: spec.InputKindInputMessage,
-			InputMessage: &spec.InputOutputContent{
-				Role: spec.RoleUser,
-				Contents: []spec.InputOutputContentItemUnion{{
-					Kind:     spec.ContentItemKindText,
-					TextItem: &spec.ContentItemText{Text: capNormUserText},
-				}},
-			},
-		}},
+		ModelParam: spec.ModelParam{Name: modelpreset.ModelNameOpenAIChatGPT41Mini},
+		Inputs: []spec.InputUnion{
+			newUserTextInput("hi"),
+		},
 		ToolChoices: []spec.ToolChoice{{
 			Type: spec.ToolTypeWebSearch,
-			ID:   capNormWebSearchToolID,
-			Name: capNormWebSearchToolName,
+			ID:   "ws",
+			Name: spec.DefaultWebSearchToolName,
 			WebSearchArguments: &spec.WebSearchToolChoiceItem{
 				SearchContextSize: spec.WebSearchContextSizeMedium,
 			},
@@ -87,7 +72,7 @@ func TestNormalizeRequestForSDK_OpenAIChat_PreservesWebSearchToolChoice(t *testi
 
 func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 	api, err := openairesponsessdk.NewOpenAIResponsesAPI(spec.ProviderParam{
-		Name:    capNormOpenAIResponsesProviderName,
+		Name:    modelpreset.ProviderOpenAIResponses,
 		SDKType: spec.ProviderSDKTypeOpenAIResponses,
 	}, nil)
 	if err != nil {
@@ -99,49 +84,54 @@ func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Example: model does NOT allow reasoning level none/xhigh (per your prompt).
-	custom := baseCaps
-	custom.ReasoningCapabilities = &spec.ReasoningCapabilities{
-		SupportsReasoningConfig: true,
-		SupportedReasoningTypes: []spec.ReasoningType{spec.ReasoningTypeSingleWithLevels},
-		SupportedReasoningLevels: []spec.ReasoningLevel{
-			spec.ReasoningLevelLow,
-			spec.ReasoningLevelMedium,
-			spec.ReasoningLevelHigh,
-		},
-		SupportsSummaryStyle:             true,
-		SupportsEncryptedReasoningInput:  false,
-		TemperatureDisallowedWhenEnabled: false,
+	pp, err := modelpreset.Provider(modelpreset.ProviderOpenAIResponses)
+	if err != nil {
+		t.Fatal(err)
 	}
+	mp, err := modelpreset.Model(
+		modelpreset.ProviderOpenAIResponses,
+		modelpreset.PresetOpenAIResponsesGPT5Mini,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	caps := capabilityoverride.DeriveModelCapabilities(
+		baseCaps,
+		pp.CapabilitiesOverride,
+		mp.CapabilitiesOverride,
+		&capabilityoverride.ModelCapabilitiesOverride{
+			ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+				SupportedReasoningLevels: []spec.ReasoningLevel{
+					spec.ReasoningLevelLow,
+					spec.ReasoningLevelMedium,
+					spec.ReasoningLevelHigh,
+				},
+			},
+		},
+	)
 
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{
-			Name: capNormGPT5MiniModelName,
+			Name: mp.Name,
 			Reasoning: &spec.ReasoningParam{
 				Type:  spec.ReasoningTypeSingleWithLevels,
 				Level: spec.ReasoningLevelXHigh,
 			},
 		},
-		Inputs: []spec.InputUnion{{
-			Kind: spec.InputKindInputMessage,
-			InputMessage: &spec.InputOutputContent{
-				Role: spec.RoleUser,
-				Contents: []spec.InputOutputContentItemUnion{{
-					Kind:     spec.ContentItemKindText,
-					TextItem: &spec.ContentItemText{Text: capNormUserText},
-				}},
-			},
-		}},
+		Inputs: []spec.InputUnion{
+			newUserTextInput("hi"),
+		},
 	}
 
 	nreq, _, warns, err := sdkutil.NormalizeRequestForSDK(
 		t.Context(),
 		req,
 		&spec.FetchCompletionOptions{
-			CapabilityResolver: staticCapsResolver{Caps: &custom},
-			CompletionKey:      capNormGPT5MiniCompletionKey,
+			CapabilityResolver: staticCapsResolver{Caps: &caps},
+			CompletionKey:      string(mp.ID),
 		},
-		spec.ProviderSDKTypeOpenAIResponses,
+		pp.SDKType,
 		baseCaps,
 	)
 	if err != nil {
@@ -150,10 +140,12 @@ func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 	if nreq.ModelParam.Reasoning != nil {
 		t.Fatalf("expected reasoning to be dropped; got %#v", nreq.ModelParam.Reasoning)
 	}
+
 	found := false
 	for _, w := range warns {
 		if w.Code == "reasoning_dropped_invalid_level" {
 			found = true
+			break
 		}
 	}
 	if !found {

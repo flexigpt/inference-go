@@ -7,18 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/flexigpt/inference-go"
+	"github.com/flexigpt/inference-go/modelpreset"
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const (
-	googleBasicProviderName  = "google"
-	googleBasicModelName     = "gemini-3-flash-preview"
-	googleBasicCompletionKey = "gemini-flash"
-)
-
-// Example_googleGenerateContent_basicConversation demonstrates a minimal non-streaming
-// call to Google's Generative AI API (Gemini) using the normalized inference-go API.
 func Example_googleGenerateContent_basicConversation() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -29,12 +21,14 @@ func Example_googleGenerateContent_basicConversation() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, googleBasicProviderName, &inference.AddProviderConfig{
-		SDKType: spec.ProviderSDKTypeGoogleGenerateContent,
-		Origin:  spec.DefaultGoogleGenerateContentOrigin,
-	})
+	pp, mp, err := addCatalogModelProvider(
+		ctx,
+		ps,
+		modelpreset.ProviderGoogleGemini,
+		modelpreset.PresetGoogleGemini25Flash,
+	)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error adding Google GenAI provider:", err)
+		fmt.Fprintln(os.Stderr, "error adding Google Gemini preset provider:", err)
 		return
 	}
 
@@ -43,45 +37,33 @@ func Example_googleGenerateContent_basicConversation() {
 		apiKey = os.Getenv("GOOGLE_API_KEY")
 	}
 	if apiKey == "" {
-		fmt.Fprintln(os.Stderr, "GEMINI_API_KEY not set; skipping live Google GenAI call")
+		fmt.Fprintln(os.Stderr, "GEMINI_API_KEY/GOOGLE_API_KEY not set; skipping live Google Gemini call")
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, googleBasicProviderName, apiKey); err != nil {
-		fmt.Fprintln(os.Stderr, "error setting Google GenAI API key:", err)
+	if err := ps.SetProviderAPIKey(ctx, pp.Name, apiKey); err != nil {
+		fmt.Fprintln(os.Stderr, "error setting Google Gemini API key:", err)
 		return
 	}
 
-	req := &spec.FetchCompletionRequest{
-		ModelParam: spec.ModelParam{
-			Name:            googleBasicModelName,
-			Stream:          false,
-			MaxPromptLength: 4096,
-			MaxOutputLength: 256,
-			SystemPrompt:    "You are a concise, helpful assistant.",
-		},
-		Inputs: []spec.InputUnion{
-			{
-				Kind: spec.InputKindInputMessage,
-				InputMessage: &spec.InputOutputContent{
-					Role: spec.RoleUser,
-					Contents: []spec.InputOutputContentItemUnion{
-						{
-							Kind: spec.ContentItemKindText,
-							TextItem: &spec.ContentItemText{
-								Text: "Say hello from Google Gemini in one short sentence.",
-							},
-						},
-					},
-				},
-			},
-		},
+	modelParam := mp.ModelParam
+	modelParam.Stream = false
+	modelParam.MaxPromptLength = min(modelParam.MaxPromptLength, 4096)
+	modelParam.MaxOutputLength = min(modelParam.MaxOutputLength, 2048)
+	modelParam.SystemPrompt = "You are a concise, helpful assistant."
+
+	opts, err := presetFetchOptions(ctx, ps, pp, mp)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error creating preset capability resolver:", err)
+		return
 	}
 
-	resp, err := ps.FetchCompletion(
-		ctx, googleBasicProviderName, req,
-		&spec.FetchCompletionOptions{CompletionKey: googleBasicCompletionKey},
-	)
+	resp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
+		ModelParam: modelParam,
+		Inputs: []spec.InputUnion{
+			newUserTextInput("Say hello from Google Gemini in one short sentence."),
+		},
+	}, opts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {
@@ -90,16 +72,7 @@ func Example_googleGenerateContent_basicConversation() {
 		return
 	}
 
-	for _, out := range resp.Outputs {
-		if out.Kind != spec.OutputKindOutputMessage || out.OutputMessage == nil {
-			continue
-		}
-		for _, c := range out.OutputMessage.Contents {
-			if c.Kind == spec.ContentItemKindText && c.TextItem != nil {
-				fmt.Fprintln(os.Stderr, "Gemini assistant:", c.TextItem.Text)
-			}
-		}
-	}
+	fmt.Fprintln(os.Stderr, "Gemini assistant:", responseText(resp))
 	fmt.Println("OK")
 	// Output: OK
 }

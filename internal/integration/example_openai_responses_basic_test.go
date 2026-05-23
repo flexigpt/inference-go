@@ -7,19 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/flexigpt/inference-go"
+	"github.com/flexigpt/inference-go/modelpreset"
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const (
-	openAIResponsesBasicProviderName  = "openai-responses"
-	openAIResponsesBasicPathPrefix    = "/v1/responses"
-	openAIResponsesBasicModelName     = "gpt-5-mini"
-	openAIResponsesBasicCompletionKey = "gpt5mini"
-)
-
-// Example_openAIResponses_basicConversation demonstrates a minimal non-streaming
-// call to OpenAI's Responses API using text-only input.
 func Example_openAIResponses_basicConversation() {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
@@ -30,15 +21,14 @@ func Example_openAIResponses_basicConversation() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, openAIResponsesBasicProviderName, &inference.AddProviderConfig{
-		SDKType: spec.ProviderSDKTypeOpenAIResponses,
-		Origin:  spec.DefaultOpenAIOrigin,
-		// Only used when Origin is overridden; kept here for clarity.
-		ChatCompletionPathPrefix: openAIResponsesBasicPathPrefix,
-		APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
-	})
+	pp, mp, err := addCatalogModelProvider(
+		ctx,
+		ps,
+		modelpreset.ProviderOpenAIResponses,
+		modelpreset.PresetOpenAIResponsesGPT5Mini,
+	)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error adding OpenAI Responses provider:", err)
+		fmt.Fprintln(os.Stderr, "error adding OpenAI Responses preset provider:", err)
 		return
 	}
 
@@ -48,47 +38,33 @@ func Example_openAIResponses_basicConversation() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, openAIResponsesBasicProviderName, apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, pp.Name, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
 	}
 
-	req := &spec.FetchCompletionRequest{
-		ModelParam: spec.ModelParam{
-			Name:            openAIResponsesBasicModelName,
-			Stream:          false,
-			MaxPromptLength: 4096,
-			MaxOutputLength: 256,
-			SystemPrompt:    "You are a concise assistant.",
-			Reasoning: &spec.ReasoningParam{
-				Type:  spec.ReasoningTypeSingleWithLevels,
-				Level: spec.ReasoningLevelLow,
-			},
-		},
-		Inputs: []spec.InputUnion{
-			{
-				Kind: spec.InputKindInputMessage,
-				InputMessage: &spec.InputOutputContent{
-					Role: spec.RoleUser,
-					Contents: []spec.InputOutputContentItemUnion{
-						{
-							Kind: spec.ContentItemKindText,
-							TextItem: &spec.ContentItemText{
-								Text: "Explain the difference between goroutines and OS threads in 2–3 sentences.",
-							},
-						},
-					},
-				},
-			},
-		},
+	modelParam := mp.ModelParam
+	modelParam.Stream = false
+	modelParam.MaxPromptLength = min(modelParam.MaxPromptLength, 4096)
+	modelParam.MaxOutputLength = min(modelParam.MaxOutputLength, 4096)
+	modelParam.SystemPrompt = "You are a concise assistant."
+	modelParam.Reasoning = &spec.ReasoningParam{
+		Type:  spec.ReasoningTypeSingleWithLevels,
+		Level: spec.ReasoningLevelLow,
 	}
 
-	resp, err := ps.FetchCompletion(
-		ctx,
-		openAIResponsesBasicProviderName,
-		req,
-		&spec.FetchCompletionOptions{CompletionKey: openAIResponsesBasicCompletionKey},
-	)
+	opts, err := presetFetchOptions(ctx, ps, pp, mp)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error creating preset capability resolver:", err)
+		return
+	}
+
+	resp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
+		ModelParam: modelParam,
+		Inputs: []spec.InputUnion{
+			newUserTextInput("Explain the difference between goroutines and OS threads in 2-3 sentences."),
+		},
+	}, opts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {
@@ -97,17 +73,7 @@ func Example_openAIResponses_basicConversation() {
 		return
 	}
 
-	for _, out := range resp.Outputs {
-		if out.Kind != spec.OutputKindOutputMessage || out.OutputMessage == nil {
-			continue
-		}
-		for _, c := range out.OutputMessage.Contents {
-			if c.Kind == spec.ContentItemKindText && c.TextItem != nil {
-				fmt.Fprintln(os.Stderr, "OpenAI Responses assistant:", c.TextItem.Text)
-			}
-		}
-	}
-
+	fmt.Fprintln(os.Stderr, "OpenAI Responses assistant:", responseText(resp))
 	fmt.Println("OK")
 	// Output: OK
 }

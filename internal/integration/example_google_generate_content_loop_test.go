@@ -10,22 +10,13 @@ import (
 	"time"
 
 	"github.com/flexigpt/inference-go"
+	"github.com/flexigpt/inference-go/modelpreset"
 	"github.com/flexigpt/inference-go/spec"
 )
 
 const (
-	googleGenerateContentLoopProviderName                = "google-loop"
-	googleGenerateContentLoopModelName                   = "gemini-2.5-flash"
-	googleGenerateContentLoopToolID                      = "echo-tool"
-	googleGenerateContentLoopToolName                    = "echo_text"
-	googleGenerateContentLoopToolDescription             = "Echo the provided text back in a deterministic tool result."
-	googleGenerateContentLoopJSONKeyType                 = "type"
-	googleGenerateContentLoopJSONValueObject             = "object"
-	googleGenerateContentLoopJSONKeyProperties           = "properties"
-	googleGenerateContentLoopJSONKeyText                 = "text"
-	googleGenerateContentLoopJSONValueString             = "string"
-	googleGenerateContentLoopJSONKeyRequired             = "required"
-	googleGenerateContentLoopJSONKeyAdditionalProperties = "additionalProperties"
+	googleGenerateContentLoopToolID   = "echo-tool"
+	googleGenerateContentLoopToolName = "echo_text"
 )
 
 func TestGoogleGenerateContent_FunctionToolRoundTripLoop(t *testing.T) {
@@ -45,14 +36,17 @@ func TestGoogleGenerateContent_FunctionToolRoundTripLoop(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = ps.AddProvider(ctx, googleGenerateContentLoopProviderName, &inference.AddProviderConfig{
-		SDKType: spec.ProviderSDKTypeGoogleGenerateContent,
-		Origin:  spec.DefaultGoogleGenerateContentOrigin,
-	})
+	pp, mp, err := addCatalogModelProvider(
+		ctx,
+		ps,
+		modelpreset.ProviderGoogleGemini,
+		modelpreset.PresetGoogleGemini25Flash,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := ps.SetProviderAPIKey(ctx, googleGenerateContentLoopProviderName, apiKey); err != nil {
+
+	if err := ps.SetProviderAPIKey(ctx, pp.Name, apiKey); err != nil {
 		t.Fatal(err)
 	}
 
@@ -61,7 +55,8 @@ func TestGoogleGenerateContent_FunctionToolRoundTripLoop(t *testing.T) {
 		saw, err := runGoogleGenerateContentEchoRoundTrip(
 			ctx,
 			ps,
-			googleGenerateContentLoopProviderName,
+			pp,
+			mp,
 			fmt.Sprintf("google loop %d", i),
 		)
 		if err != nil {
@@ -80,23 +75,11 @@ func TestGoogleGenerateContent_FunctionToolRoundTripLoop(t *testing.T) {
 func runGoogleGenerateContentEchoRoundTrip(
 	ctx context.Context,
 	ps *inference.ProviderSetAPI,
-	providerName spec.ProviderName,
+	pp modelpreset.ProviderPreset,
+	mp modelpreset.ModelPreset,
 	payload string,
 ) (bool, error) {
-	tool := spec.ToolChoice{
-		Type:        spec.ToolTypeFunction,
-		ID:          googleGenerateContentLoopToolID,
-		Name:        googleGenerateContentLoopToolName,
-		Description: googleGenerateContentLoopToolDescription,
-		Arguments: map[string]any{
-			googleGenerateContentLoopJSONKeyType: googleGenerateContentLoopJSONValueObject,
-			googleGenerateContentLoopJSONKeyProperties: map[string]any{
-				googleGenerateContentLoopJSONKeyText: map[string]any{"type": googleGenerateContentLoopJSONValueString},
-			},
-			googleGenerateContentLoopJSONKeyRequired:             []any{googleGenerateContentLoopJSONKeyText},
-			googleGenerateContentLoopJSONKeyAdditionalProperties: false,
-		},
-	}
+	tool := newEchoToolChoice(googleGenerateContentLoopToolID, googleGenerateContentLoopToolName)
 
 	history := []spec.InputUnion{
 		newUserTextInput(
@@ -123,23 +106,26 @@ func runGoogleGenerateContentEchoRoundTrip(
 			}
 		}
 
-		resp, err := ps.FetchCompletion(ctx, providerName, &spec.FetchCompletionRequest{
-			ModelParam: spec.ModelParam{
-				Name:            googleGenerateContentLoopModelName,
-				MaxOutputLength: 256,
-				SystemPrompt: "Preserve prior assistant reasoning/tool state across turns. " +
-					"After the tool result is available, answer plainly and do not call the tool again.",
-				Reasoning: &spec.ReasoningParam{
-					Type:   spec.ReasoningTypeHybridWithTokens,
-					Tokens: 1024,
-				},
-			},
+		modelParam := mp.ModelParam
+		modelParam.MaxOutputLength = min(modelParam.MaxOutputLength, 4096)
+		modelParam.SystemPrompt = "Preserve prior assistant reasoning/tool state across turns. " +
+			"After the tool result is available, answer plainly and do not call the tool again."
+		modelParam.Reasoning = &spec.ReasoningParam{
+			Type:   spec.ReasoningTypeHybridWithTokens,
+			Tokens: 2048,
+		}
+
+		opts, err := presetFetchOptions(ctx, ps, pp, mp)
+		if err != nil {
+			return sawSignedReasoning, fmt.Errorf("turn %d preset capability resolver: %w", turn, err)
+		}
+
+		resp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
+			ModelParam:  modelParam,
 			Inputs:      history,
 			ToolChoices: []spec.ToolChoice{tool},
 			ToolPolicy:  policy,
-		}, &spec.FetchCompletionOptions{
-			CompletionKey: googleGenerateContentLoopModelName,
-		})
+		}, opts)
 		if err != nil {
 			return sawSignedReasoning, fmt.Errorf("turn %d fetch: %w", turn, err)
 		}
@@ -183,20 +169,24 @@ func responseHasGoogleSignature(resp *spec.FetchCompletionResponse) bool {
 	if resp == nil {
 		return false
 	}
+
 	for _, out := range resp.Outputs {
 		switch out.Kind {
 		case spec.OutputKindReasoningMessage:
 			if out.ReasoningMessage != nil && out.ReasoningMessage.Signature != "" {
 				return true
 			}
+
 		case spec.OutputKindFunctionToolCall:
 			if out.FunctionToolCall != nil && out.FunctionToolCall.Signature != "" {
 				return true
 			}
+
 		case spec.OutputKindCustomToolCall:
 			if out.CustomToolCall != nil && out.CustomToolCall.Signature != "" {
 				return true
 			}
+
 		case spec.OutputKindOutputMessage:
 			if out.OutputMessage == nil {
 				continue
@@ -209,64 +199,8 @@ func responseHasGoogleSignature(resp *spec.FetchCompletionResponse) bool {
 				}
 			}
 		default:
-			// Continue.
 		}
 	}
+
 	return false
-}
-
-func outputUnionsToInputs(outputs []spec.OutputUnion) []spec.InputUnion {
-	if len(outputs) == 0 {
-		return nil
-	}
-
-	out := make([]spec.InputUnion, 0, len(outputs))
-	for _, item := range outputs {
-		switch item.Kind {
-		case spec.OutputKindOutputMessage:
-			if item.OutputMessage != nil {
-				out = append(out, spec.InputUnion{
-					Kind:          spec.InputKindOutputMessage,
-					OutputMessage: item.OutputMessage,
-				})
-			}
-		case spec.OutputKindReasoningMessage:
-			if item.ReasoningMessage != nil {
-				out = append(out, spec.InputUnion{
-					Kind:             spec.InputKindReasoningMessage,
-					ReasoningMessage: item.ReasoningMessage,
-				})
-			}
-		case spec.OutputKindFunctionToolCall:
-			if item.FunctionToolCall != nil {
-				out = append(out, spec.InputUnion{
-					Kind:             spec.InputKindFunctionToolCall,
-					FunctionToolCall: item.FunctionToolCall,
-				})
-			}
-		case spec.OutputKindCustomToolCall:
-			if item.CustomToolCall != nil {
-				out = append(out, spec.InputUnion{
-					Kind:           spec.InputKindCustomToolCall,
-					CustomToolCall: item.CustomToolCall,
-				})
-			}
-		case spec.OutputKindWebSearchToolCall:
-			if item.WebSearchToolCall != nil {
-				out = append(out, spec.InputUnion{
-					Kind:              spec.InputKindWebSearchToolCall,
-					WebSearchToolCall: item.WebSearchToolCall,
-				})
-			}
-		case spec.OutputKindWebSearchToolOutput:
-			if item.WebSearchToolOutput != nil {
-				out = append(out, spec.InputUnion{
-					Kind:                spec.InputKindWebSearchToolOutput,
-					WebSearchToolOutput: item.WebSearchToolOutput,
-				})
-			}
-		}
-	}
-
-	return out
 }

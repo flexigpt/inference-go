@@ -17,7 +17,9 @@ A single normalized Go interface for LLM inference across multiple providers, us
   - [OpenAI Responses API](#openai-responses-api)
   - [OpenAI Chat Completions API](#openai-chat-completions-api)
   - [Google Generate Content API](#google-generate-content-api)
+- [Model presets](#model-presets)
 - [Model capabilities and normalization](#model-capabilities-and-normalization)
+  - [Capability overrides](#capability-overrides)
 - [HTTP debugging](#http-debugging)
 - [Notes](#notes)
 - [Development](#development)
@@ -66,12 +68,74 @@ go get github.com/flexigpt/inference-go
 
 Basic flow:
 
-1. Create a `ProviderSetAPI`
+1. Create a `ProviderSetAPI`.
 2. Register one or more providers with `AddProvider`
+   - The easiest path is to use a predefined vendor specific `modelpreset`, which contains provider connection defaults, model defaults, and per-provider/per-model capability overrides.
 3. Set each provider API key with `SetProviderAPIKey`
 4. Call `FetchCompletion`
 
 ## Examples
+
+Basic:
+
+```go
+ctx := context.Background()
+ps, err := inference.NewProviderSetAPI()
+if err != nil {
+    return err
+}
+providerPreset, err := modelpreset.Provider(modelpreset.ProviderOpenAIResponses)
+if err != nil {
+    return err
+}
+modelPreset, err := modelpreset.Model(modelpreset.ProviderOpenAIResponses, modelpreset.PresetOpenAIResponsesGPT5Mini)
+if err != nil {
+    return err
+}
+if _, err := ps.AddProviderFromPreset(ctx, providerPreset.Name, providerPreset); err != nil {
+    return err
+}
+if err := ps.SetProviderAPIKey(ctx, providerPreset.Name, os.Getenv("OPENAI_API_KEY")); err != nil {
+    return err
+}
+
+completionKey := string(modelPreset.ID)
+resolver, err := ps.NewPresetCapabilityResolver(
+    ctx,
+    providerPreset.Name,
+    providerPreset,
+    modelPreset,
+    completionKey,
+)
+if err != nil {
+    return err
+}
+
+modelParam := modelPreset.ModelParam
+modelParam.Stream = false
+modelParam.MaxOutputLength = 2048
+modelParam.SystemPrompt = "You are concise."
+resp, err := ps.FetchCompletion(ctx, providerPreset.Name, &spec.FetchCompletionRequest{
+    ModelParam: modelParam,
+    Inputs: []spec.InputUnion{{
+        Kind: spec.InputKindInputMessage,
+        InputMessage: &spec.InputOutputContent{
+            Role: spec.RoleUser,
+            Contents: []spec.InputOutputContentItemUnion{{
+                Kind: spec.ContentItemKindText,
+                TextItem: &spec.ContentItemText{Text: "Say hello in one sentence."},
+            }},
+        },
+    }},
+}, &spec.FetchCompletionOptions{
+    CompletionKey:      completionKey,
+    CapabilityResolver: resolver,
+})
+if err != nil {
+    return err
+}
+_ = resp
+```
 
 Available repository examples:
 
@@ -243,6 +307,32 @@ Normalization notes:
 - function tool output history is currently text-only
 - `ToolPolicy.DisableParallel` is not currently normalized for Google Generate Content
 
+## Model presets
+
+Package `modelpreset` provides a runtime catalog of common providers and models.
+
+It includes:
+
+- provider names
+- model preset IDs
+- model names
+- provider connection defaults
+- model default `spec.ModelParam`
+- provider-level capability overrides
+- model-level capability overrides
+- default provider/default model hints
+
+Typical use:
+
+```go
+providerPreset, err := modelpreset.Provider(modelpreset.ProviderAnthropic)
+modelPreset, err := modelpreset.Model(modelpreset.ProviderAnthropic, modelpreset.PresetAnthropicSonnet46)
+_, err = ps.AddProviderFromPreset(ctx, providerPreset.Name, providerPreset)
+```
+
+- The returned presets are cloned. Callers may mutate/customize returned values safely as required.
+- Apps that need persistence should treat `modelpreset` as immutable base data and store their own overlay/preference fields separately.
+
 ## Model capabilities and normalization
 
 Capabilities are described by `spec.ModelCapabilities` in [`spec/capability.go`](./spec/capability.go).
@@ -271,6 +361,53 @@ Normalization behavior:
   - Google: only valid signed Google thought history is retained
 
 For per-model capability differences, pass a custom `spec.ModelCapabilityResolver` in `FetchCompletionOptions`.
+
+- For most model-preset based callers, use:
+  - `ProviderSetAPI.NewPresetCapabilityResolver`
+  - `capabilityoverride.DeriveModelCapabilities`
+  - `capabilityoverride.NewCompletionKeyResolver`
+
+### Capability overrides
+
+Provider SDKs expose broad provider-level capabilities. Real models often differ:
+
+- one model may not support files
+- one model may only allow a subset of reasoning levels
+- one gateway may use a different parameter dialect
+- one model may require temperature to be omitted when reasoning is enabled
+
+`capabilityoverride.ModelCapabilitiesOverride` is a patch-like form of `spec.ModelCapabilities`.
+
+Layering order is:
+
+1. SDK/provider base capability profile
+2. provider preset override
+3. model preset override
+4. caller/user override, if any
+
+Use `ProviderSetAPI.NewPresetCapabilityResolver` for the common case:
+
+```go
+resolver, err := ps.NewPresetCapabilityResolver(
+    ctx,
+    providerPreset.Name,
+    providerPreset,
+    modelPreset,
+    string(modelPreset.ID),
+)
+```
+
+Then pass it per completion:
+
+```go
+opts := &spec.FetchCompletionOptions{
+    CompletionKey:      string(modelPreset.ID),
+    CapabilityResolver: resolver,
+}
+```
+
+`AddProviderFromPreset` only configures the provider connection. Capability overrides are applied per completion through `FetchCompletionOptions`, because
+the active model can differ from call to call.
 
 ## HTTP debugging
 

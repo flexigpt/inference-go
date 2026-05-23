@@ -7,18 +7,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/flexigpt/inference-go"
+	"github.com/flexigpt/inference-go/modelpreset"
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const (
-	anthropicBasicProviderName  = "anthropic"
-	anthropicBasicModelName     = "claude-haiku-4-5-20251001"
-	anthropicBasicCompletionKey = "haiku45"
-)
-
-// Example_anthropic_basicConversation demonstrates a minimal non-streaming
-// call to Anthropic's Messages API using the normalized inference-go API.
 func Example_anthropic_basicConversation() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -29,15 +21,14 @@ func Example_anthropic_basicConversation() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, anthropicBasicProviderName, &inference.AddProviderConfig{
-		SDKType:                  spec.ProviderSDKTypeAnthropic,
-		Origin:                   spec.DefaultAnthropicOrigin,
-		ChatCompletionPathPrefix: spec.DefaultAnthropicChatCompletionPrefix,
-		APIKeyHeaderKey:          spec.DefaultAnthropicAuthorizationHeaderKey,
-		// DefaultHeaders are optional; the official SDK sets anthropic-version.
-	})
+	pp, mp, err := addCatalogModelProvider(
+		ctx,
+		ps,
+		modelpreset.ProviderAnthropic,
+		modelpreset.PresetAnthropicHaiku45,
+	)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error adding Anthropic provider:", err)
+		fmt.Fprintln(os.Stderr, "error adding Anthropic preset provider:", err)
 		return
 	}
 
@@ -47,43 +38,29 @@ func Example_anthropic_basicConversation() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, anthropicBasicProviderName, apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, pp.Name, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting Anthropic API key:", err)
 		return
 	}
 
-	req := &spec.FetchCompletionRequest{
-		ModelParam: spec.ModelParam{
-			Name:            anthropicBasicModelName,
-			Stream:          false,
-			MaxPromptLength: 4096,
-			MaxOutputLength: 256,
-			SystemPrompt:    "You are a concise, helpful assistant.",
-		},
-		Inputs: []spec.InputUnion{
-			{
-				Kind: spec.InputKindInputMessage,
-				InputMessage: &spec.InputOutputContent{
-					Role: spec.RoleUser,
-					Contents: []spec.InputOutputContentItemUnion{
-						{
-							Kind: spec.ContentItemKindText,
-							TextItem: &spec.ContentItemText{
-								Text: "Say hello from Anthropic in one short sentence.",
-							},
-						},
-					},
-				},
-			},
-		},
+	modelParam := mp.ModelParam
+	modelParam.Stream = false
+	modelParam.MaxPromptLength = min(modelParam.MaxPromptLength, 4096)
+	modelParam.MaxOutputLength = min(modelParam.MaxOutputLength, 2048)
+	modelParam.SystemPrompt = "You are a concise, helpful assistant."
+
+	opts, err := presetFetchOptions(ctx, ps, pp, mp)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error creating preset capability resolver:", err)
+		return
 	}
 
-	resp, err := ps.FetchCompletion(
-		ctx,
-		anthropicBasicProviderName,
-		req,
-		&spec.FetchCompletionOptions{CompletionKey: anthropicBasicCompletionKey},
-	)
+	resp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
+		ModelParam: modelParam,
+		Inputs: []spec.InputUnion{
+			newUserTextInput("Say hello from Anthropic in one short sentence."),
+		},
+	}, opts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {
@@ -92,16 +69,7 @@ func Example_anthropic_basicConversation() {
 		return
 	}
 
-	for _, out := range resp.Outputs {
-		if out.Kind != spec.OutputKindOutputMessage || out.OutputMessage == nil {
-			continue
-		}
-		for _, c := range out.OutputMessage.Contents {
-			if c.Kind == spec.ContentItemKindText && c.TextItem != nil {
-				fmt.Fprintln(os.Stderr, "Anthropic assistant:", c.TextItem.Text)
-			}
-		}
-	}
+	fmt.Fprintln(os.Stderr, "Anthropic assistant:", responseText(resp))
 	fmt.Println("OK")
 	// Output: OK
 }

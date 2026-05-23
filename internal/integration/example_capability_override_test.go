@@ -1,100 +1,69 @@
 package integration
 
 import (
-	"context"
-	"errors"
 	"testing"
 
-	"github.com/flexigpt/inference-go"
+	"github.com/flexigpt/inference-go/capabilityoverride"
 	"github.com/flexigpt/inference-go/internal/sdkutil"
+	"github.com/flexigpt/inference-go/modelpreset"
 	"github.com/flexigpt/inference-go/spec"
 )
-
-const (
-	capOverrideOpenAIResponsesProviderName = "openai-responses"
-	capOverrideOpenAIResponsesPathPrefix   = "/v1/responses"
-	capOverrideModelName                   = "gpt-5-mini"
-	capOverrideCompletionKey               = "gpt5mini"
-)
-
-// overrideResolver is a minimal ModelCapabilityResolver example used in tests.
-// In a real app you might:
-//   - keep a per-model capability table,
-//   - or derive capabilities from an upstream registry.
-type overrideResolver struct {
-	// key: model name
-	byModel map[spec.ModelName]*spec.ModelCapabilities
-}
-
-func (r overrideResolver) ResolveModelCapabilities(
-	ctx context.Context,
-	req spec.ResolveModelCapabilitiesRequest,
-) (*spec.ModelCapabilities, error) {
-	if r.byModel == nil {
-		return nil, errors.New("invalid model")
-	}
-	if c := r.byModel[req.ModelName]; c != nil {
-		return c, nil
-	}
-	return nil, errors.New("model not found")
-}
 
 func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 	ctx := t.Context()
 
-	ps, err := inference.NewProviderSetAPI()
+	ps, err := newProviderSetWithDebug(0)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = ps.AddProvider(ctx, capOverrideOpenAIResponsesProviderName, &inference.AddProviderConfig{
-		SDKType:                  spec.ProviderSDKTypeOpenAIResponses,
-		Origin:                   spec.DefaultOpenAIOrigin,
-		ChatCompletionPathPrefix: capOverrideOpenAIResponsesPathPrefix,
-		APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
-	})
+	pp, mp, err := addCatalogModelProvider(
+		ctx,
+		ps,
+		modelpreset.ProviderOpenAIResponses,
+		modelpreset.PresetOpenAIResponsesGPT5Mini,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// 1) Get SDK-wide default capabilities programmatically.
-	baseCaps, err := ps.GetProviderCapability(ctx, capOverrideOpenAIResponsesProviderName)
+	baseCaps, err := ps.GetProviderCapability(ctx, pp.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// 2) Override per-model capabilities.
-	//
-	// This is an example override (not necessarily reflecting OpenAI’s real limits):
-	//   - disallow file input
-	//   - disallow reasoning level xhigh
-	//
-	// The point is: *capabilities are the authoritative enforcement mechanism*.
-	override := baseCaps
-	override.ModalitiesIn = []spec.Modality{spec.ModalityTextIn, spec.ModalityImageIn} // drop fileIn
-	if override.ReasoningCapabilities != nil {
-		override.ReasoningCapabilities.SupportedReasoningLevels = []spec.ReasoningLevel{
-			spec.ReasoningLevelLow,
-			spec.ReasoningLevelMedium,
-			spec.ReasoningLevelHigh,
-		}
-	}
-
-	if override.ToolCapabilities != nil {
-		override.ToolCapabilities.SupportedClientToolOutputFormats = []spec.ToolOutputFormatKind{
-			spec.ToolOutputFormatKindString,
-		}
-	}
-
-	resolver := overrideResolver{
-		byModel: map[spec.ModelName]*spec.ModelCapabilities{
-			capOverrideModelName: &override,
+	override := &capabilityoverride.ModelCapabilitiesOverride{
+		ModalitiesIn: []spec.Modality{
+			spec.ModalityTextIn,
+			spec.ModalityImageIn,
+		},
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+		},
+		ToolCapabilities: &capabilityoverride.ToolCapabilitiesOverride{
+			SupportedClientToolOutputFormats: []spec.ToolOutputFormatKind{
+				spec.ToolOutputFormatKindString,
+			},
 		},
 	}
 
+	caps := capabilityoverride.DeriveModelCapabilities(
+		baseCaps,
+		pp.CapabilitiesOverride,
+		mp.CapabilitiesOverride,
+		override,
+	)
+
+	completionKey := string(mp.ID)
+	resolver := capabilityoverride.NewCompletionKeyResolver(completionKey, &caps)
+
 	t.Run("modalities: file input rejected when fileIn unsupported", func(t *testing.T) {
 		req := &spec.FetchCompletionRequest{
-			ModelParam: spec.ModelParam{Name: capOverrideModelName},
+			ModelParam: spec.ModelParam{Name: mp.Name},
 			Inputs: []spec.InputUnion{{
 				Kind: spec.InputKindInputMessage,
 				InputMessage: &spec.InputOutputContent{
@@ -117,10 +86,10 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 			ctx,
 			req,
 			&spec.FetchCompletionOptions{
-				CompletionKey:      capOverrideCompletionKey,
+				CompletionKey:      completionKey,
 				CapabilityResolver: resolver,
 			},
-			spec.ProviderSDKTypeOpenAIResponses,
+			pp.SDKType,
 			baseCaps,
 		)
 		if err == nil {
@@ -131,31 +100,25 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 	t.Run("reasoning: unsupported level dropped with warning", func(t *testing.T) {
 		req := &spec.FetchCompletionRequest{
 			ModelParam: spec.ModelParam{
-				Name: capOverrideModelName,
+				Name: mp.Name,
 				Reasoning: &spec.ReasoningParam{
 					Type:  spec.ReasoningTypeSingleWithLevels,
 					Level: spec.ReasoningLevelXHigh,
 				},
 			},
-			Inputs: []spec.InputUnion{{
-				Kind: spec.InputKindInputMessage,
-				InputMessage: &spec.InputOutputContent{
-					Role: spec.RoleUser,
-					Contents: []spec.InputOutputContentItemUnion{
-						{Kind: spec.ContentItemKindText, TextItem: &spec.ContentItemText{Text: "hi"}},
-					},
-				},
-			}},
+			Inputs: []spec.InputUnion{
+				newUserTextInput("hi"),
+			},
 		}
 
 		capped, _, warns, err := sdkutil.NormalizeRequestForSDK(
 			ctx,
 			req,
 			&spec.FetchCompletionOptions{
-				CompletionKey:      capOverrideCompletionKey,
+				CompletionKey:      completionKey,
 				CapabilityResolver: resolver,
 			},
-			spec.ProviderSDKTypeOpenAIResponses,
+			pp.SDKType,
 			baseCaps,
 		)
 		if err != nil {
@@ -164,6 +127,7 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 		if capped.ModelParam.Reasoning != nil {
 			t.Fatalf("expected reasoning dropped, got %#v", capped.ModelParam.Reasoning)
 		}
+
 		found := false
 		for _, w := range warns {
 			if w.Code == "reasoning_dropped_invalid_level" {
@@ -179,13 +143,16 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 	t.Run("tool outputs: rich function output collapses to string when resolver says string-only", func(t *testing.T) {
 		newOverride := override
 		newOverride.ModalitiesIn = []spec.Modality{spec.ModalityTextIn, spec.ModalityImageIn, spec.ModalityFileIn}
-		newResolver := overrideResolver{
-			byModel: map[spec.ModelName]*spec.ModelCapabilities{
-				capOverrideModelName: &newOverride,
-			},
-		}
+		caps := capabilityoverride.DeriveModelCapabilities(
+			baseCaps,
+			pp.CapabilitiesOverride,
+			mp.CapabilitiesOverride,
+			newOverride,
+		)
+		resolver := capabilityoverride.NewCompletionKeyResolver(completionKey, &caps)
+
 		req := &spec.FetchCompletionRequest{
-			ModelParam: spec.ModelParam{Name: capOverrideModelName},
+			ModelParam: spec.ModelParam{Name: mp.Name},
 			Inputs: []spec.InputUnion{{
 				Kind: spec.InputKindFunctionToolOutput,
 				FunctionToolOutput: &spec.ToolOutput{
@@ -213,10 +180,10 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 			ctx,
 			req,
 			&spec.FetchCompletionOptions{
-				CompletionKey:      capOverrideCompletionKey,
-				CapabilityResolver: newResolver,
+				CompletionKey:      completionKey,
+				CapabilityResolver: resolver,
 			},
-			spec.ProviderSDKTypeOpenAIResponses,
+			pp.SDKType,
 			baseCaps,
 		)
 		if err != nil {

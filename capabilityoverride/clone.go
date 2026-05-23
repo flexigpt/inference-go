@@ -3,6 +3,7 @@ package capabilityoverride
 import (
 	"slices"
 
+	"github.com/flexigpt/inference-go/internal/sdkutil"
 	"github.com/flexigpt/inference-go/spec"
 )
 
@@ -118,15 +119,15 @@ func cloneReasoningCapabilitiesOverride(
 	}
 
 	return &ReasoningCapabilitiesOverride{
-		SupportsReasoningConfig:  cloneBoolPtr(in.SupportsReasoningConfig),
+		SupportsReasoningConfig:  sdkutil.CloneBoolPtr(in.SupportsReasoningConfig),
 		SupportedReasoningTypes:  slices.Clone(in.SupportedReasoningTypes),
 		SupportedReasoningLevels: slices.Clone(in.SupportedReasoningLevels),
 		HybridTokenBudgetCapabilities: cloneReasoningTokenBudgetCapabilitiesOverride(
 			in.HybridTokenBudgetCapabilities,
 		),
-		SupportsSummaryStyle:             cloneBoolPtr(in.SupportsSummaryStyle),
-		SupportsEncryptedReasoningInput:  cloneBoolPtr(in.SupportsEncryptedReasoningInput),
-		TemperatureDisallowedWhenEnabled: cloneBoolPtr(in.TemperatureDisallowedWhenEnabled),
+		SupportsSummaryStyle:             sdkutil.CloneBoolPtr(in.SupportsSummaryStyle),
+		SupportsEncryptedReasoningInput:  sdkutil.CloneBoolPtr(in.SupportsEncryptedReasoningInput),
+		TemperatureDisallowedWhenEnabled: sdkutil.CloneBoolPtr(in.TemperatureDisallowedWhenEnabled),
 	}
 }
 
@@ -138,10 +139,10 @@ func cloneReasoningTokenBudgetCapabilitiesOverride(
 	}
 
 	return &ReasoningTokenBudgetCapabilitiesOverride{
-		MinAllowed:      cloneIntPtr(in.MinAllowed),
-		MaxAllowed:      cloneIntPtr(in.MaxAllowed),
-		ZeroAllowed:     cloneBoolPtr(in.ZeroAllowed),
-		MinusOneAllowed: cloneBoolPtr(in.MinusOneAllowed),
+		MinAllowed:      sdkutil.CloneIntPtr(in.MinAllowed),
+		MaxAllowed:      sdkutil.CloneIntPtr(in.MaxAllowed),
+		ZeroAllowed:     sdkutil.CloneBoolPtr(in.ZeroAllowed),
+		MinusOneAllowed: sdkutil.CloneBoolPtr(in.MinusOneAllowed),
 	}
 }
 
@@ -153,9 +154,9 @@ func cloneStopSequenceCapabilitiesOverride(
 	}
 
 	return &StopSequenceCapabilitiesOverride{
-		IsSupported:             cloneBoolPtr(in.IsSupported),
-		DisallowedWithReasoning: cloneBoolPtr(in.DisallowedWithReasoning),
-		MaxSequences:            cloneIntPtr(in.MaxSequences),
+		IsSupported:             sdkutil.CloneBoolPtr(in.IsSupported),
+		DisallowedWithReasoning: sdkutil.CloneBoolPtr(in.DisallowedWithReasoning),
+		MaxSequences:            sdkutil.CloneIntPtr(in.MaxSequences),
 	}
 }
 
@@ -166,7 +167,7 @@ func cloneOutputCapabilitiesOverride(in *OutputCapabilitiesOverride) *OutputCapa
 
 	return &OutputCapabilitiesOverride{
 		SupportedOutputFormats: slices.Clone(in.SupportedOutputFormats),
-		SupportsVerbosity:      cloneBoolPtr(in.SupportsVerbosity),
+		SupportsVerbosity:      sdkutil.CloneBoolPtr(in.SupportsVerbosity),
 	}
 }
 
@@ -178,8 +179,8 @@ func cloneToolCapabilitiesOverride(in *ToolCapabilitiesOverride) *ToolCapabiliti
 	return &ToolCapabilitiesOverride{
 		SupportedToolTypes:               slices.Clone(in.SupportedToolTypes),
 		SupportedToolPolicyModes:         slices.Clone(in.SupportedToolPolicyModes),
-		SupportsParallelToolCalls:        cloneBoolPtr(in.SupportsParallelToolCalls),
-		MaxForcedTools:                   cloneIntPtr(in.MaxForcedTools),
+		SupportsParallelToolCalls:        sdkutil.CloneBoolPtr(in.SupportsParallelToolCalls),
+		MaxForcedTools:                   sdkutil.CloneIntPtr(in.MaxForcedTools),
 		SupportedClientToolOutputFormats: slices.Clone(in.SupportedClientToolOutputFormats),
 	}
 }
@@ -190,7 +191,7 @@ func cloneCacheCapabilitiesOverride(in *CacheCapabilitiesOverride) *CacheCapabil
 	}
 
 	return &CacheCapabilitiesOverride{
-		SupportsAutomaticCaching: cloneBoolPtr(in.SupportsAutomaticCaching),
+		SupportsAutomaticCaching: sdkutil.CloneBoolPtr(in.SupportsAutomaticCaching),
 		TopLevel:                 cloneCacheControlCapabilitiesOverride(in.TopLevel),
 		InputOutputContent:       cloneCacheControlCapabilitiesOverride(in.InputOutputContent),
 		ReasoningContent:         cloneCacheControlCapabilitiesOverride(in.ReasoningContent),
@@ -208,25 +209,9 @@ func cloneCacheControlCapabilitiesOverride(
 	}
 
 	return &CacheControlCapabilitiesOverride{
-		SupportsTTL:    cloneBoolPtr(in.SupportsTTL),
+		SupportsTTL:    sdkutil.CloneBoolPtr(in.SupportsTTL),
 		SupportedKinds: slices.Clone(in.SupportedKinds),
 		SupportedTTLs:  slices.Clone(in.SupportedTTLs),
-		SupportsKey:    cloneBoolPtr(in.SupportsKey),
+		SupportsKey:    sdkutil.CloneBoolPtr(in.SupportsKey),
 	}
-}
-
-func cloneBoolPtr(p *bool) *bool {
-	if p == nil {
-		return nil
-	}
-	v := *p
-	return &v
-}
-
-func cloneIntPtr(p *int) *int {
-	if p == nil {
-		return nil
-	}
-	v := *p
-	return &v
 }

@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,7 +11,22 @@ import (
 
 	"github.com/flexigpt/inference-go"
 	"github.com/flexigpt/inference-go/debugclient"
+	"github.com/flexigpt/inference-go/modelpreset"
 	"github.com/flexigpt/inference-go/spec"
+)
+
+const (
+	toolJSONKeyType                 = "type"
+	toolJSONValueObject             = "object"
+	toolJSONKeyProperties           = "properties"
+	toolJSONKeyText                 = "text"
+	toolJSONValueString             = "string"
+	toolJSONKeyRequired             = "required"
+	toolJSONKeyAdditionalProperties = "additionalProperties"
+	toolJSONSchemaName              = "answer"
+	toolJSONKeySummary              = "summary"
+	toolJSONKeySourceUsed           = "source_used"
+	toolJSONValueBoolean            = "boolean"
 )
 
 // newProviderSetWithDebug constructs a ProviderSetAPI with:
@@ -24,6 +40,7 @@ func newProviderSetWithDebug(level slog.Level) (*inference.ProviderSetAPI, error
 		Level: level,
 	}))
 	slog.SetDefault(logger)
+
 	return inference.NewProviderSetAPI(
 		inference.WithLogger(logger),
 		inference.WithDebugClientBuilder(func(p spec.ProviderParam) spec.CompletionDebugger {
@@ -37,6 +54,48 @@ func newProviderSetWithDebug(level slog.Level) (*inference.ProviderSetAPI, error
 	)
 }
 
+func addCatalogModelProvider(
+	ctx context.Context,
+	ps *inference.ProviderSetAPI,
+	providerName spec.ProviderName,
+	modelID modelpreset.ModelPresetID,
+) (modelpreset.ProviderPreset, modelpreset.ModelPreset, error) {
+	pp, err := modelpreset.Provider(providerName)
+	if err != nil {
+		return modelpreset.ProviderPreset{}, modelpreset.ModelPreset{}, err
+	}
+
+	mp, err := modelpreset.Model(providerName, modelID)
+	if err != nil {
+		return modelpreset.ProviderPreset{}, modelpreset.ModelPreset{}, err
+	}
+
+	if _, err := ps.AddProviderFromPreset(ctx, "", pp); err != nil {
+		return modelpreset.ProviderPreset{}, modelpreset.ModelPreset{}, err
+	}
+
+	return pp, mp, nil
+}
+
+func presetFetchOptions(
+	ctx context.Context,
+	ps *inference.ProviderSetAPI,
+	pp modelpreset.ProviderPreset,
+	mp modelpreset.ModelPreset,
+) (*spec.FetchCompletionOptions, error) {
+	completionKey := string(mp.ID)
+
+	resolver, err := ps.NewPresetCapabilityResolver(ctx, pp.Name, pp, mp, completionKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return &spec.FetchCompletionOptions{
+		CompletionKey:      completionKey,
+		CapabilityResolver: resolver,
+	}, nil
+}
+
 func newUserTextInput(text string) spec.InputUnion {
 	return spec.InputUnion{
 		Kind: spec.InputKindInputMessage,
@@ -48,6 +107,23 @@ func newUserTextInput(text string) spec.InputUnion {
 					TextItem: &spec.ContentItemText{Text: text},
 				},
 			},
+		},
+	}
+}
+
+func newEchoToolChoice(id, name string) spec.ToolChoice {
+	return spec.ToolChoice{
+		Type:        spec.ToolTypeFunction,
+		ID:          id,
+		Name:        name,
+		Description: "Echo the provided text back in a deterministic tool result.",
+		Arguments: map[string]any{
+			toolJSONKeyType: toolJSONValueObject,
+			toolJSONKeyProperties: map[string]any{
+				toolJSONKeyText: map[string]any{toolJSONKeyType: toolJSONValueString},
+			},
+			toolJSONKeyRequired:             []any{toolJSONKeyText},
+			toolJSONKeyAdditionalProperties: false,
 		},
 	}
 }
@@ -84,8 +160,6 @@ func runEchoTool(call *spec.ToolCall) (*spec.ToolOutput, error) {
 		return nil, errors.New("tool argument text is empty")
 	}
 
-	result := "ECHO: " + args.Text
-
 	return &spec.ToolOutput{
 		Type:     call.Type,
 		ChoiceID: call.ChoiceID,
@@ -96,7 +170,7 @@ func runEchoTool(call *spec.ToolCall) (*spec.ToolOutput, error) {
 		Contents: []spec.ToolOutputItemUnion{
 			{
 				Kind:     spec.ContentItemKindText,
-				TextItem: &spec.ContentItemText{Text: result},
+				TextItem: &spec.ContentItemText{Text: "ECHO: " + args.Text},
 			},
 		},
 	}, nil
@@ -134,6 +208,62 @@ func responseText(resp *spec.FetchCompletionResponse) string {
 		}
 	}
 	return strings.TrimSpace(b.String())
+}
+
+func outputUnionsToInputs(outputs []spec.OutputUnion) []spec.InputUnion {
+	if len(outputs) == 0 {
+		return nil
+	}
+
+	out := make([]spec.InputUnion, 0, len(outputs))
+	for _, item := range outputs {
+		switch item.Kind {
+		case spec.OutputKindOutputMessage:
+			if item.OutputMessage != nil {
+				out = append(out, spec.InputUnion{
+					Kind:          spec.InputKindOutputMessage,
+					OutputMessage: item.OutputMessage,
+				})
+			}
+		case spec.OutputKindReasoningMessage:
+			if item.ReasoningMessage != nil {
+				out = append(out, spec.InputUnion{
+					Kind:             spec.InputKindReasoningMessage,
+					ReasoningMessage: item.ReasoningMessage,
+				})
+			}
+		case spec.OutputKindFunctionToolCall:
+			if item.FunctionToolCall != nil {
+				out = append(out, spec.InputUnion{
+					Kind:             spec.InputKindFunctionToolCall,
+					FunctionToolCall: item.FunctionToolCall,
+				})
+			}
+		case spec.OutputKindCustomToolCall:
+			if item.CustomToolCall != nil {
+				out = append(out, spec.InputUnion{
+					Kind:           spec.InputKindCustomToolCall,
+					CustomToolCall: item.CustomToolCall,
+				})
+			}
+		case spec.OutputKindWebSearchToolCall:
+			if item.WebSearchToolCall != nil {
+				out = append(out, spec.InputUnion{
+					Kind:              spec.InputKindWebSearchToolCall,
+					WebSearchToolCall: item.WebSearchToolCall,
+				})
+			}
+		case spec.OutputKindWebSearchToolOutput:
+			if item.WebSearchToolOutput != nil {
+				out = append(out, spec.InputUnion{
+					Kind:                spec.InputKindWebSearchToolOutput,
+					WebSearchToolOutput: item.WebSearchToolOutput,
+				})
+			}
+		}
+	}
+
+	return out
 }
 
 func nonEmpty(values ...string) string {

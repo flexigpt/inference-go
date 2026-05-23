@@ -7,48 +7,33 @@ import (
 	"os"
 	"time"
 
-	"github.com/flexigpt/inference-go"
+	"github.com/flexigpt/inference-go/modelpreset"
 	"github.com/flexigpt/inference-go/spec"
 )
 
 const (
-	openAIResponsesExtendedProviderName                = "openai-responses-extended"
-	openAIResponsesExtendedPathPrefix                  = "/v1/responses"
-	openAIResponsesExtendedSummarizeToolID             = "summarize-document"
-	openAIResponsesExtendedSummarizeToolName           = "summarize_document"
-	openAIResponsesExtendedSummarizeToolDescription    = "Summarize a document with an optional focus."
-	openAIResponsesExtendedWebSearchToolID             = "web-search"
-	openAIResponsesExtendedWebSearchToolName           = "web_search"
-	openAIResponsesExtendedWebSearchToolDescription    = "Search the web for recent information."
-	openAIResponsesExtendedJSONKeyType                 = "type"
-	openAIResponsesExtendedJSONValueObject             = "object"
-	openAIResponsesExtendedJSONKeyProperties           = "properties"
-	openAIResponsesExtendedJSONKeyDocument             = "document"
-	openAIResponsesExtendedJSONKeyFocus                = "focus"
-	openAIResponsesExtendedJSONKeyDescription          = "description"
-	openAIResponsesExtendedJSONValueString             = "string"
-	openAIResponsesExtendedJSONKeyRequired             = "required"
-	openAIResponsesExtendedJSONKeyAdditionalProperties = "additionalProperties"
-	openAIResponsesExtendedSchemaName                  = "final_answer"
-	openAIResponsesExtendedJSONImageDescriptionKey     = "image_description"
-	openAIResponsesExtendedJSONFileNameKey             = "file_name"
-	openAIResponsesExtendedJSONAnswerKey               = "answer"
-	openAIResponsesExtendedModelName                   = "gpt-5-mini"
-	openAIResponsesExtendedCompletionKey               = "gpt5mini"
+	openAIResponsesSummarizeToolID          = "summarize-document"
+	openAIResponsesSummarizeToolName        = "summarize_document"
+	openAIResponsesSummarizeToolDescription = "Summarize a document with an optional focus."
+
+	openAIResponsesWebSearchToolID          = "web-search"
+	openAIResponsesWebSearchToolName        = "web_search"
+	openAIResponsesWebSearchToolDescription = "Search the web for recent information."
 )
 
-const sendFile = true
+const sendOpenAIResponsesExampleFile = true
 
 // Example_openAIResponses_toolsAndAttachments demonstrates a more advanced
-// Responses call that:
+// Responses call:
 //
-//   - defines function and web-search tools,
-//   - sends text + image + file as input content,
-//   - enables streaming of both text and reasoning.
+//   - catalog-based OpenAI Responses provider setup
+//   - preset model defaults
+//   - preset capability resolver
+//   - function and web-search tools
+//   - text + image + file input content
+//   - streaming text and reasoning
 //
-// The example only attempts a live call when OPENAI_API_KEY is set. The
-// image/file payloads are placeholders; for a real run, replace them with
-// valid data or URLs.
+// The example only attempts a live call when OPENAI_API_KEY is set.
 func Example_openAIResponses_toolsAndAttachments() {
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
@@ -59,14 +44,14 @@ func Example_openAIResponses_toolsAndAttachments() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, openAIResponsesExtendedProviderName, &inference.AddProviderConfig{
-		SDKType:                  spec.ProviderSDKTypeOpenAIResponses,
-		Origin:                   spec.DefaultOpenAIOrigin,
-		ChatCompletionPathPrefix: openAIResponsesExtendedPathPrefix,
-		APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
-	})
+	pp, mp, err := addCatalogModelProvider(
+		ctx,
+		ps,
+		modelpreset.ProviderOpenAIResponses,
+		modelpreset.PresetOpenAIResponsesGPT5Mini,
+	)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error adding OpenAI Responses provider:", err)
+		fmt.Fprintln(os.Stderr, "error adding OpenAI Responses preset provider:", err)
 		return
 	}
 
@@ -76,44 +61,41 @@ func Example_openAIResponses_toolsAndAttachments() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, openAIResponsesExtendedProviderName, apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, pp.Name, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
 	}
 
-	// Tool: summarize_document(document: string, focus: string).
 	summarizeTool := spec.ToolChoice{
 		Type:        spec.ToolTypeFunction,
-		ID:          openAIResponsesExtendedSummarizeToolID,
-		Name:        openAIResponsesExtendedSummarizeToolName,
-		Description: openAIResponsesExtendedSummarizeToolDescription,
+		ID:          openAIResponsesSummarizeToolID,
+		Name:        openAIResponsesSummarizeToolName,
+		Description: openAIResponsesSummarizeToolDescription,
 		Arguments: map[string]any{
-			openAIResponsesExtendedJSONKeyType: openAIResponsesExtendedJSONValueObject,
-			openAIResponsesExtendedJSONKeyProperties: map[string]any{
-				openAIResponsesExtendedJSONKeyDocument: map[string]any{
-					openAIResponsesExtendedJSONKeyType:        openAIResponsesExtendedJSONValueString,
-					openAIResponsesExtendedJSONKeyDescription: "Full text of the document to summarize.",
+			toolJSONKeyType: toolJSONValueObject,
+			toolJSONKeyProperties: map[string]any{
+				"document": map[string]any{
+					toolJSONKeyType: toolJSONValueString,
+					"description":   "Full text of the document to summarize.",
 				},
-				openAIResponsesExtendedJSONKeyFocus: map[string]any{
-					openAIResponsesExtendedJSONKeyType:        openAIResponsesExtendedJSONValueString,
-					openAIResponsesExtendedJSONKeyDescription: "Optional topic to focus on.",
+				"focus": map[string]any{
+					toolJSONKeyType: toolJSONValueString,
+					"description":   "Optional topic to focus on.",
 				},
 			},
-			openAIResponsesExtendedJSONKeyRequired:             []any{openAIResponsesExtendedJSONKeyDocument},
-			openAIResponsesExtendedJSONKeyAdditionalProperties: false,
+			toolJSONKeyRequired:             []any{"document"},
+			toolJSONKeyAdditionalProperties: false,
 		},
 	}
 
-	// Web search tool: used for retrieving fresh information when needed.
 	webSearchTool := spec.ToolChoice{
 		Type:        spec.ToolTypeWebSearch,
-		ID:          openAIResponsesExtendedWebSearchToolID,
-		Name:        openAIResponsesExtendedWebSearchToolName,
-		Description: openAIResponsesExtendedWebSearchToolDescription,
+		ID:          openAIResponsesWebSearchToolID,
+		Name:        openAIResponsesWebSearchToolName,
+		Description: openAIResponsesWebSearchToolDescription,
 		WebSearchArguments: &spec.WebSearchToolChoiceItem{
 			MaxUses:           2,
 			SearchContextSize: spec.WebSearchContextSizeMedium,
-			AllowedDomains:    []string{}, // any domain
 			UserLocation: &spec.WebSearchToolChoiceItemUserLocation{
 				City:     "San Francisco",
 				Country:  "US",
@@ -123,9 +105,6 @@ func Example_openAIResponses_toolsAndAttachments() {
 		},
 	}
 
-	toolChoices := []spec.ToolChoice{summarizeTool, webSearchTool}
-
-	// Placeholder image data (not a real image). In a real application, provide a valid base64-encoded image.
 	// 1x1 transparent PNG.
 	fakeImageData := "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
 
@@ -135,7 +114,7 @@ func Example_openAIResponses_toolsAndAttachments() {
 			{
 				Kind: spec.ContentItemKindText,
 				TextItem: &spec.ContentItemText{
-					Text: "This is a test. Very briefly reply with attached PDF name and data and describe the image. Use tools where appropriate. Keep the final answer short.",
+					Text: "Briefly describe the image and attached file. Use tools where appropriate. Keep the final answer short.",
 				},
 			},
 			{
@@ -145,109 +124,90 @@ func Example_openAIResponses_toolsAndAttachments() {
 					ImageData: fakeImageData,
 					ImageName: "example-image",
 					Detail:    spec.ImageDetailLow,
-					ImageURL:  "",
-					ID:        "abc",
 				},
 			},
 		},
 	}
-	if sendFile {
-		// Placeholder PDF URL.
-		fileURL := "https://www.w3schools.com/asp/text/textfile.txt"
+
+	if sendOpenAIResponsesExampleFile {
 		userMessage.Contents = append(userMessage.Contents, spec.InputOutputContentItemUnion{
 			Kind: spec.ContentItemKindFile,
 			FileItem: &spec.ContentItemFile{
-				FileName: "dummy",
+				FileName: "example.txt",
 				FileMIME: "text/plain",
-				FileURL:  fileURL,
+				FileURL:  "https://www.w3schools.com/asp/text/textfile.txt",
 			},
 		})
 	}
-	req := &spec.FetchCompletionRequest{
-		ModelParam: spec.ModelParam{
-			Name:            openAIResponsesExtendedModelName,
-			Stream:          true,
-			MaxPromptLength: 8192,
-			MaxOutputLength: 8192,
-			SystemPrompt: "You are a research assistant that first uses tools " +
-				"when needed, then answers succinctly.",
-			Reasoning: &spec.ReasoningParam{
-				Type:  spec.ReasoningTypeSingleWithLevels,
-				Level: spec.ReasoningLevelMedium,
-			},
-			OutputParam: &spec.OutputParam{
-				// Responses maps this to params.Text.format + params.Text.verbosity.
-				Verbosity: func() *spec.OutputVerbosity {
-					v := spec.OutputVerbosityMedium
-					return &v
-				}(),
-				Format: &spec.OutputFormat{
-					Kind: spec.OutputFormatKindJSONSchema,
-					JSONSchemaParam: &spec.JSONSchemaParam{
-						Name: openAIResponsesExtendedSchemaName,
-						Schema: map[string]any{
-							openAIResponsesExtendedJSONKeyType: openAIResponsesExtendedJSONValueObject,
-							openAIResponsesExtendedJSONKeyProperties: map[string]any{
-								openAIResponsesExtendedJSONImageDescriptionKey: map[string]any{
-									openAIResponsesExtendedJSONKeyType: openAIResponsesExtendedJSONValueString,
-								},
-								openAIResponsesExtendedJSONFileNameKey: map[string]any{
-									openAIResponsesExtendedJSONKeyType: openAIResponsesExtendedJSONValueString,
-								},
-								openAIResponsesExtendedJSONAnswerKey: map[string]any{
-									openAIResponsesExtendedJSONKeyType: openAIResponsesExtendedJSONValueString,
-								},
-							},
-							openAIResponsesExtendedJSONKeyRequired: []any{
-								openAIResponsesExtendedJSONImageDescriptionKey,
-								openAIResponsesExtendedJSONAnswerKey,
-								openAIResponsesExtendedJSONFileNameKey,
-							},
-							openAIResponsesExtendedJSONKeyAdditionalProperties: false,
-						},
-						Strict: true,
+
+	modelParam := mp.ModelParam
+	modelParam.Stream = true
+	modelParam.MaxPromptLength = min(modelParam.MaxPromptLength, 8192)
+	modelParam.MaxOutputLength = min(modelParam.MaxOutputLength, 8192)
+	modelParam.SystemPrompt = "You are a research assistant that first uses tools when needed, then answers succinctly."
+	modelParam.Reasoning = &spec.ReasoningParam{
+		Type:  spec.ReasoningTypeSingleWithLevels,
+		Level: spec.ReasoningLevelMedium,
+	}
+	modelParam.OutputParam = &spec.OutputParam{
+		Verbosity: new(spec.OutputVerbosityMedium),
+		Format: &spec.OutputFormat{
+			Kind: spec.OutputFormatKindJSONSchema,
+			JSONSchemaParam: &spec.JSONSchemaParam{
+				Name: "final_answer",
+				Schema: map[string]any{
+					toolJSONKeyType: toolJSONValueObject,
+					toolJSONKeyProperties: map[string]any{
+						"image_description": map[string]any{toolJSONKeyType: toolJSONValueString},
+						"file_name":         map[string]any{toolJSONKeyType: toolJSONValueString},
+						"answer":            map[string]any{toolJSONKeyType: toolJSONValueString},
 					},
+					toolJSONKeyRequired: []any{
+						"image_description",
+						"file_name",
+						"answer",
+					},
+					toolJSONKeyAdditionalProperties: false,
 				},
+				Strict: true,
 			},
 		},
+	}
+
+	opts, err := presetFetchOptions(ctx, ps, pp, mp)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error creating preset capability resolver:", err)
+		return
+	}
+	opts.StreamHandler = func(ev spec.StreamEvent) error {
+		switch ev.Kind {
+		case spec.StreamContentKindText:
+			if ev.Text != nil {
+				fmt.Fprintln(os.Stderr, ev.Text.Text)
+			}
+		case spec.StreamContentKindThinking:
+			if ev.Thinking != nil {
+				fmt.Fprintf(os.Stderr, "\n[thinking] %s\n", ev.Thinking.Text)
+			}
+		}
+		return nil
+	}
+	opts.StreamConfig = &spec.StreamConfig{}
+
+	resp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
+		ModelParam: modelParam,
 		Inputs: []spec.InputUnion{
 			{
 				Kind:         spec.InputKindInputMessage,
 				InputMessage: &userMessage,
 			},
 		},
-		ToolChoices: toolChoices,
+		ToolChoices: []spec.ToolChoice{summarizeTool, webSearchTool},
 		ToolPolicy: &spec.ToolPolicy{
-			// Demonstrates policy plumbing.
 			Mode:            spec.ToolPolicyModeAuto,
 			DisableParallel: true,
 		},
-	}
-
-	// Stream both text and reasoning to stdout.
-	opts := &spec.FetchCompletionOptions{
-		StreamHandler: func(ev spec.StreamEvent) error {
-			switch ev.Kind {
-			case spec.StreamContentKindText:
-				if ev.Text != nil {
-					fmt.Fprintln(os.Stderr, ev.Text.Text)
-				}
-			case spec.StreamContentKindThinking:
-				if ev.Thinking != nil {
-					// In a real app you might log this separately; here we
-					// just prefix it.
-					fmt.Fprintf(os.Stderr, "\n[thinking] %s \n", ev.Thinking.Text)
-				}
-			}
-			return nil
-		},
-		StreamConfig: &spec.StreamConfig{
-			// Use library defaults; override here if you want.
-		},
-		CompletionKey: openAIResponsesExtendedCompletionKey,
-	}
-
-	resp, err := ps.FetchCompletion(ctx, openAIResponsesExtendedProviderName, req, opts)
+	}, opts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "\nFetchCompletion error:", err)
 		if resp != nil && resp.Error != nil {
@@ -256,7 +216,7 @@ func Example_openAIResponses_toolsAndAttachments() {
 		return
 	}
 
-	fmt.Fprintln(os.Stderr, "\n\n--- normalized outputs ---")
+	fmt.Fprintln(os.Stderr, "\n--- normalized outputs ---")
 	for _, out := range resp.Outputs {
 		switch out.Kind {
 		case spec.OutputKindFunctionToolCall:
@@ -266,10 +226,12 @@ func Example_openAIResponses_toolsAndAttachments() {
 					out.FunctionToolCall.Arguments,
 				)
 			}
+
 		case spec.OutputKindWebSearchToolCall:
 			if out.WebSearchToolCall != nil {
 				fmt.Fprintf(os.Stderr, "Web search call: %+v\n", out.WebSearchToolCall.WebSearchToolCallItems)
 			}
+
 		case spec.OutputKindOutputMessage:
 			if out.OutputMessage != nil {
 				for _, c := range out.OutputMessage.Contents {
@@ -278,6 +240,7 @@ func Example_openAIResponses_toolsAndAttachments() {
 					}
 				}
 			}
+
 		case spec.OutputKindReasoningMessage:
 			if out.ReasoningMessage != nil && len(out.ReasoningMessage.Summary) > 0 {
 				fmt.Fprintln(os.Stderr, "Reasoning summary:", out.ReasoningMessage.Summary[0])

@@ -19,8 +19,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/flexigpt/inference-go/capabilityoverride"
 	"github.com/flexigpt/inference-go/internal/anthropicsdk"
 	"github.com/flexigpt/inference-go/internal/googlegeneratecontentsdk"
+	"github.com/flexigpt/inference-go/modelpreset"
 
 	"github.com/flexigpt/inference-go/internal/logutil"
 	"github.com/flexigpt/inference-go/internal/openaichatsdk"
@@ -90,6 +92,43 @@ type AddProviderConfig struct {
 	ChatCompletionPathPrefix string               `json:"chatCompletionPathPrefix"`
 	APIKeyHeaderKey          string               `json:"apiKeyHeaderKey"`
 	DefaultHeaders           map[string]string    `json:"defaultHeaders"`
+}
+
+func (ps *ProviderSetAPI) AddProviderFromPreset(
+	ctx context.Context,
+	provider spec.ProviderName,
+	preset modelpreset.ProviderPreset,
+) (spec.ProviderParam, error) {
+	if provider == "" {
+		provider = preset.Name
+	}
+	return ps.AddProvider(ctx, provider, addProviderConfigFromPreset(preset))
+}
+
+func (ps *ProviderSetAPI) NewPresetCapabilityResolver(
+	ctx context.Context,
+	runtimeProvider spec.ProviderName,
+	providerPreset modelpreset.ProviderPreset,
+	modelPreset modelpreset.ModelPreset,
+	completionKey string,
+) (spec.ModelCapabilityResolver, error) {
+	if runtimeProvider == "" {
+		runtimeProvider = providerPreset.Name
+	}
+
+	base, err := ps.GetProviderCapability(ctx, runtimeProvider)
+	if err != nil {
+		return nil, err
+	}
+
+	caps := capabilityoverride.DeriveModelCapabilities(
+		base,
+		providerPreset.CapabilitiesOverride,
+		modelPreset.CapabilitiesOverride,
+	)
+	resolver := capabilityoverride.NewCompletionKeyResolver(completionKey, &caps)
+
+	return resolver, nil
 }
 
 func (ps *ProviderSetAPI) AddProvider(
@@ -279,4 +318,14 @@ func getProviderAPI(p spec.ProviderParam, dbg spec.CompletionDebugger) (sdkutil.
 	}
 
 	return nil, errors.New("invalid provider api type")
+}
+
+func addProviderConfigFromPreset(p modelpreset.ProviderPreset) *AddProviderConfig {
+	return &AddProviderConfig{
+		SDKType:                  p.SDKType,
+		Origin:                   p.Origin,
+		ChatCompletionPathPrefix: p.ChatCompletionPathPrefix,
+		APIKeyHeaderKey:          p.APIKeyHeaderKey,
+		DefaultHeaders:           sdkutil.CloneStringMap(p.DefaultHeaders),
+	}
 }

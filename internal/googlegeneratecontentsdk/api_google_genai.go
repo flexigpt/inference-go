@@ -1154,7 +1154,7 @@ func applyGoogleGenerateContentOutputParam(
 		if op.Format.JSONSchemaParam == nil || len(op.Format.JSONSchemaParam.Schema) == 0 {
 			return errors.New("googleGenerateContent: outputParam.format=jsonSchema requires jsonSchemaParam.schema")
 		}
-		config.ResponseMIMEType = "application/json"
+		config.ResponseMIMEType = spec.DefaultContentTypeHeader
 		// Use ResponseJsonSchema (accepts any) with the raw map to avoid
 		// the complexity of converting map[string]any → *genai.Schema.
 		config.ResponseJsonSchema = op.Format.JSONSchemaParam.Schema

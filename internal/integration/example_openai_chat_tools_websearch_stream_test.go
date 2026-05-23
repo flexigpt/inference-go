@@ -7,30 +7,23 @@ import (
 	"os"
 	"time"
 
-	"github.com/flexigpt/inference-go"
+	"github.com/flexigpt/inference-go/modelpreset"
 	"github.com/flexigpt/inference-go/spec"
 )
 
 const (
-	openAIChatToolsProviderName                = "openai-chat"
-	openAIChatToolsFunctionToolID              = "math"
-	openAIChatToolsFunctionToolName            = "multiply"
-	openAIChatToolsFunctionToolDescription     = "Multiply two integers."
-	openAIChatToolsJSONKeyType                 = "type"
-	openAIChatToolsJSONValueObject             = "object"
-	openAIChatToolsJSONKeyProperties           = "properties"
-	openAIChatToolsJSONKeyRequired             = "required"
-	openAIChatToolsJSONKeyAdditionalProperties = "additionalProperties"
-	openAIChatToolsJSONAnswerKey               = "answer"
-	openAIChatToolsSchemaName                  = "result"
-	openAIChatToolsModelName                   = "gpt-4.1"
-	openAIChatToolsCompletionKey               = "gpt41"
-	openAIChatToolsSystemPrompt                = "answer directly"
+	openAIChatMathToolID          = "math"
+	openAIChatMathToolName        = "multiply"
+	openAIChatMathToolDescription = "Multiply two integers."
 )
 
 // Example_openAIChat_toolsAndJSONSchema demonstrates:
+//
+//   - catalog-based OpenAI Chat provider setup
+//   - preset model defaults
+//   - preset capability resolver
 //   - streaming text
-//   - JSON schema output (response_format=json_schema)
+//   - JSON schema output
 //   - function tools
 func Example_openAIChat_toolsAndJSONSchema() {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
@@ -42,15 +35,14 @@ func Example_openAIChat_toolsAndJSONSchema() {
 		return
 	}
 
-	_, err = ps.AddProvider(ctx, openAIChatToolsProviderName, &inference.AddProviderConfig{
-		SDKType:                  spec.ProviderSDKTypeOpenAIChatCompletions,
-		Origin:                   spec.DefaultOpenAIOrigin,
-		ChatCompletionPathPrefix: spec.DefaultOpenAIChatCompletionsPrefix,
-		APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
-		DefaultHeaders:           spec.OpenAIChatCompletionsDefaultHeaders,
-	})
+	pp, mp, err := addCatalogModelProvider(
+		ctx,
+		ps,
+		modelpreset.ProviderOpenAIChat,
+		modelpreset.PresetOpenAIChatGPT41,
+	)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "error adding OpenAI Chat provider:", err)
+		fmt.Fprintln(os.Stderr, "error adding OpenAI Chat preset provider:", err)
 		return
 	}
 
@@ -60,80 +52,74 @@ func Example_openAIChat_toolsAndJSONSchema() {
 		fmt.Println("OK")
 		return
 	}
-	if err := ps.SetProviderAPIKey(ctx, openAIChatToolsProviderName, apiKey); err != nil {
+	if err := ps.SetProviderAPIKey(ctx, pp.Name, apiKey); err != nil {
 		fmt.Fprintln(os.Stderr, "error setting OpenAI API key:", err)
 		return
+	}
+
+	modelParam := mp.ModelParam
+	modelParam.Stream = true
+	modelParam.MaxOutputLength = min(modelParam.MaxOutputLength, 1024)
+	modelParam.SystemPrompt = "Answer directly."
+	modelParam.OutputParam = &spec.OutputParam{
+		Format: &spec.OutputFormat{
+			Kind: spec.OutputFormatKindJSONSchema,
+			JSONSchemaParam: &spec.JSONSchemaParam{
+				Name: "result",
+				Schema: map[string]any{
+					toolJSONKeyType: toolJSONValueObject,
+					toolJSONKeyProperties: map[string]any{
+						toolJSONSchemaName: map[string]any{toolJSONKeyType: toolJSONValueString},
+					},
+					toolJSONKeyRequired:             []any{toolJSONSchemaName},
+					toolJSONKeyAdditionalProperties: false,
+				},
+				Strict: true,
+			},
+		},
 	}
 
 	tools := []spec.ToolChoice{
 		{
 			Type:        spec.ToolTypeFunction,
-			ID:          openAIChatToolsFunctionToolID,
-			Name:        openAIChatToolsFunctionToolName,
-			Description: openAIChatToolsFunctionToolDescription,
+			ID:          openAIChatMathToolID,
+			Name:        openAIChatMathToolName,
+			Description: openAIChatMathToolDescription,
 			Arguments: map[string]any{
-				openAIChatToolsJSONKeyType: openAIChatToolsJSONValueObject,
-				openAIChatToolsJSONKeyProperties: map[string]any{
-					"a": map[string]any{openAIChatToolsJSONKeyType: "integer"},
-					"b": map[string]any{openAIChatToolsJSONKeyType: "integer"},
+				toolJSONKeyType: toolJSONValueObject,
+				toolJSONKeyProperties: map[string]any{
+					"a": map[string]any{toolJSONKeyType: "integer"},
+					"b": map[string]any{toolJSONKeyType: "integer"},
 				},
-				openAIChatToolsJSONKeyRequired:             []any{"a", "b"},
-				openAIChatToolsJSONKeyAdditionalProperties: false,
+				toolJSONKeyRequired:             []any{"a", "b"},
+				toolJSONKeyAdditionalProperties: false,
 			},
 		},
 	}
 
-	req := &spec.FetchCompletionRequest{
-		ModelParam: spec.ModelParam{
-			Name:         openAIChatToolsModelName,
-			Stream:       true,
-			SystemPrompt: openAIChatToolsSystemPrompt,
-			OutputParam: &spec.OutputParam{
-				Format: &spec.OutputFormat{
-					Kind: spec.OutputFormatKindJSONSchema,
-					JSONSchemaParam: &spec.JSONSchemaParam{
-						Name: openAIChatToolsSchemaName,
-						Schema: map[string]any{
-							openAIChatToolsJSONKeyType: openAIChatToolsJSONValueObject,
-							openAIChatToolsJSONKeyProperties: map[string]any{
-								openAIChatToolsJSONAnswerKey: map[string]any{openAIChatToolsJSONKeyType: "string"},
-							},
-							openAIChatToolsJSONKeyRequired:             []any{openAIChatToolsJSONAnswerKey},
-							openAIChatToolsJSONKeyAdditionalProperties: false,
-						},
-						Strict: true,
-					},
-				},
-			},
+	opts, err := presetFetchOptions(ctx, ps, pp, mp)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error creating preset capability resolver:", err)
+		return
+	}
+	opts.StreamHandler = func(ev spec.StreamEvent) error {
+		if ev.Kind == spec.StreamContentKindText && ev.Text != nil {
+			fmt.Fprint(os.Stderr, ev.Text.Text)
+		}
+		return nil
+	}
+
+	_, err = ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
+		ModelParam: modelParam,
+		Inputs: []spec.InputUnion{
+			newUserTextInput("What is 6*7? Use the multiply tool if useful."),
 		},
-		Inputs: []spec.InputUnion{{
-			Kind: spec.InputKindInputMessage,
-			InputMessage: &spec.InputOutputContent{
-				Role: spec.RoleUser,
-				Contents: []spec.InputOutputContentItemUnion{{
-					Kind: spec.ContentItemKindText,
-					TextItem: &spec.ContentItemText{
-						Text: "What is 6*7 and what's a recent Go release? (If unknown, say unknown.)",
-					},
-				}},
-			},
-		}},
 		ToolChoices: tools,
 		ToolPolicy: &spec.ToolPolicy{
 			Mode:            spec.ToolPolicyModeAuto,
 			DisableParallel: true,
 		},
-	}
-
-	_, err = ps.FetchCompletion(ctx, openAIChatToolsProviderName, req, &spec.FetchCompletionOptions{
-		CompletionKey: openAIChatToolsCompletionKey,
-		StreamHandler: func(ev spec.StreamEvent) error {
-			if ev.Kind == spec.StreamContentKindText && ev.Text != nil {
-				fmt.Fprint(os.Stderr, ev.Text.Text)
-			}
-			return nil
-		},
-	})
+	}, opts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "\nFetchCompletion error:", err)
 		return
