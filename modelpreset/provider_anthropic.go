@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	PresetAnthropicOpus48   ModelPresetID = "opus48"
 	PresetAnthropicOpus47   ModelPresetID = "opus47"
 	PresetAnthropicOpus46   ModelPresetID = "opus46"
 	PresetAnthropicOpus45   ModelPresetID = "opus45"
@@ -17,6 +18,7 @@ const (
 )
 
 const (
+	ModelNameAnthropicOpus48   spec.ModelName = "claude-opus-4-8"
 	ModelNameAnthropicOpus47   spec.ModelName = "claude-opus-4-7"
 	ModelNameAnthropicOpus46   spec.ModelName = "claude-opus-4-6"
 	ModelNameAnthropicOpus45   spec.ModelName = "claude-opus-4-5-20251101"
@@ -26,6 +28,37 @@ const (
 	ModelNameAnthropicSonnet4  spec.ModelName = "claude-sonnet-4-20250514"
 	ModelNameAnthropicHaiku45  spec.ModelName = "claude-haiku-4-5-20251001"
 )
+
+var modelAnthropicOpus48 = ModelPreset{
+	ID:          PresetAnthropicOpus48,
+	Name:        ModelNameAnthropicOpus48,
+	DisplayName: "Claude 4.8 Opus",
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameAnthropicOpus48,
+		Stream:          true,
+		MaxPromptLength: 200000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+		CacheControl:    cacheEphemeral5m(),
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+				spec.ReasoningLevelMax,
+			},
+		},
+	},
+}
 
 var modelAnthropicOpus47 = ModelPreset{
 	ID:          PresetAnthropicOpus47,
@@ -37,7 +70,7 @@ var modelAnthropicOpus47 = ModelPreset{
 		MaxPromptLength: 200000,
 		MaxOutputLength: 128000,
 		Temperature:     new(1.0),
-		Reasoning:       reasoningSingle(spec.ReasoningLevelXHigh),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
 		SystemPrompt:    "",
 		Timeout:         1800,
 		CacheControl:    cacheEphemeral5m(),
@@ -302,6 +335,7 @@ var providerAnthropic = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetAnthropicOpus48:   modelAnthropicOpus48,
 		PresetAnthropicOpus47:   modelAnthropicOpus47,
 		PresetAnthropicOpus46:   modelAnthropicOpus46,
 		PresetAnthropicOpus45:   modelAnthropicOpus45,
