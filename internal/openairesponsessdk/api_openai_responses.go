@@ -1016,7 +1016,7 @@ func webSearchToolCallToOpenAIResponses(
 			return nil
 		}
 		action.OfSearch = &responses.ResponseFunctionWebSearchActionSearchParam{
-			Query:   wcall.SearchItem.Query,
+			Queries: []string{wcall.SearchItem.Query},
 			Sources: []responses.ResponseFunctionWebSearchActionSearchSourceParam{},
 		}
 
