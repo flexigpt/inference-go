@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	PresetAnthropicFable5   ModelPresetID = "fable5"
 	PresetAnthropicOpus48   ModelPresetID = "opus48"
 	PresetAnthropicOpus47   ModelPresetID = "opus47"
 	PresetAnthropicOpus46   ModelPresetID = "opus46"
@@ -18,6 +19,7 @@ const (
 )
 
 const (
+	ModelNameAnthropicFable5   spec.ModelName = "claude-fable-5"
 	ModelNameAnthropicOpus48   spec.ModelName = "claude-opus-4-8"
 	ModelNameAnthropicOpus47   spec.ModelName = "claude-opus-4-7"
 	ModelNameAnthropicOpus46   spec.ModelName = "claude-opus-4-6"
@@ -29,14 +31,45 @@ const (
 	ModelNameAnthropicHaiku45  spec.ModelName = "claude-haiku-4-5-20251001"
 )
 
+var modelAnthropicFable5 = ModelPreset{
+	ID:          PresetAnthropicFable5,
+	Name:        ModelNameAnthropicFable5,
+	DisplayName: "Claude Fable 5",
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameAnthropicFable5,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+		CacheControl:    cacheEphemeral5m(),
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+				spec.ReasoningLevelMax,
+			},
+		},
+	},
+}
+
 var modelAnthropicOpus48 = ModelPreset{
 	ID:          PresetAnthropicOpus48,
 	Name:        ModelNameAnthropicOpus48,
-	DisplayName: "Claude 4.8 Opus",
+	DisplayName: "Claude Opus 4.8",
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameAnthropicOpus48,
 		Stream:          true,
-		MaxPromptLength: 200000,
+		MaxPromptLength: 1000000,
 		MaxOutputLength: 128000,
 		Temperature:     new(1.0),
 		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
@@ -63,7 +96,7 @@ var modelAnthropicOpus48 = ModelPreset{
 var modelAnthropicOpus47 = ModelPreset{
 	ID:          PresetAnthropicOpus47,
 	Name:        ModelNameAnthropicOpus47,
-	DisplayName: "Claude 4.7 Opus",
+	DisplayName: "Claude Opus 4.7",
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameAnthropicOpus47,
 		Stream:          true,
@@ -94,7 +127,7 @@ var modelAnthropicOpus47 = ModelPreset{
 var modelAnthropicOpus46 = ModelPreset{
 	ID:          PresetAnthropicOpus46,
 	Name:        ModelNameAnthropicOpus46,
-	DisplayName: "Claude 4.6 Opus",
+	DisplayName: "Claude Opus 4.6",
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameAnthropicOpus46,
 		Stream:          true,
@@ -124,7 +157,7 @@ var modelAnthropicOpus46 = ModelPreset{
 var modelAnthropicOpus45 = ModelPreset{
 	ID:          PresetAnthropicOpus45,
 	Name:        ModelNameAnthropicOpus45,
-	DisplayName: "Claude 4.5 Opus",
+	DisplayName: "Claude Opus 4.5",
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameAnthropicOpus45,
 		Stream:          true,
@@ -148,7 +181,7 @@ var modelAnthropicOpus45 = ModelPreset{
 var modelAnthropicOpus41 = ModelPreset{
 	ID:          PresetAnthropicOpus41,
 	Name:        ModelNameAnthropicOpus41,
-	DisplayName: "Claude 4.1 Opus",
+	DisplayName: "Claude Opus 4.1",
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameAnthropicOpus41,
 		Stream:          true,
@@ -172,11 +205,11 @@ var modelAnthropicOpus41 = ModelPreset{
 var modelAnthropicSonnet46 = ModelPreset{
 	ID:          PresetAnthropicSonnet46,
 	Name:        ModelNameAnthropicSonnet46,
-	DisplayName: "Claude 4.6 Sonnet",
+	DisplayName: "Claude Sonnet 4.6",
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameAnthropicSonnet46,
 		Stream:          true,
-		MaxPromptLength: 200000,
+		MaxPromptLength: 1000000,
 		MaxOutputLength: 64000,
 		Temperature:     new(0.1),
 		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
@@ -202,7 +235,7 @@ var modelAnthropicSonnet46 = ModelPreset{
 var modelAnthropicSonnet45 = ModelPreset{
 	ID:          PresetAnthropicSonnet45,
 	Name:        ModelNameAnthropicSonnet45,
-	DisplayName: "Claude 4.5 Sonnet",
+	DisplayName: "Claude Sonnet 4.5",
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameAnthropicSonnet45,
 		Stream:          true,
@@ -226,7 +259,7 @@ var modelAnthropicSonnet45 = ModelPreset{
 var modelAnthropicSonnet4 = ModelPreset{
 	ID:          PresetAnthropicSonnet4,
 	Name:        ModelNameAnthropicSonnet4,
-	DisplayName: "Claude 4 Sonnet",
+	DisplayName: "Claude Sonnet 4",
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameAnthropicSonnet4,
 		Stream:          true,
@@ -243,7 +276,7 @@ var modelAnthropicSonnet4 = ModelPreset{
 var modelAnthropicHaiku45 = ModelPreset{
 	ID:          PresetAnthropicHaiku45,
 	Name:        ModelNameAnthropicHaiku45,
-	DisplayName: "Claude 4.5 Haiku",
+	DisplayName: "Claude Haiku 4.5",
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameAnthropicHaiku45,
 		Stream:          true,
@@ -335,6 +368,7 @@ var providerAnthropic = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetAnthropicFable5:   modelAnthropicFable5,
 		PresetAnthropicOpus48:   modelAnthropicOpus48,
 		PresetAnthropicOpus47:   modelAnthropicOpus47,
 		PresetAnthropicOpus46:   modelAnthropicOpus46,

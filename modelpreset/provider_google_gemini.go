@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	PresetGoogleGemini35Flash     ModelPresetID = "gemini35Flash"
 	PresetGoogleGemini31Pro       ModelPresetID = "gemini31Pro"
 	PresetGoogleGemini3Flash      ModelPresetID = "gemini3Flash"
 	PresetGoogleGemini31FlashLite ModelPresetID = "gemini31FlashLite"
@@ -16,6 +17,7 @@ const (
 
 const (
 	ModelNameGoogleGemini31Pro       spec.ModelName = "gemini-3.1-pro-preview"
+	ModelNameGoogleGemini35Flash     spec.ModelName = "gemini-3.5-flash"
 	ModelNameGoogleGemini3Flash      spec.ModelName = "gemini-3-flash-preview"
 	ModelNameGoogleGemini31FlashLite spec.ModelName = "gemini-3.1-flash-lite-preview"
 	ModelNameGoogleGemini25Flash     spec.ModelName = "gemini-2.5-flash"
@@ -43,6 +45,37 @@ var modelGoogleGemini31Pro = ModelPreset{
 				spec.ReasoningTypeSingleWithLevels,
 			},
 			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+	},
+}
+
+var modelGoogleGemini35Flash = ModelPreset{
+	ID:          PresetGoogleGemini35Flash,
+	Name:        ModelNameGoogleGemini35Flash,
+	DisplayName: "GoogleAI Gemini 3.5 Flash",
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGoogleGemini35Flash,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 65536,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelMinimal,
 				spec.ReasoningLevelLow,
 				spec.ReasoningLevelMedium,
 				spec.ReasoningLevelHigh,
@@ -246,6 +279,7 @@ var providerGoogleGemini = ProviderPreset{
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
 		PresetGoogleGemini31Pro:       modelGoogleGemini31Pro,
+		PresetGoogleGemini35Flash:     modelGoogleGemini35Flash,
 		PresetGoogleGemini3Flash:      modelGoogleGemini3Flash,
 		PresetGoogleGemini31FlashLite: modelGoogleGemini31FlashLite,
 		PresetGoogleGemini25Flash:     modelGoogleGemini25Flash,
