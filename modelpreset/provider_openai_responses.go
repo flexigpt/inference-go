@@ -87,7 +87,7 @@ var modelOpenAIResponsesGPT54Mini = ModelPreset{
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameOpenAIResponsesGPT54Mini,
 		Stream:          true,
-		MaxPromptLength: 400000,
+		MaxPromptLength: 200000,
 		MaxOutputLength: 128000,
 		Temperature:     new(1.0),
 		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),

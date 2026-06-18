@@ -3,9 +3,9 @@ module github.com/flexigpt/inference-go
 go 1.26
 
 require (
-	github.com/anthropics/anthropic-sdk-go v1.50.1
-	github.com/openai/openai-go/v3 v3.39.0
-	google.golang.org/genai v1.60.0
+	github.com/anthropics/anthropic-sdk-go v1.50.2
+	github.com/openai/openai-go/v3 v3.40.0
+	google.golang.org/genai v1.61.0
 )
 
 require (

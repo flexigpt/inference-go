@@ -20,17 +20,6 @@ const (
 	thinkingOverrideForceDisabled
 )
 
-func (o thinkingOverride) String() string {
-	switch o {
-	case thinkingOverrideForceEnabled:
-		return "forceEnabled"
-	case thinkingOverrideForceDisabled:
-		return "forceDisabled"
-	default:
-		return "none"
-	}
-}
-
 type anthropicThinkingAnalysis struct {
 	Override                    thinkingOverride
 	TotalReasoningMessages      int
@@ -383,5 +372,16 @@ func anthropicEffortFromReasoningLevel(level spec.ReasoningLevel) (anthropic.Out
 	default:
 		// None / Unknown.
 		return "", false
+	}
+}
+
+func (o thinkingOverride) String() string {
+	switch o {
+	case thinkingOverrideForceEnabled:
+		return "forceEnabled"
+	case thinkingOverrideForceDisabled:
+		return "forceDisabled"
+	default:
+		return "none"
 	}
 }
