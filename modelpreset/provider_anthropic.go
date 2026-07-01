@@ -12,6 +12,7 @@ const (
 	PresetAnthropicOpus46   ModelPresetID = "opus46"
 	PresetAnthropicOpus45   ModelPresetID = "opus45"
 	PresetAnthropicOpus41   ModelPresetID = "opus41"
+	PresetAnthropicSonnet5  ModelPresetID = "sonnet5"
 	PresetAnthropicSonnet46 ModelPresetID = "sonnet46"
 	PresetAnthropicSonnet45 ModelPresetID = "sonnet45"
 	PresetAnthropicSonnet4  ModelPresetID = "sonnet4"
@@ -25,6 +26,7 @@ const (
 	ModelNameAnthropicOpus46   spec.ModelName = "claude-opus-4-6"
 	ModelNameAnthropicOpus45   spec.ModelName = "claude-opus-4-5-20251101"
 	ModelNameAnthropicOpus41   spec.ModelName = "claude-opus-4-1-20250805"
+	ModelNameAnthropicSonnet5  spec.ModelName = "claude-sonnet-5"
 	ModelNameAnthropicSonnet46 spec.ModelName = "claude-sonnet-4-6"
 	ModelNameAnthropicSonnet45 spec.ModelName = "claude-sonnet-4-5-20250929"
 	ModelNameAnthropicSonnet4  spec.ModelName = "claude-sonnet-4-20250514"
@@ -202,6 +204,36 @@ var modelAnthropicOpus41 = ModelPreset{
 	},
 }
 
+var modelAnthropicSonnet5 = ModelPreset{
+	ID:          PresetAnthropicSonnet5,
+	Name:        ModelNameAnthropicSonnet5,
+	DisplayName: "Claude Sonnet 5",
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameAnthropicSonnet5,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(0.1),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+		CacheControl:    cacheEphemeral5m(),
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelMax,
+			},
+		},
+	},
+}
+
 var modelAnthropicSonnet46 = ModelPreset{
 	ID:          PresetAnthropicSonnet46,
 	Name:        ModelNameAnthropicSonnet46,
@@ -374,6 +406,7 @@ var providerAnthropic = ProviderPreset{
 		PresetAnthropicOpus46:   modelAnthropicOpus46,
 		PresetAnthropicOpus45:   modelAnthropicOpus45,
 		PresetAnthropicOpus41:   modelAnthropicOpus41,
+		PresetAnthropicSonnet5:  modelAnthropicSonnet5,
 		PresetAnthropicSonnet46: modelAnthropicSonnet46,
 		PresetAnthropicSonnet45: modelAnthropicSonnet45,
 		PresetAnthropicSonnet4:  modelAnthropicSonnet4,

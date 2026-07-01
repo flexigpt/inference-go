@@ -7,12 +7,14 @@ import (
 )
 
 const (
+	PresetXAIGrokBuild01        ModelPresetID = "grokBuild01"
 	PresetXAIGrok43             ModelPresetID = "grok43"
 	PresetXAIGrok42Reasoning    ModelPresetID = "grok42Reasoning"
 	PresetXAIGrok42NonReasoning ModelPresetID = "grok42NonReasoning"
 )
 
 const (
+	ModelNameXAIGrokBuild01        spec.ModelName = "grok-build-0.1"
 	ModelNameXAIGrok43             spec.ModelName = "grok-4.3"
 	ModelNameXAIGrok42Reasoning    spec.ModelName = "grok-4.20-0309-reasoning"
 	ModelNameXAIGrok42NonReasoning spec.ModelName = "grok-4.20-0309-non-reasoning"
@@ -45,6 +47,27 @@ var modelXAIGrok43 = ModelPreset{
 				spec.ReasoningLevelHigh,
 			},
 			SupportsSummaryStyle: new(true),
+		},
+	},
+}
+
+var modelXAIGrokBuild01 = ModelPreset{
+	ID:          PresetXAIGrokBuild01,
+	Name:        ModelNameXAIGrokBuild01,
+	DisplayName: "xAI Build 0.1",
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameXAIGrokBuild01,
+		Stream:          true,
+		MaxPromptLength: 2000000,
+		MaxOutputLength: 65536,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         3600,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportsReasoningConfig:         new(false),
+			SupportsEncryptedReasoningInput: new(true),
 		},
 	},
 }
@@ -164,6 +187,7 @@ var providerXAI = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetXAIGrokBuild01:        modelXAIGrokBuild01,
 		PresetXAIGrok43:             modelXAIGrok43,
 		PresetXAIGrok42Reasoning:    modelXAIGrok42Reasoning,
 		PresetXAIGrok42NonReasoning: modelXAIGrok42NonReasoning,
