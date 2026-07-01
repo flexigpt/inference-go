@@ -7,16 +7,48 @@ import (
 )
 
 const (
+	PresetMistralMedium35  ModelPresetID = "mistralMedium35"
 	PresetMistralSmall4    ModelPresetID = "mistralSmall4"
 	PresetMistralLarge3    ModelPresetID = "mistralLarge3"
 	PresetMistralDevstral2 ModelPresetID = "devstral2"
 )
 
 const (
+	ModelNameMistralMedium35  spec.ModelName = "mistral-medium-3-5"
 	ModelNameMistralSmall4    spec.ModelName = "mistral-small-2603"
 	ModelNameMistralLarge3    spec.ModelName = "mistral-large-2512"
 	ModelNameMistralDevstral2 spec.ModelName = "devstral-2512"
 )
+
+var modelMistralMedium35 = ModelPreset{
+	ID:          PresetMistralMedium35,
+	Name:        ModelNameMistralMedium35,
+	DisplayName: "Mistral Medium 3.5",
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameMistralMedium35,
+		Stream:          true,
+		MaxPromptLength: 256000,
+		MaxOutputLength: 32768,
+		Temperature:     new(0.1),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportsReasoningConfig: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelNone,
+				spec.ReasoningLevelHigh,
+			},
+			SupportsSummaryStyle:             new(false),
+			SupportsEncryptedReasoningInput:  new(false),
+			TemperatureDisallowedWhenEnabled: new(false),
+		},
+	},
+}
 
 var modelMistralSmall4 = ModelPreset{
 	ID:          PresetMistralSmall4,
@@ -150,6 +182,7 @@ var providerMistral = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetMistralMedium35:  modelMistralMedium35,
 		PresetMistralSmall4:    modelMistralSmall4,
 		PresetMistralLarge3:    modelMistralLarge3,
 		PresetMistralDevstral2: modelMistralDevstral2,
