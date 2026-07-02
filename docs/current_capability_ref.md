@@ -1,6 +1,6 @@
-# API capability and normalization done and pending reference
+# API capability, preset provider, and normalization done and pending reference
 
-This document is the current implementation reference for normalized API capability support across providers.
+This document is the current implementation reference for normalized API capability support across wire adapters, provider presets, hosted routers, and local runtimes.
 
 Terminology used here:
 
@@ -22,36 +22,50 @@ Primary capability sources:
 - `internal/openairesponsessdk/capability.go`
 - `internal/openaichatsdk/capability.go`
 - `internal/googlegeneratecontentsdk/capability.go`
+- `capabilityoverride`
+- `modelpreset`
 
-- [Cross-provider reference](#cross-provider-reference)
-  - [Done reference](#done-reference)
-  - [Pending reference](#pending-reference)
-- [Anthropic Messages API reference](#anthropic-messages-api-reference)
-  - [Done reference](#done-reference-1)
-  - [Pending reference](#pending-reference-1)
-- [OpenAI Responses API reference](#openai-responses-api-reference)
-  - [Done reference](#done-reference-2)
-  - [Pending reference](#pending-reference-2)
-- [OpenAI Chat Completions API reference](#openai-chat-completions-api-reference)
-  - [Done reference](#done-reference-3)
-  - [Pending reference](#pending-reference-3)
-- [Google Generate Content API reference](#google-generate-content-api-reference)
-  - [Done reference](#done-reference-4)
-  - [Pending reference](#pending-reference-4)
-- [Cross-provider pending backlog reference](#cross-provider-pending-backlog-reference)
+## Table of contents <!-- omit from toc -->
+
+- [Cross-provider Reference](#cross-provider-reference)
+  - [Done](#done)
   - [Pending](#pending)
+- [Anthropic Messages API Reference](#anthropic-messages-api-reference)
+  - [Done Anthropic Reference](#done-anthropic-reference)
+  - [Pending Anthropic Reference](#pending-anthropic-reference)
+- [OpenAI Responses API Reference](#openai-responses-api-reference)
+  - [Done OpenAI Responses Reference](#done-openai-responses-reference)
+  - [Pending OpenAI Responses Reference](#pending-openai-responses-reference)
+- [OpenAI Chat Completions API Reference](#openai-chat-completions-api-reference)
+  - [Done OpenAI Chat Completions Reference](#done-openai-chat-completions-reference)
+  - [Pending OpenAI Chat Completions Reference](#pending-openai-chat-completions-reference)
+- [Google Generate Content API Reference](#google-generate-content-api-reference)
+  - [Done Google Generate Content Reference](#done-google-generate-content-reference)
+  - [Pending Google Generate Content Reference](#pending-google-generate-content-reference)
+- [Preset Provider Catalog Reference](#preset-provider-catalog-reference)
+  - [Done Presets Reference](#done-presets-reference)
+  - [Pending Presets Reference](#pending-presets-reference)
+- [Cross-provider Pending Backlog Reference](#cross-provider-pending-backlog-reference)
 
----
+## Cross-provider Reference
 
-## Cross-provider reference
-
-### Done reference
+### Done
 
 - Provider registration and dispatch
   - Anthropic Messages
   - OpenAI Responses
   - OpenAI Chat Completions
   - Google Generate Content
+  - Mistral through OpenAI Chat-compatible adapter presets
+  - Hugging Face Router through OpenAI Chat-compatible adapter presets
+  - llama.cpp through OpenAI Chat-compatible adapter presets
+  - xAI through OpenAI Responses-compatible adapter presets
+  - OpenRouter through OpenAI Responses-compatible adapter presets
+  - LocalAI through OpenAI Responses-compatible adapter presets
+  - LM Studio through OpenAI Responses-compatible adapter presets
+  - SGLang through OpenAI Responses-compatible adapter presets
+  - vLLM through OpenAI Responses-compatible adapter presets
+  - Ollama through Anthropic-compatible adapter presets
 
 - Normalized request/response model
   - `spec.FetchCompletionRequest`
@@ -61,16 +75,6 @@ Primary capability sources:
   - `spec.ModelParam`
   - `spec.ToolChoice`
   - `spec.ToolPolicy`
-
-- Capability-driven normalization
-  - request cloning
-  - modality validation
-  - reasoning validation
-  - stop-sequence normalization
-  - output-format validation
-  - tool capability validation
-  - cache-control normalization
-  - warnings returned in `FetchCompletionResponse.Warnings`
 
 - Streaming
   - normalized text streaming
@@ -82,24 +86,47 @@ Primary capability sources:
   - cached token accounting where exposed
   - reasoning token accounting where exposed
 
+- Capability-driven normalization
+  - request cloning
+  - modality validation
+  - reasoning validation
+  - stop-sequence normalization
+  - output-format validation
+  - tool capability validation
+  - cache-control normalization
+  - parameter dialect overrides where declared
+  - warnings returned in `FetchCompletionResponse.Warnings`
+
+- Capability override layering
+  - SDK/provider base capabilities
+  - provider preset overrides
+  - model preset overrides
+  - caller/user overrides
+
+- Preset catalog
+  - provider connection defaults
+  - provider-level capability overrides
+  - model default params
+  - model-level capability overrides
+
 - Debugging
   - `CompletionDebugger`
   - `debugclient.HTTPCompletionDebugger`
 
-### Pending reference
+### Pending
 
 - Audio input/output normalization
 - Video input/output normalization
 - Image output normalization
 - Richer cross-provider citation normalization beyond URL/basic grounding forms
 - Safe allowlisted passthrough for `ModelParam.AdditionalParametersRawJSON`
+- Full capability-vs-adapter enforcement for modalities that can be represented in presets but are not yet normalized end to end
+  - examples: audio and video input advertised by some gateway model metadata
 - Explicit capability signal for `ToolPolicy.DisableParallel`
   - today this is not represented separately in the capability model
   - some providers can disable parallel tool calls, some cannot, and docs must currently describe that per provider
 
----
-
-## Anthropic Messages API reference
+## Anthropic Messages API Reference
 
 Capability source:
 
@@ -112,7 +139,7 @@ Adapter references:
 - `internal/anthropicsdk/thinking.go`
 - `internal/anthropicsdk/cache_control.go`
 
-### Done reference
+### Done Anthropic Reference
 
 - Message/input normalization
   - user input messages
@@ -172,7 +199,7 @@ Adapter references:
   - cached input tokens
   - output tokens
 
-### Pending reference
+### Pending Anthropic Reference
 
 - File/document handling
   - plain-text `text/*` file document mapping is still pending
@@ -193,9 +220,7 @@ Adapter references:
   - `service_tier`
   - `top_k`
 
----
-
-## OpenAI Responses API reference
+## OpenAI Responses API Reference
 
 Capability source:
 
@@ -207,7 +232,7 @@ Adapter references:
 - `internal/openairesponsessdk/thinking.go`
 - `internal/openairesponsessdk/cache_control.go`
 
-### Done reference
+### Done OpenAI Responses Reference
 
 - Message/input normalization
   - user input messages
@@ -260,7 +285,7 @@ Adapter references:
   - output tokens
   - reasoning tokens
 
-### Pending reference
+### Pending OpenAI Responses Reference
 
 - Stop sequences
   - unsupported by Responses API
@@ -288,9 +313,7 @@ Adapter references:
   - safety/user identifiers
   - stream options
 
----
-
-## OpenAI Chat Completions API reference
+## OpenAI Chat Completions API Reference
 
 Capability source:
 
@@ -301,7 +324,7 @@ Adapter references:
 - `internal/openaichatsdk/api_openai_chat_completions.go`
 - `internal/openaichatsdk/cache_control.go`
 
-### Done reference
+### Done OpenAI Chat Completions Reference
 
 - Message/input normalization
   - user input messages
@@ -353,7 +376,7 @@ Adapter references:
   - output tokens
   - reasoning tokens where exposed by the API
 
-### Pending reference
+### Pending OpenAI Chat Completions Reference
 
 - Reasoning history
   - structured reasoning input/output messages are not supported by Chat Completions
@@ -379,9 +402,7 @@ Adapter references:
   - message `name`
   - model-specific penalties/logprobs/seed/logit-bias where normalization is later desired
 
----
-
-## Google Generate Content API reference
+## Google Generate Content API Reference
 
 Capability source:
 
@@ -393,7 +414,7 @@ Adapter references:
 - `internal/googlegeneratecontentsdk/input_processing.go`
 - `internal/googlegeneratecontentsdk/thinking.go`
 
-### Done reference
+### Done Google Generate Content Reference
 
 - Message/input normalization
   - user input messages
@@ -443,7 +464,7 @@ Adapter references:
   - output tokens
   - reasoning tokens
 
-### Pending reference
+### Pending Google Generate Content Reference
 
 - Tool parallelism
   - `ToolPolicy.DisableParallel` is not currently normalized/enforced for Google Generate Content
@@ -475,13 +496,161 @@ Adapter references:
   - image output is not normalized
   - audio/video output is not normalized
 
----
+## Preset Provider Catalog Reference
 
-## Cross-provider pending backlog reference
+This section covers provider presets that reuse one of the normalized wire adapters and then apply provider/model capability overrides through `modelpreset`.
 
-These are the main remaining normalized-surface items that affect more than one provider.
+Capability sources:
 
-### Pending
+- `modelpreset`
+- `capabilityoverride`
+- the selected SDK adapter base capability file
+
+Adapter mapping:
+
+| Preset provider     | Provider constant                     | Wire adapter                       | Capability notes                                                                                              |
+| ------------------- | ------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Anthropic           | `modelpreset.ProviderAnthropic`       | Anthropic Messages                 | Provider preset extends Anthropic base caps with catalog defaults and model-specific reasoning/cache behavior |
+| OpenAI Responses    | `modelpreset.ProviderOpenAIResponses` | OpenAI Responses                   | Provider preset plus per-model reasoning-level restrictions                                                   |
+| OpenAI Chat         | `modelpreset.ProviderOpenAIChat`      | OpenAI Chat Completions            | Provider preset plus model-level no-reasoning overrides for selected non-reasoning models                     |
+| Google Gemini       | `modelpreset.ProviderGoogleGemini`    | Google Generate Content            | Provider preset plus per-model reasoning and token-budget restrictions                                        |
+| Mistral             | `modelpreset.ProviderMistral`         | OpenAI Chat Completions-compatible | Provider override narrows modalities/tools/cache and selects Mistral parameter dialect                        |
+| Hugging Face Router | `modelpreset.ProviderHuggingFace`     | OpenAI Chat Completions-compatible | Routed backend suffixes are distinct model identities; model overrides restrict reasoning where known         |
+| llama.cpp           | `modelpreset.ProviderLlamaCPP`        | OpenAI Chat Completions-compatible | Local OpenAI-compatible preset with model defaults                                                            |
+| xAI                 | `modelpreset.ProviderXAI`             | OpenAI Responses-compatible        | Provider/model overrides describe xAI reasoning, encrypted reasoning, cache, tool, and output behavior        |
+| OpenRouter          | `modelpreset.ProviderOpenRouter`      | OpenAI Responses-compatible        | Model overrides are central; routed models vary in modalities, output formats, tools, and reasoning levels    |
+| LocalAI             | `modelpreset.ProviderLocalAI`         | OpenAI Responses-compatible        | Local preset with broad provider caps and per-model modality/reasoning overrides                              |
+| LM Studio           | `modelpreset.ProviderLMStudio`        | OpenAI Responses-compatible        | Local preset with per-model modality/reasoning overrides                                                      |
+| Ollama              | `modelpreset.ProviderOllama`          | Anthropic-compatible               | Local preset with constrained tool policy and Anthropic-style request adapter                                 |
+| SGLang              | `modelpreset.ProviderSGLang`          | OpenAI Responses-compatible        | Self-hosted preset with per-model modality/reasoning overrides                                                |
+| vLLM                | `modelpreset.ProviderVLLM`            | OpenAI Responses-compatible        | Self-hosted preset with per-model modality/reasoning overrides                                                |
+
+### Done Presets Reference
+
+- Provider preset registration
+  - `ProviderPreset.Name`
+  - `ProviderPreset.DisplayName`
+  - `ProviderPreset.SDKType`
+  - `ProviderPreset.Origin`
+  - `ProviderPreset.ChatCompletionPathPrefix`
+  - `ProviderPreset.APIKeyHeaderKey`
+  - `ProviderPreset.DefaultHeaders`
+  - `ProviderPreset.CapabilitiesOverride`
+  - `ProviderPreset.ModelPresets`
+
+- Model preset registration
+  - `ModelPreset.ID`
+  - `ModelPreset.Name`
+  - `ModelPreset.DisplayName`
+  - `ModelPreset.ModelParam`
+  - `ModelPreset.CapabilitiesOverride`
+
+- Capability resolver support
+  - provider preset overrides
+  - model preset overrides
+  - cloned presets returned by catalog APIs
+  - derived per-completion capabilities through `ProviderSetAPI.NewPresetCapabilityResolver`
+
+- Distinct routed model identities
+  - Hugging Face routed backend suffixes such as `:fireworks-ai`, `:deepinfra`, `:novita`, `:featherless-ai`, and `:cerebras`
+  - OpenRouter routed model names with suffixes such as `:free`
+  - display names that include backend/router-specific distinctions where the backend is part of the effective model identity
+
+- Hosted API presets
+  - Mistral provider preset
+    - text and image input
+    - text output
+    - reasoning config for supported models
+    - function tools
+    - tool policies `auto`, `any`, `tool`, `none`
+    - cache disabled
+    - Mistral parameter dialect override
+  - xAI provider preset
+    - text and image input
+    - text output
+    - reasoning levels
+    - encrypted reasoning support where declared
+    - function and web-search tools
+    - top-level ephemeral cache support where declared
+
+- Hosted router presets
+  - OpenRouter provider preset
+    - OpenAI Responses-compatible adapter
+    - model-level modality overrides
+    - model-level reasoning-level overrides
+    - model-level output-format overrides
+    - model-level tool and parallel-tool-call overrides
+    - stop sequences disabled at provider preset level
+  - Hugging Face Router provider preset
+    - OpenAI Chat-compatible adapter
+    - routed backend model names
+    - routed backend-specific preset IDs and display names
+    - model-level reasoning overrides for known reasoning models
+
+- Local and self-hosted runtime presets
+  - LocalAI
+    - OpenAI Responses-compatible adapter
+    - text/image/file provider capabilities
+    - per-model modality and reasoning overrides
+    - stop sequences disabled
+  - LM Studio
+    - OpenAI Responses-compatible adapter
+    - text/image provider capabilities
+    - per-model modality and reasoning overrides
+    - stop sequences disabled
+  - llama.cpp
+    - OpenAI Chat-compatible adapter
+    - local origin defaults
+    - model defaults for local serving
+  - Ollama
+    - Anthropic-compatible adapter
+    - text/image provider capabilities
+    - constrained tool policy
+    - model-level reasoning overrides
+  - SGLang
+    - OpenAI Responses-compatible adapter
+    - text/image provider capabilities
+    - per-model modality and reasoning overrides
+    - stop sequences disabled
+  - vLLM
+    - OpenAI Responses-compatible adapter
+    - text/image provider capabilities
+    - per-model modality and reasoning overrides
+    - stop sequences disabled
+
+- Shared clean catalog constants
+  - provider-agnostic display names for the same base model identity
+  - provider-agnostic preset IDs where the model identity is the same
+  - backend-specific preset IDs and display names where routed backend identity matters
+
+### Pending Presets Reference
+
+- Runtime discovery
+  - presets are static catalog data
+  - no automatic discovery of local server model lists
+  - no automatic probing of hosted router model capabilities
+
+- Router/local capability drift
+  - hosted routers can change model support without this package changing
+  - local runtimes can vary by version, build flags, and loaded model
+  - callers may still need user overrides for deployments with known differences
+
+- Audio/video end-to-end support
+  - capability structs can represent audio/video modalities
+  - some gateway model presets may include audio/video modality metadata
+  - normalized audio/video request and response conversion is still pending cross-provider work
+
+- Full local runtime parity
+  - local runtimes often implement only subsets of OpenAI-compatible or Anthropic-compatible APIs
+  - behavior around tools, JSON Schema, reasoning, and streaming can vary significantly
+
+- Provider-specific advanced parameters
+  - safe allowlisted passthrough for `ModelParam.AdditionalParametersRawJSON` is still pending
+  - router-specific controls are intentionally not normalized yet
+
+## Cross-provider Pending Backlog Reference
+
+These are the main remaining normalized-surface items that affect more than one provider. Pending:
 
 - Richer citation abstraction
   - beyond URL citations

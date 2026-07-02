@@ -5,40 +5,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const (
-	PresetAnthropicFable5   ModelPresetID = "fable5"
-	PresetAnthropicOpus48   ModelPresetID = "opus48"
-	PresetAnthropicOpus47   ModelPresetID = "opus47"
-	PresetAnthropicOpus46   ModelPresetID = "opus46"
-	PresetAnthropicOpus45   ModelPresetID = "opus45"
-	PresetAnthropicOpus41   ModelPresetID = "opus41"
-	PresetAnthropicSonnet5  ModelPresetID = "sonnet5"
-	PresetAnthropicSonnet46 ModelPresetID = "sonnet46"
-	PresetAnthropicSonnet45 ModelPresetID = "sonnet45"
-	PresetAnthropicSonnet4  ModelPresetID = "sonnet4"
-	PresetAnthropicHaiku45  ModelPresetID = "haiku45"
-)
-
-const (
-	ModelNameAnthropicFable5   spec.ModelName = "claude-fable-5"
-	ModelNameAnthropicOpus48   spec.ModelName = "claude-opus-4-8"
-	ModelNameAnthropicOpus47   spec.ModelName = "claude-opus-4-7"
-	ModelNameAnthropicOpus46   spec.ModelName = "claude-opus-4-6"
-	ModelNameAnthropicOpus45   spec.ModelName = "claude-opus-4-5-20251101"
-	ModelNameAnthropicOpus41   spec.ModelName = "claude-opus-4-1-20250805"
-	ModelNameAnthropicSonnet5  spec.ModelName = "claude-sonnet-5"
-	ModelNameAnthropicSonnet46 spec.ModelName = "claude-sonnet-4-6"
-	ModelNameAnthropicSonnet45 spec.ModelName = "claude-sonnet-4-5-20250929"
-	ModelNameAnthropicSonnet4  spec.ModelName = "claude-sonnet-4-20250514"
-	ModelNameAnthropicHaiku45  spec.ModelName = "claude-haiku-4-5-20251001"
-)
-
 var modelAnthropicFable5 = ModelPreset{
-	ID:          PresetAnthropicFable5,
-	Name:        ModelNameAnthropicFable5,
-	DisplayName: "Claude Fable 5",
+	ID:          PresetClaudeFable5,
+	Name:        ModelNameClaudeFable5,
+	DisplayName: DisplayNameClaudeFable5,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicFable5,
+		Name:            ModelNameClaudeFable5,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 128000,
@@ -65,11 +37,11 @@ var modelAnthropicFable5 = ModelPreset{
 }
 
 var modelAnthropicOpus48 = ModelPreset{
-	ID:          PresetAnthropicOpus48,
-	Name:        ModelNameAnthropicOpus48,
-	DisplayName: "Claude Opus 4.8",
+	ID:          PresetClaudeOpus48,
+	Name:        ModelNameClaudeOpus48,
+	DisplayName: DisplayNameClaudeOpus48,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicOpus48,
+		Name:            ModelNameClaudeOpus48,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 128000,
@@ -96,11 +68,11 @@ var modelAnthropicOpus48 = ModelPreset{
 }
 
 var modelAnthropicOpus47 = ModelPreset{
-	ID:          PresetAnthropicOpus47,
-	Name:        ModelNameAnthropicOpus47,
-	DisplayName: "Claude Opus 4.7",
+	ID:          PresetClaudeOpus47,
+	Name:        ModelNameClaudeOpus47,
+	DisplayName: DisplayNameClaudeOpus47,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicOpus47,
+		Name:            ModelNameClaudeOpus47,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 128000,
@@ -127,11 +99,11 @@ var modelAnthropicOpus47 = ModelPreset{
 }
 
 var modelAnthropicOpus46 = ModelPreset{
-	ID:          PresetAnthropicOpus46,
-	Name:        ModelNameAnthropicOpus46,
-	DisplayName: "Claude Opus 4.6",
+	ID:          PresetClaudeOpus46,
+	Name:        ModelNameClaudeOpus46,
+	DisplayName: DisplayNameClaudeOpus46,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicOpus46,
+		Name:            ModelNameClaudeOpus46,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 128000,
@@ -157,11 +129,11 @@ var modelAnthropicOpus46 = ModelPreset{
 }
 
 var modelAnthropicOpus45 = ModelPreset{
-	ID:          PresetAnthropicOpus45,
-	Name:        ModelNameAnthropicOpus45,
-	DisplayName: "Claude Opus 4.5",
+	ID:          PresetClaudeOpus45,
+	Name:        ModelNameClaudeOpus45,
+	DisplayName: DisplayNameClaudeOpus45,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicOpus45,
+		Name:            ModelNameClaudeOpus45,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 64000,
@@ -181,11 +153,11 @@ var modelAnthropicOpus45 = ModelPreset{
 }
 
 var modelAnthropicOpus41 = ModelPreset{
-	ID:          PresetAnthropicOpus41,
-	Name:        ModelNameAnthropicOpus41,
-	DisplayName: "Claude Opus 4.1",
+	ID:          PresetClaudeOpus41,
+	Name:        ModelNameClaudeOpus41,
+	DisplayName: DisplayNameClaudeOpus41,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicOpus41,
+		Name:            ModelNameClaudeOpus41,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 32000,
@@ -205,11 +177,11 @@ var modelAnthropicOpus41 = ModelPreset{
 }
 
 var modelAnthropicSonnet5 = ModelPreset{
-	ID:          PresetAnthropicSonnet5,
-	Name:        ModelNameAnthropicSonnet5,
-	DisplayName: "Claude Sonnet 5",
+	ID:          PresetClaudeSonnet5,
+	Name:        ModelNameClaudeSonnet5,
+	DisplayName: DisplayNameClaudeSonnet5,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicSonnet5,
+		Name:            ModelNameClaudeSonnet5,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 128000,
@@ -235,11 +207,11 @@ var modelAnthropicSonnet5 = ModelPreset{
 }
 
 var modelAnthropicSonnet46 = ModelPreset{
-	ID:          PresetAnthropicSonnet46,
-	Name:        ModelNameAnthropicSonnet46,
-	DisplayName: "Claude Sonnet 4.6",
+	ID:          PresetClaudeSonnet46,
+	Name:        ModelNameClaudeSonnet46,
+	DisplayName: DisplayNameClaudeSonnet46,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicSonnet46,
+		Name:            ModelNameClaudeSonnet46,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 64000,
@@ -265,11 +237,11 @@ var modelAnthropicSonnet46 = ModelPreset{
 }
 
 var modelAnthropicSonnet45 = ModelPreset{
-	ID:          PresetAnthropicSonnet45,
-	Name:        ModelNameAnthropicSonnet45,
-	DisplayName: "Claude Sonnet 4.5",
+	ID:          PresetClaudeSonnet45,
+	Name:        ModelNameClaudeSonnet45,
+	DisplayName: DisplayNameClaudeSonnet45,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicSonnet45,
+		Name:            ModelNameClaudeSonnet45,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 64000,
@@ -289,11 +261,11 @@ var modelAnthropicSonnet45 = ModelPreset{
 }
 
 var modelAnthropicSonnet4 = ModelPreset{
-	ID:          PresetAnthropicSonnet4,
-	Name:        ModelNameAnthropicSonnet4,
-	DisplayName: "Claude Sonnet 4",
+	ID:          PresetClaudeSonnet4,
+	Name:        ModelNameClaudeSonnet4,
+	DisplayName: DisplayNameClaudeSonnet4,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicSonnet4,
+		Name:            ModelNameClaudeSonnet4,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 64000,
@@ -306,11 +278,11 @@ var modelAnthropicSonnet4 = ModelPreset{
 }
 
 var modelAnthropicHaiku45 = ModelPreset{
-	ID:          PresetAnthropicHaiku45,
-	Name:        ModelNameAnthropicHaiku45,
-	DisplayName: "Claude Haiku 4.5",
+	ID:          PresetClaudeHaiku45,
+	Name:        ModelNameClaudeHaiku45,
+	DisplayName: DisplayNameClaudeHaiku45,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameAnthropicHaiku45,
+		Name:            ModelNameClaudeHaiku45,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 64000,
@@ -331,7 +303,7 @@ var modelAnthropicHaiku45 = ModelPreset{
 
 var providerAnthropic = ProviderPreset{
 	Name:                     ProviderAnthropic,
-	DisplayName:              "Anthropic",
+	DisplayName:              DisplayNameProviderAnthropic,
 	SDKType:                  spec.ProviderSDKTypeAnthropic,
 	Origin:                   spec.DefaultAnthropicOrigin,
 	ChatCompletionPathPrefix: spec.DefaultAnthropicChatCompletionPrefix,
@@ -400,16 +372,16 @@ var providerAnthropic = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetAnthropicFable5:   modelAnthropicFable5,
-		PresetAnthropicOpus48:   modelAnthropicOpus48,
-		PresetAnthropicOpus47:   modelAnthropicOpus47,
-		PresetAnthropicOpus46:   modelAnthropicOpus46,
-		PresetAnthropicOpus45:   modelAnthropicOpus45,
-		PresetAnthropicOpus41:   modelAnthropicOpus41,
-		PresetAnthropicSonnet5:  modelAnthropicSonnet5,
-		PresetAnthropicSonnet46: modelAnthropicSonnet46,
-		PresetAnthropicSonnet45: modelAnthropicSonnet45,
-		PresetAnthropicSonnet4:  modelAnthropicSonnet4,
-		PresetAnthropicHaiku45:  modelAnthropicHaiku45,
+		PresetClaudeFable5:   modelAnthropicFable5,
+		PresetClaudeOpus48:   modelAnthropicOpus48,
+		PresetClaudeOpus47:   modelAnthropicOpus47,
+		PresetClaudeOpus46:   modelAnthropicOpus46,
+		PresetClaudeOpus45:   modelAnthropicOpus45,
+		PresetClaudeOpus41:   modelAnthropicOpus41,
+		PresetClaudeSonnet5:  modelAnthropicSonnet5,
+		PresetClaudeSonnet46: modelAnthropicSonnet46,
+		PresetClaudeSonnet45: modelAnthropicSonnet45,
+		PresetClaudeSonnet4:  modelAnthropicSonnet4,
+		PresetClaudeHaiku45:  modelAnthropicHaiku45,
 	},
 }

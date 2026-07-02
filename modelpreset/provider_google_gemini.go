@@ -6,30 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const (
-	PresetGoogleGemini35Flash     ModelPresetID = "gemini35Flash"
-	PresetGoogleGemini31Pro       ModelPresetID = "gemini31Pro"
-	PresetGoogleGemini3Flash      ModelPresetID = "gemini3Flash"
-	PresetGoogleGemini31FlashLite ModelPresetID = "gemini31FlashLite"
-	PresetGoogleGemini25Flash     ModelPresetID = "gemini25Flash"
-	PresetGoogleGemini25FlashLite ModelPresetID = "gemini25FlashLite"
-)
-
-const (
-	ModelNameGoogleGemini31Pro       spec.ModelName = "gemini-3.1-pro-preview"
-	ModelNameGoogleGemini35Flash     spec.ModelName = "gemini-3.5-flash"
-	ModelNameGoogleGemini3Flash      spec.ModelName = "gemini-3-flash-preview"
-	ModelNameGoogleGemini31FlashLite spec.ModelName = "gemini-3.1-flash-lite-preview"
-	ModelNameGoogleGemini25Flash     spec.ModelName = "gemini-2.5-flash"
-	ModelNameGoogleGemini25FlashLite spec.ModelName = "gemini-2.5-flash-lite-preview-06-17"
-)
-
 var modelGoogleGemini31Pro = ModelPreset{
-	ID:          PresetGoogleGemini31Pro,
-	Name:        ModelNameGoogleGemini31Pro,
-	DisplayName: "GoogleAI Gemini 3.1 Pro",
+	ID:          PresetGemini31Pro,
+	Name:        ModelNameGemini31Pro,
+	DisplayName: DisplayNameGemini31Pro,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameGoogleGemini31Pro,
+		Name:            ModelNameGemini31Pro,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 65536,
@@ -55,11 +37,11 @@ var modelGoogleGemini31Pro = ModelPreset{
 }
 
 var modelGoogleGemini35Flash = ModelPreset{
-	ID:          PresetGoogleGemini35Flash,
-	Name:        ModelNameGoogleGemini35Flash,
-	DisplayName: "GoogleAI Gemini 3.5 Flash",
+	ID:          PresetGemini35Flash,
+	Name:        ModelNameGemini35Flash,
+	DisplayName: DisplayNameGemini35Flash,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameGoogleGemini35Flash,
+		Name:            ModelNameGemini35Flash,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 65536,
@@ -86,11 +68,11 @@ var modelGoogleGemini35Flash = ModelPreset{
 }
 
 var modelGoogleGemini3Flash = ModelPreset{
-	ID:          PresetGoogleGemini3Flash,
-	Name:        ModelNameGoogleGemini3Flash,
-	DisplayName: "GoogleAI Gemini 3 Flash",
+	ID:          PresetGemini3Flash,
+	Name:        ModelNameGemini3Flash,
+	DisplayName: DisplayNameGemini3Flash,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameGoogleGemini3Flash,
+		Name:            ModelNameGemini3Flash,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 65536,
@@ -117,11 +99,11 @@ var modelGoogleGemini3Flash = ModelPreset{
 }
 
 var modelGoogleGemini31FlashLite = ModelPreset{
-	ID:          PresetGoogleGemini31FlashLite,
-	Name:        ModelNameGoogleGemini31FlashLite,
-	DisplayName: "GoogleAI Gemini 3.1 Flash Lite",
+	ID:          PresetGemini31FlashLite,
+	Name:        ModelNameGemini31FlashLite,
+	DisplayName: DisplayNameGemini31FlashLite,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameGoogleGemini31FlashLite,
+		Name:            ModelNameGemini31FlashLite,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 65536,
@@ -148,11 +130,11 @@ var modelGoogleGemini31FlashLite = ModelPreset{
 }
 
 var modelGoogleGemini25Flash = ModelPreset{
-	ID:          PresetGoogleGemini25Flash,
-	Name:        ModelNameGoogleGemini25Flash,
-	DisplayName: "GoogleAI Gemini 2.5 Flash",
+	ID:          PresetGemini25Flash,
+	Name:        ModelNameGemini25Flash,
+	DisplayName: DisplayNameGemini25Flash,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameGoogleGemini25Flash,
+		Name:            ModelNameGemini25Flash,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 65536,
@@ -177,11 +159,11 @@ var modelGoogleGemini25Flash = ModelPreset{
 }
 
 var modelGoogleGemini25FlashLite = ModelPreset{
-	ID:          PresetGoogleGemini25FlashLite,
-	Name:        ModelNameGoogleGemini25FlashLite,
-	DisplayName: "GoogleAI Gemini 2.5 Flash Lite",
+	ID:          PresetGemini25FlashLite,
+	Name:        ModelNameGemini25FlashLite,
+	DisplayName: DisplayNameGemini25FlashLite,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameGoogleGemini25FlashLite,
+		Name:            ModelNameGemini25FlashLite,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 65536,
@@ -207,7 +189,7 @@ var modelGoogleGemini25FlashLite = ModelPreset{
 
 var providerGoogleGemini = ProviderPreset{
 	Name:                     ProviderGoogleGemini,
-	DisplayName:              "Google Gemini API",
+	DisplayName:              DisplayNameProviderGoogleGemini,
 	SDKType:                  spec.ProviderSDKTypeGoogleGenerateContent,
 	Origin:                   spec.DefaultGoogleGenerateContentOrigin,
 	ChatCompletionPathPrefix: spec.DefaultGoogleGenerateContentPrefix,
@@ -278,11 +260,11 @@ var providerGoogleGemini = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetGoogleGemini31Pro:       modelGoogleGemini31Pro,
-		PresetGoogleGemini35Flash:     modelGoogleGemini35Flash,
-		PresetGoogleGemini3Flash:      modelGoogleGemini3Flash,
-		PresetGoogleGemini31FlashLite: modelGoogleGemini31FlashLite,
-		PresetGoogleGemini25Flash:     modelGoogleGemini25Flash,
-		PresetGoogleGemini25FlashLite: modelGoogleGemini25FlashLite,
+		PresetGemini31Pro:       modelGoogleGemini31Pro,
+		PresetGemini35Flash:     modelGoogleGemini35Flash,
+		PresetGemini3Flash:      modelGoogleGemini3Flash,
+		PresetGemini31FlashLite: modelGoogleGemini31FlashLite,
+		PresetGemini25Flash:     modelGoogleGemini25Flash,
+		PresetGemini25FlashLite: modelGoogleGemini25FlashLite,
 	},
 }

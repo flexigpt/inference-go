@@ -38,7 +38,7 @@ func TestNormalizeRequestForSDK_OpenAIChat_PreservesWebSearchToolChoice(t *testi
 	}
 
 	req := &spec.FetchCompletionRequest{
-		ModelParam: spec.ModelParam{Name: modelpreset.ModelNameOpenAIChatGPT41Mini},
+		ModelParam: spec.ModelParam{Name: modelpreset.ModelNameGPT41Mini},
 		Inputs: []spec.InputUnion{
 			newUserTextInput("hi"),
 		},
@@ -90,7 +90,7 @@ func TestNormalizeRequestForSDK_ResolverRestrictsReasoningLevels(t *testing.T) {
 	}
 	mp, err := modelpreset.Model(
 		modelpreset.ProviderOpenAIResponses,
-		modelpreset.PresetOpenAIResponsesGPT5Mini,
+		modelpreset.PresetGPT5Mini,
 	)
 	if err != nil {
 		t.Fatal(err)

@@ -4,18 +4,24 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/flexigpt/inference-go/capabilityoverride"
 	"github.com/flexigpt/inference-go/spec"
 )
 
 const (
 	ProviderAnthropic       spec.ProviderName = "anthropic"
+	ProviderLocalAI         spec.ProviderName = "localai"
+	ProviderLMStudio        spec.ProviderName = "lmstudio"
 	ProviderGoogleGemini    spec.ProviderName = "googlegemini"
 	ProviderHuggingFace     spec.ProviderName = "huggingface"
 	ProviderLlamaCPP        spec.ProviderName = "llamacpp"
 	ProviderMistral         spec.ProviderName = "mistral"
+	ProviderOllama          spec.ProviderName = "ollama"
 	ProviderOpenAIChat      spec.ProviderName = "openai"
 	ProviderOpenAIResponses spec.ProviderName = "openairesponses"
 	ProviderOpenRouter      spec.ProviderName = "openrouter"
+	ProviderSGLang          spec.ProviderName = "sglang"
+	ProviderVLLM            spec.ProviderName = "vllm"
 	ProviderXAI             spec.ProviderName = "xai"
 )
 
@@ -26,13 +32,18 @@ var (
 
 var catalogProviders = map[spec.ProviderName]ProviderPreset{
 	ProviderAnthropic:       providerAnthropic,
+	ProviderLocalAI:         providerLocalAI,
+	ProviderLMStudio:        providerLMStudio,
 	ProviderGoogleGemini:    providerGoogleGemini,
 	ProviderHuggingFace:     providerHuggingFace,
 	ProviderLlamaCPP:        providerLlamaCPP,
 	ProviderMistral:         providerMistral,
+	ProviderOllama:          providerOllama,
 	ProviderOpenAIChat:      providerOpenAIChat,
 	ProviderOpenAIResponses: providerOpenAIResponses,
 	ProviderOpenRouter:      providerOpenRouter,
+	ProviderSGLang:          providerSGLang,
+	ProviderVLLM:            providerVLLM,
 	ProviderXAI:             providerXAI,
 }
 
@@ -83,6 +94,91 @@ func ModelPresetIDs(provider spec.ProviderName) ([]ModelPresetID, error) {
 	}
 	slices.Sort(ids)
 	return ids, nil
+}
+
+func reasoningLevels(includeNone bool) []spec.ReasoningLevel {
+	levels := make([]spec.ReasoningLevel, 0, 4)
+	if includeNone {
+		levels = append(levels, spec.ReasoningLevelNone)
+	}
+	levels = append(levels,
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+	)
+	return levels
+}
+
+func capTextOnly() *capabilityoverride.ModelCapabilitiesOverride {
+	return &capabilityoverride.ModelCapabilitiesOverride{
+		ModalitiesIn: []spec.Modality{
+			spec.ModalityTextIn,
+		},
+		ModalitiesOut: []spec.Modality{
+			spec.ModalityTextOut,
+		},
+	}
+}
+
+func capTextImage() *capabilityoverride.ModelCapabilitiesOverride {
+	return &capabilityoverride.ModelCapabilitiesOverride{
+		ModalitiesIn: []spec.Modality{
+			spec.ModalityTextIn,
+			spec.ModalityImageIn,
+		},
+		ModalitiesOut: []spec.Modality{
+			spec.ModalityTextOut,
+		},
+	}
+}
+
+func capTextOnlyReasoning(
+	levels []spec.ReasoningLevel,
+	summaryStyle bool,
+	temperatureDisallowed bool,
+) *capabilityoverride.ModelCapabilitiesOverride {
+	return &capabilityoverride.ModelCapabilitiesOverride{
+		ModalitiesIn: []spec.Modality{
+			spec.ModalityTextIn,
+		},
+		ModalitiesOut: []spec.Modality{
+			spec.ModalityTextOut,
+		},
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels:         levels,
+			SupportsSummaryStyle:             new(summaryStyle),
+			SupportsEncryptedReasoningInput:  new(false),
+			TemperatureDisallowedWhenEnabled: new(temperatureDisallowed),
+		},
+	}
+}
+
+func capTextImageReasoning(
+	levels []spec.ReasoningLevel,
+	summaryStyle bool,
+	temperatureDisallowed bool,
+) *capabilityoverride.ModelCapabilitiesOverride {
+	return &capabilityoverride.ModelCapabilitiesOverride{
+		ModalitiesIn: []spec.Modality{
+			spec.ModalityTextIn,
+			spec.ModalityImageIn,
+		},
+		ModalitiesOut: []spec.Modality{
+			spec.ModalityTextOut,
+		},
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels:         levels,
+			SupportsSummaryStyle:             new(summaryStyle),
+			SupportsEncryptedReasoningInput:  new(false),
+			TemperatureDisallowedWhenEnabled: new(temperatureDisallowed),
+		},
+	}
 }
 
 func reasoningHybrid(tokens int) *spec.ReasoningParam {

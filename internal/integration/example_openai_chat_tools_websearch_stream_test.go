@@ -39,7 +39,7 @@ func Example_openAIChat_toolsAndJSONSchema() {
 		ctx,
 		ps,
 		modelpreset.ProviderOpenAIChat,
-		modelpreset.PresetOpenAIChatGPT41,
+		modelpreset.PresetGPT41,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding OpenAI Chat preset provider:", err)

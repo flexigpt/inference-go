@@ -6,20 +6,6 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const (
-	PresetOpenAIChatGPT41     ModelPresetID = "gpt41"
-	PresetOpenAIChatGPT41Mini ModelPresetID = "gpt41Mini"
-	PresetOpenAIChatGPT4o     ModelPresetID = "gpt4o"
-	PresetOpenAIChatGPT4oMini ModelPresetID = "gpt4oMini"
-)
-
-const (
-	ModelNameOpenAIChatGPT41     spec.ModelName = "gpt-4.1"
-	ModelNameOpenAIChatGPT41Mini spec.ModelName = "gpt-4.1-mini"
-	ModelNameOpenAIChatGPT4o     spec.ModelName = "gpt-4o"
-	ModelNameOpenAIChatGPT4oMini spec.ModelName = "gpt-4o-mini"
-)
-
 var openAIChatNoReasoningOverride = &capabilityoverride.ModelCapabilitiesOverride{
 	ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
 		SupportedReasoningTypes:  []spec.ReasoningType{},
@@ -28,11 +14,11 @@ var openAIChatNoReasoningOverride = &capabilityoverride.ModelCapabilitiesOverrid
 }
 
 var modelOpenAIChatGPT41 = ModelPreset{
-	ID:          PresetOpenAIChatGPT41,
-	Name:        ModelNameOpenAIChatGPT41,
-	DisplayName: "OpenAI GPT 4.1",
+	ID:          PresetGPT41,
+	Name:        ModelNameGPT41,
+	DisplayName: DisplayNameGPT41,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIChatGPT41,
+		Name:            ModelNameGPT41,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 32768,
@@ -44,11 +30,11 @@ var modelOpenAIChatGPT41 = ModelPreset{
 }
 
 var modelOpenAIChatGPT41Mini = ModelPreset{
-	ID:          PresetOpenAIChatGPT41Mini,
-	Name:        ModelNameOpenAIChatGPT41Mini,
-	DisplayName: "OpenAI GPT 4.1 Mini",
+	ID:          PresetGPT41Mini,
+	Name:        ModelNameGPT41Mini,
+	DisplayName: DisplayNameGPT41Mini,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIChatGPT41Mini,
+		Name:            ModelNameGPT41Mini,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 32768,
@@ -60,11 +46,11 @@ var modelOpenAIChatGPT41Mini = ModelPreset{
 }
 
 var modelOpenAIChatGPT4o = ModelPreset{
-	ID:          PresetOpenAIChatGPT4o,
-	Name:        ModelNameOpenAIChatGPT4o,
-	DisplayName: "OpenAI GPT 4o",
+	ID:          PresetGPT4o,
+	Name:        ModelNameGPT4o,
+	DisplayName: DisplayNameGPT4o,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIChatGPT4o,
+		Name:            ModelNameGPT4o,
 		Stream:          true,
 		MaxPromptLength: 64000,
 		MaxOutputLength: 16384,
@@ -76,11 +62,11 @@ var modelOpenAIChatGPT4o = ModelPreset{
 }
 
 var modelOpenAIChatGPT4oMini = ModelPreset{
-	ID:          PresetOpenAIChatGPT4oMini,
-	Name:        ModelNameOpenAIChatGPT4oMini,
-	DisplayName: "OpenAI GPT 4o Mini",
+	ID:          PresetGPT4oMini,
+	Name:        ModelNameGPT4oMini,
+	DisplayName: DisplayNameGPT4oMini,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIChatGPT4oMini,
+		Name:            ModelNameGPT4oMini,
 		Stream:          true,
 		MaxPromptLength: 64000,
 		MaxOutputLength: 16384,
@@ -93,12 +79,12 @@ var modelOpenAIChatGPT4oMini = ModelPreset{
 
 var providerOpenAIChat = ProviderPreset{
 	Name:                     ProviderOpenAIChat,
-	DisplayName:              "OpenAI Chat Completions API",
+	DisplayName:              DisplayNameProviderOpenAIChat,
 	SDKType:                  spec.ProviderSDKTypeOpenAIChatCompletions,
 	Origin:                   spec.DefaultOpenAIOrigin,
 	ChatCompletionPathPrefix: spec.DefaultOpenAIChatCompletionsPrefix,
 	APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
-	DefaultHeaders:           sdkutil.CloneStringMap(sdkutil.CloneStringMap(spec.DefaultBaseHeaders)),
+	DefaultHeaders:           sdkutil.CloneStringMap(spec.DefaultBaseHeaders),
 	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
 		ModalitiesIn: []spec.Modality{
 			spec.ModalityTextIn,
@@ -157,9 +143,9 @@ var providerOpenAIChat = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetOpenAIChatGPT41:     modelOpenAIChatGPT41,
-		PresetOpenAIChatGPT41Mini: modelOpenAIChatGPT41Mini,
-		PresetOpenAIChatGPT4o:     modelOpenAIChatGPT4o,
-		PresetOpenAIChatGPT4oMini: modelOpenAIChatGPT4oMini,
+		PresetGPT41:     modelOpenAIChatGPT41,
+		PresetGPT41Mini: modelOpenAIChatGPT41Mini,
+		PresetGPT4o:     modelOpenAIChatGPT4o,
+		PresetGPT4oMini: modelOpenAIChatGPT4oMini,
 	},
 }

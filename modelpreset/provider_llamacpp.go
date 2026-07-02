@@ -6,24 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const (
-	PresetLlamaCPPBehemoth ModelPresetID = "llama4Behemoth"
-	PresetLlamaCPPMaverick ModelPresetID = "llama4Maverick"
-	PresetLlamaCPPScout    ModelPresetID = "llama4Scout"
-)
-
-const (
-	ModelNameLlamaCPPBehemoth spec.ModelName = "llama4-behemoth"
-	ModelNameLlamaCPPMaverick spec.ModelName = "llama4-maverick"
-	ModelNameLlamaCPPScout    spec.ModelName = "llama4-scout"
-)
-
 var modelLlamaCPPBehemoth = ModelPreset{
-	ID:          PresetLlamaCPPBehemoth,
-	Name:        ModelNameLlamaCPPBehemoth,
-	DisplayName: "LLama 4 Behemoth",
+	ID:          PresetLlama4Behemoth,
+	Name:        ModelNameLlama4BehemothLocal,
+	DisplayName: DisplayNameLlama4Behemoth,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameLlamaCPPBehemoth,
+		Name:            ModelNameLlama4BehemothLocal,
 		Stream:          true,
 		MaxPromptLength: 4096,
 		MaxOutputLength: 4096,
@@ -34,11 +22,11 @@ var modelLlamaCPPBehemoth = ModelPreset{
 }
 
 var modelLlamaCPPMaverick = ModelPreset{
-	ID:          PresetLlamaCPPMaverick,
-	Name:        ModelNameLlamaCPPMaverick,
-	DisplayName: "LLama 4 Maverick",
+	ID:          PresetLlama4Maverick,
+	Name:        ModelNameLlama4MaverickLocal,
+	DisplayName: DisplayNameLlama4Maverick,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameLlamaCPPMaverick,
+		Name:            ModelNameLlama4MaverickLocal,
 		Stream:          true,
 		MaxPromptLength: 4096,
 		MaxOutputLength: 4096,
@@ -49,11 +37,11 @@ var modelLlamaCPPMaverick = ModelPreset{
 }
 
 var modelLlamaCPPScout = ModelPreset{
-	ID:          PresetLlamaCPPScout,
-	Name:        ModelNameLlamaCPPScout,
-	DisplayName: "LLama 4 Scout",
+	ID:          PresetLlama4Scout,
+	Name:        ModelNameLlama4ScoutLocal,
+	DisplayName: DisplayNameLlama4Scout,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameLlamaCPPScout,
+		Name:            ModelNameLlama4ScoutLocal,
 		Stream:          true,
 		MaxPromptLength: 4096,
 		MaxOutputLength: 4096,
@@ -63,9 +51,25 @@ var modelLlamaCPPScout = ModelPreset{
 	},
 }
 
+var modelLlamaCPPQwen3635BA3B = ModelPreset{
+	ID:          PresetQwen3635BA3B,
+	Name:        ModelNameQwen3635BA3BLocal,
+	DisplayName: DisplayNameQwen3635BA3B,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameQwen3635BA3BLocal,
+		Stream:          true,
+		MaxPromptLength: 262144,
+		MaxOutputLength: 8192,
+		Temperature:     new(0.1),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
+
 var providerLlamaCPP = ProviderPreset{
 	Name:                     ProviderLlamaCPP,
-	DisplayName:              "llama.cpp",
+	DisplayName:              DisplayNameProviderLlamaCPP,
 	SDKType:                  spec.ProviderSDKTypeOpenAIChatCompletions,
 	Origin:                   "http://127.0.0.1:8080",
 	ChatCompletionPathPrefix: spec.DefaultOpenAIChatCompletionsPrefix,
@@ -129,8 +133,9 @@ var providerLlamaCPP = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetLlamaCPPBehemoth: modelLlamaCPPBehemoth,
-		PresetLlamaCPPMaverick: modelLlamaCPPMaverick,
-		PresetLlamaCPPScout:    modelLlamaCPPScout,
+		PresetLlama4Behemoth: modelLlamaCPPBehemoth,
+		PresetLlama4Maverick: modelLlamaCPPMaverick,
+		PresetLlama4Scout:    modelLlamaCPPScout,
+		PresetQwen3635BA3B:   modelLlamaCPPQwen3635BA3B,
 	},
 }

@@ -6,94 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const (
-	PresetHuggingFaceGPTOSS120           ModelPresetID = "hfGptOss120"
-	PresetHuggingFaceGPTOSS20            ModelPresetID = "hfGptOss20"
-	PresetHuggingFaceQwen3Coder30        ModelPresetID = "hfQwen3Coder30"
-	PresetHuggingFaceGLM52               ModelPresetID = "hfGlm52"
-	PresetHuggingFaceDeepSeekV4Flash     ModelPresetID = "hfDeepSeekV4Flash"
-	PresetHuggingFaceDeepSeekV4Pro       ModelPresetID = "hfDeepSeekV4Pro"
-	PresetHuggingFaceOrnith1035BFP8      ModelPresetID = "hfOrnith1035BFP8"
-	PresetHuggingFaceGLM52FP8            ModelPresetID = "hfGlm52FP8"
-	PresetHuggingFaceMiMoV25Pro          ModelPresetID = "hfMiMoV25Pro"
-	PresetHuggingFaceNemotron3UltraNVFP4 ModelPresetID = "hfNemotron3UltraNVFP4"
-	PresetHuggingFaceQwen3CoderNext      ModelPresetID = "hfQwen3CoderNext"
-	PresetHuggingFaceNemotron3UltraBF16  ModelPresetID = "hfNemotron3UltraBF16"
-	PresetHuggingFaceGLM51               ModelPresetID = "hfGlm51"
-	PresetHuggingFaceNemotron3SuperBF16  ModelPresetID = "hfNemotron3SuperBF16"
-	PresetHuggingFaceMiniMaxM27          ModelPresetID = "hfMiniMaxM27"
-	PresetHuggingFaceKimiK2Thinking      ModelPresetID = "hfKimiK2Thinking"
-	PresetHuggingFaceGLM5                ModelPresetID = "hfGlm5"
-	PresetHuggingFaceStep35Flash         ModelPresetID = "hfStep35Flash"
-	PresetHuggingFaceMiniMaxM25          ModelPresetID = "hfMiniMaxM25"
-	PresetHuggingFaceKimiK2Instruct      ModelPresetID = "hfKimiK2Instruct"
-	PresetHuggingFaceKimiK2Instruct0905  ModelPresetID = "hfKimiK2Instruct0905"
-	PresetHuggingFaceMiMoV2Flash         ModelPresetID = "hfMiMoV2Flash"
-	PresetHuggingFaceGLM47               ModelPresetID = "hfGlm47"
-	PresetHuggingFaceGLM51FP8            ModelPresetID = "hfGlm51FP8"
-)
-
-const (
-	ModelNameHuggingFaceGPTOSS120           spec.ModelName = "openai/gpt-oss-120b:fireworks-ai"
-	ModelNameHuggingFaceGPTOSS20            spec.ModelName = "openai/gpt-oss-20b:fireworks-ai"
-	ModelNameHuggingFaceQwen3Coder30        spec.ModelName = "Qwen/Qwen3-Coder-30B-A3B-Instruct:fireworks-ai"
-	ModelNameHuggingFaceGLM52               spec.ModelName = "zai-org/GLM-5.2:fireworks-ai"
-	ModelNameHuggingFaceDeepSeekV4Flash     spec.ModelName = "deepseek-ai/DeepSeek-V4-Flash:fireworks-ai"
-	ModelNameHuggingFaceDeepSeekV4Pro       spec.ModelName = "deepseek-ai/DeepSeek-V4-Pro:fireworks-ai"
-	ModelNameHuggingFaceOrnith1035BFP8      spec.ModelName = "deepreinforce-ai/Ornith-1.0-35B-FP8:deepinfra"
-	ModelNameHuggingFaceGLM52FP8            spec.ModelName = "zai-org/GLM-5.2-FP8:zai-org"
-	ModelNameHuggingFaceMiMoV25Pro          spec.ModelName = "XiaomiMiMo/MiMo-V2.5-Pro:deepinfra"
-	ModelNameHuggingFaceNemotron3UltraNVFP4 spec.ModelName = "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-NVFP4:fireworks-ai"
-	ModelNameHuggingFaceQwen3CoderNext      spec.ModelName = "Qwen/Qwen3-Coder-Next:novita"
-	ModelNameHuggingFaceNemotron3UltraBF16  spec.ModelName = "nvidia/NVIDIA-Nemotron-3-Ultra-550B-A55B-BF16:deepinfra"
-	ModelNameHuggingFaceGLM51               spec.ModelName = "zai-org/GLM-5.1:fireworks-ai"
-	ModelNameHuggingFaceNemotron3SuperBF16  spec.ModelName = "nvidia/NVIDIA-Nemotron-3-Super-120B-A12B-BF16:featherless-ai"
-	ModelNameHuggingFaceMiniMaxM27          spec.ModelName = "MiniMaxAI/MiniMax-M2.7:fireworks-ai"
-	ModelNameHuggingFaceKimiK2Thinking      spec.ModelName = "moonshotai/Kimi-K2-Thinking:featherless-ai"
-	ModelNameHuggingFaceGLM5                spec.ModelName = "zai-org/GLM-5:novita"
-	ModelNameHuggingFaceStep35Flash         spec.ModelName = "stepfun-ai/Step-3.5-Flash:featherless-ai"
-	ModelNameHuggingFaceMiniMaxM25          spec.ModelName = "MiniMaxAI/MiniMax-M2.5:novita"
-	ModelNameHuggingFaceKimiK2Instruct      spec.ModelName = "moonshotai/Kimi-K2-Instruct:novita"
-	ModelNameHuggingFaceKimiK2Instruct0905  spec.ModelName = "moonshotai/Kimi-K2-Instruct-0905:novita"
-	ModelNameHuggingFaceMiMoV2Flash         spec.ModelName = "XiaomiMiMo/MiMo-V2-Flash:featherless-ai"
-	ModelNameHuggingFaceGLM47               spec.ModelName = "zai-org/GLM-4.7:cerebras"
-	ModelNameHuggingFaceGLM51FP8            spec.ModelName = "zai-org/GLM-5.1-FP8:fireworks-ai"
-)
-
-const (
-	huggingFaceDefaultMaxOutputLength = 8192
-	huggingFaceDefaultTimeout         = 1800
-)
-
-func huggingFaceModelPreset(
-	id ModelPresetID,
-	name spec.ModelName,
-	displayName string,
-	maxPromptLength int,
-	temperature float64,
-) ModelPreset {
-	return ModelPreset{
-		ID:          id,
-		Name:        name,
-		DisplayName: displayName,
-		ModelParam: spec.ModelParam{
-			Name:            name,
-			Stream:          true,
-			MaxPromptLength: maxPromptLength,
-			MaxOutputLength: huggingFaceDefaultMaxOutputLength,
-			Temperature:     &temperature,
-			SystemPrompt:    "",
-			Timeout:         huggingFaceDefaultTimeout,
-		},
-	}
-}
-
 var modelHuggingFaceGPTOSS120 = ModelPreset{
-	ID:          PresetHuggingFaceGPTOSS120,
-	Name:        ModelNameHuggingFaceGPTOSS120,
-	DisplayName: "HF GPT OSS 120B",
+	ID:          PresetGPTOSS120BFireworksAI,
+	Name:        ModelNameGPTOSS120BFireworksAI,
+	DisplayName: DisplayNameGPTOSS120BFireworksAI,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameHuggingFaceGPTOSS120,
+		Name:            ModelNameGPTOSS120BFireworksAI,
 		Stream:          true,
 		MaxPromptLength: 8192,
 		MaxOutputLength: 8192,
@@ -119,11 +37,11 @@ var modelHuggingFaceGPTOSS120 = ModelPreset{
 }
 
 var modelHuggingFaceGPTOSS20 = ModelPreset{
-	ID:          PresetHuggingFaceGPTOSS20,
-	Name:        ModelNameHuggingFaceGPTOSS20,
-	DisplayName: "HF GPT OSS 20B",
+	ID:          PresetGPTOSS20BFireworksAI,
+	Name:        ModelNameGPTOSS20BFireworksAI,
+	DisplayName: DisplayNameGPTOSS20BFireworksAI,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameHuggingFaceGPTOSS20,
+		Name:            ModelNameGPTOSS20BFireworksAI,
 		Stream:          true,
 		MaxPromptLength: 8192,
 		MaxOutputLength: 8192,
@@ -149,11 +67,11 @@ var modelHuggingFaceGPTOSS20 = ModelPreset{
 }
 
 var modelHuggingFaceQwen3Coder30 = ModelPreset{
-	ID:          PresetHuggingFaceQwen3Coder30,
-	Name:        ModelNameHuggingFaceQwen3Coder30,
-	DisplayName: "HF Qwen3 Coder 30B",
+	ID:          PresetQwen3Coder30BA3BFireworksAI,
+	Name:        ModelNameQwen3Coder30BA3BFireworksAI,
+	DisplayName: DisplayNameQwen3Coder30BA3BFireworksAI,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameHuggingFaceQwen3Coder30,
+		Name:            ModelNameQwen3Coder30BA3BFireworksAI,
 		Stream:          true,
 		MaxPromptLength: 8192,
 		MaxOutputLength: 8192,
@@ -163,177 +81,324 @@ var modelHuggingFaceQwen3Coder30 = ModelPreset{
 	},
 }
 
-var modelHuggingFaceGLM52 = huggingFaceModelPreset(
-	PresetHuggingFaceGLM52,
-	ModelNameHuggingFaceGLM52,
-	"HF GLM 5.2",
-	1048576,
-	1.0,
-)
+var modelHuggingFaceGLM52 = ModelPreset{
+	ID:          PresetGLM52FireworksAI,
+	Name:        ModelNameGLM52FireworksAI,
+	DisplayName: DisplayNameGLM52FireworksAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGLM52FireworksAI,
+		Stream:          true,
+		MaxPromptLength: 1048576,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceDeepSeekV4Flash = huggingFaceModelPreset(
-	PresetHuggingFaceDeepSeekV4Flash,
-	ModelNameHuggingFaceDeepSeekV4Flash,
-	"HF DeepSeek V4 Flash",
-	1048576,
-	1.0,
-)
+var modelHuggingFaceDeepSeekV4Flash = ModelPreset{
+	ID:          PresetDeepSeekV4FlashFireworksAI,
+	Name:        ModelNameDeepSeekV4FlashFireworksAI,
+	DisplayName: DisplayNameDeepSeekV4FlashFireworksAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameDeepSeekV4FlashFireworksAI,
+		Stream:          true,
+		MaxPromptLength: 1048576,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceDeepSeekV4Pro = huggingFaceModelPreset(
-	PresetHuggingFaceDeepSeekV4Pro,
-	ModelNameHuggingFaceDeepSeekV4Pro,
-	"HF DeepSeek V4 Pro",
-	1048576,
-	1.0,
-)
+var modelHuggingFaceDeepSeekV4Pro = ModelPreset{
+	ID:          PresetDeepSeekV4ProFireworksAI,
+	Name:        ModelNameDeepSeekV4ProFireworksAI,
+	DisplayName: DisplayNameDeepSeekV4ProFireworksAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameDeepSeekV4ProFireworksAI,
+		Stream:          true,
+		MaxPromptLength: 1048576,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceOrnith1035BFP8 = huggingFaceModelPreset(
-	PresetHuggingFaceOrnith1035BFP8,
-	ModelNameHuggingFaceOrnith1035BFP8,
-	"HF Ornith 1.0 35B FP8",
-	262144,
-	1.0,
-)
+var modelHuggingFaceOrnith1035BFP8 = ModelPreset{
+	ID:          PresetOrnith1035BFP8DeepInfra,
+	Name:        ModelNameOrnith1035BFP8DeepInfra,
+	DisplayName: DisplayNameOrnith1035BFP8DeepInfra,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameOrnith1035BFP8DeepInfra,
+		Stream:          true,
+		MaxPromptLength: 262144,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceGLM52FP8 = huggingFaceModelPreset(
-	PresetHuggingFaceGLM52FP8,
-	ModelNameHuggingFaceGLM52FP8,
-	"HF GLM 5.2 FP8",
-	1048576,
-	1.0,
-)
+var modelHuggingFaceGLM52FP8 = ModelPreset{
+	ID:          PresetGLM52FP8ZAI,
+	Name:        ModelNameGLM52FP8ZAI,
+	DisplayName: DisplayNameGLM52FP8ZAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGLM52FP8ZAI,
+		Stream:          true,
+		MaxPromptLength: 1048576,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceMiMoV25Pro = huggingFaceModelPreset(
-	PresetHuggingFaceMiMoV25Pro,
-	ModelNameHuggingFaceMiMoV25Pro,
-	"HF MiMo V2.5 Pro",
-	131272,
-	1.0,
-)
+var modelHuggingFaceMiMoV25Pro = ModelPreset{
+	ID:          PresetMiMoV25ProDeepInfra,
+	Name:        ModelNameMiMoV25ProDeepInfra,
+	DisplayName: DisplayNameMiMoV25ProDeepInfra,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameMiMoV25ProDeepInfra,
+		Stream:          true,
+		MaxPromptLength: 131272,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceNemotron3UltraNVFP4 = huggingFaceModelPreset(
-	PresetHuggingFaceNemotron3UltraNVFP4,
-	ModelNameHuggingFaceNemotron3UltraNVFP4,
-	"HF NVIDIA Nemotron 3 Ultra 550B A55B NVFP4",
-	262144,
-	1.0,
-)
+var modelHuggingFaceNemotron3UltraNVFP4 = ModelPreset{
+	ID:          PresetNemotron3UltraNVFP4FireworksAI,
+	Name:        ModelNameNemotron3UltraNVFP4FireworksAI,
+	DisplayName: DisplayNameNemotron3UltraNVFP4FireworksAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameNemotron3UltraNVFP4FireworksAI,
+		Stream:          true,
+		MaxPromptLength: 262144,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceQwen3CoderNext = huggingFaceModelPreset(
-	PresetHuggingFaceQwen3CoderNext,
-	ModelNameHuggingFaceQwen3CoderNext,
-	"HF Qwen3 Coder Next",
-	1048576,
-	1.0,
-)
+var modelHuggingFaceQwen3CoderNext = ModelPreset{
+	ID:          PresetQwen3CoderNextNovita,
+	Name:        ModelNameQwen3CoderNextNovita,
+	DisplayName: DisplayNameQwen3CoderNextNovita,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameQwen3CoderNextNovita,
+		Stream:          true,
+		MaxPromptLength: 1048576,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceNemotron3UltraBF16 = huggingFaceModelPreset(
-	PresetHuggingFaceNemotron3UltraBF16,
-	ModelNameHuggingFaceNemotron3UltraBF16,
-	"HF NVIDIA Nemotron 3 Ultra 550B A55B BF16",
-	262144,
-	1.0,
-)
+var modelHuggingFaceNemotron3UltraBF16 = ModelPreset{
+	ID:          PresetNemotron3UltraBF16DeepInfra,
+	Name:        ModelNameNemotron3UltraBF16DeepInfra,
+	DisplayName: DisplayNameNemotron3UltraBF16DeepInfra,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameNemotron3UltraBF16DeepInfra,
+		Stream:          true,
+		MaxPromptLength: 262144,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceGLM51 = huggingFaceModelPreset(
-	PresetHuggingFaceGLM51,
-	ModelNameHuggingFaceGLM51,
-	"HF GLM 5.1",
-	202752,
-	1.0,
-)
+var modelHuggingFaceGLM51 = ModelPreset{
+	ID:          PresetGLM51FireworksAI,
+	Name:        ModelNameGLM51FireworksAI,
+	DisplayName: DisplayNameGLM51FireworksAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGLM51FireworksAI,
+		Stream:          true,
+		MaxPromptLength: 202752,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceNemotron3SuperBF16 = huggingFaceModelPreset(
-	PresetHuggingFaceNemotron3SuperBF16,
-	ModelNameHuggingFaceNemotron3SuperBF16,
-	"HF NVIDIA Nemotron 3 Super 120B A12B BF16",
-	262144,
-	1.0,
-)
+var modelHuggingFaceNemotron3SuperBF16 = ModelPreset{
+	ID:          PresetNemotron3SuperBF16FeatherlessAI,
+	Name:        ModelNameNemotron3SuperBF16FeatherlessAI,
+	DisplayName: DisplayNameNemotron3SuperBF16FeatherlessAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameNemotron3SuperBF16FeatherlessAI,
+		Stream:          true,
+		MaxPromptLength: 262144,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceMiniMaxM27 = huggingFaceModelPreset(
-	PresetHuggingFaceMiniMaxM27,
-	ModelNameHuggingFaceMiniMaxM27,
-	"HF MiniMax M2.7",
-	204800,
-	1.0,
-)
+var modelHuggingFaceMiniMaxM27 = ModelPreset{
+	ID:          PresetMiniMaxM27FireworksAI,
+	Name:        ModelNameMiniMaxM27FireworksAI,
+	DisplayName: DisplayNameMiniMaxM27FireworksAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameMiniMaxM27FireworksAI,
+		Stream:          true,
+		MaxPromptLength: 204800,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceKimiK2Thinking = huggingFaceModelPreset(
-	PresetHuggingFaceKimiK2Thinking,
-	ModelNameHuggingFaceKimiK2Thinking,
-	"HF Kimi K2 Thinking",
-	262144,
-	1.0,
-)
+var modelHuggingFaceKimiK2Thinking = ModelPreset{
+	ID:          PresetKimiK2ThinkingFeatherlessAI,
+	Name:        ModelNameKimiK2ThinkingFeatherlessAI,
+	DisplayName: DisplayNameKimiK2ThinkingFeatherlessAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameKimiK2ThinkingFeatherlessAI,
+		Stream:          true,
+		MaxPromptLength: 262144,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceGLM5 = huggingFaceModelPreset(
-	PresetHuggingFaceGLM5,
-	ModelNameHuggingFaceGLM5,
-	"HF GLM 5",
-	202752,
-	1.0,
-)
+var modelHuggingFaceGLM5 = ModelPreset{
+	ID:          PresetGLM5Novita,
+	Name:        ModelNameGLM5Novita,
+	DisplayName: DisplayNameGLM5Novita,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGLM5Novita,
+		Stream:          true,
+		MaxPromptLength: 202752,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceStep35Flash = huggingFaceModelPreset(
-	PresetHuggingFaceStep35Flash,
-	ModelNameHuggingFaceStep35Flash,
-	"HF Step 3.5 Flash",
-	131072,
-	1.0,
-)
+var modelHuggingFaceStep35Flash = ModelPreset{
+	ID:          PresetStep35FlashFeatherlessAI,
+	Name:        ModelNameStep35FlashFeatherlessAI,
+	DisplayName: DisplayNameStep35FlashFeatherlessAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameStep35FlashFeatherlessAI,
+		Stream:          true,
+		MaxPromptLength: 131072,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceMiniMaxM25 = huggingFaceModelPreset(
-	PresetHuggingFaceMiniMaxM25,
-	ModelNameHuggingFaceMiniMaxM25,
-	"HF MiniMax M2.5",
-	196608,
-	1.0,
-)
+var modelHuggingFaceMiniMaxM25 = ModelPreset{
+	ID:          PresetMiniMaxM25Novita,
+	Name:        ModelNameMiniMaxM25Novita,
+	DisplayName: DisplayNameMiniMaxM25Novita,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameMiniMaxM25Novita,
+		Stream:          true,
+		MaxPromptLength: 196608,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceKimiK2Instruct = huggingFaceModelPreset(
-	PresetHuggingFaceKimiK2Instruct,
-	ModelNameHuggingFaceKimiK2Instruct,
-	"HF Kimi K2 Instruct",
-	131072,
-	1.0,
-)
+var modelHuggingFaceKimiK2Instruct = ModelPreset{
+	ID:          PresetKimiK2InstructNovita,
+	Name:        ModelNameKimiK2InstructNovita,
+	DisplayName: DisplayNameKimiK2InstructNovita,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameKimiK2InstructNovita,
+		Stream:          true,
+		MaxPromptLength: 131072,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceKimiK2Instruct0905 = huggingFaceModelPreset(
-	PresetHuggingFaceKimiK2Instruct0905,
-	ModelNameHuggingFaceKimiK2Instruct0905,
-	"HF Kimi K2 Instruct 0905",
-	262144,
-	1.0,
-)
+var modelHuggingFaceKimiK2Instruct0905 = ModelPreset{
+	ID:          PresetKimiK2Instruct0905Novita,
+	Name:        ModelNameKimiK2Instruct0905Novita,
+	DisplayName: DisplayNameKimiK2Instruct0905Novita,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameKimiK2Instruct0905Novita,
+		Stream:          true,
+		MaxPromptLength: 262144,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceMiMoV2Flash = huggingFaceModelPreset(
-	PresetHuggingFaceMiMoV2Flash,
-	ModelNameHuggingFaceMiMoV2Flash,
-	"HF MiMo V2 Flash",
-	262144,
-	1.0,
-)
+var modelHuggingFaceMiMoV2Flash = ModelPreset{
+	ID:          PresetMiMoV2FlashFeatherlessAI,
+	Name:        ModelNameMiMoV2FlashFeatherlessAI,
+	DisplayName: DisplayNameMiMoV2FlashFeatherlessAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameMiMoV2FlashFeatherlessAI,
+		Stream:          true,
+		MaxPromptLength: 262144,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceGLM47 = huggingFaceModelPreset(
-	PresetHuggingFaceGLM47,
-	ModelNameHuggingFaceGLM47,
-	"HF GLM 4.7",
-	128000,
-	1.0,
-)
+var modelHuggingFaceGLM47 = ModelPreset{
+	ID:          PresetGLM47Cerebras,
+	Name:        ModelNameGLM47Cerebras,
+	DisplayName: DisplayNameGLM47Cerebras,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGLM47Cerebras,
+		Stream:          true,
+		MaxPromptLength: 128000,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
-var modelHuggingFaceGLM51FP8 = huggingFaceModelPreset(
-	PresetHuggingFaceGLM51FP8,
-	ModelNameHuggingFaceGLM51FP8,
-	"HF GLM 5.1 FP8",
-	202752,
-	1.0,
-)
+var modelHuggingFaceGLM51FP8 = ModelPreset{
+	ID:          PresetGLM51FP8FireworksAI,
+	Name:        ModelNameGLM51FP8FireworksAI,
+	DisplayName: DisplayNameGLM51FP8FireworksAI,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGLM51FP8FireworksAI,
+		Stream:          true,
+		MaxPromptLength: 202752,
+		MaxOutputLength: 8192,
+		Temperature:     new(1.0),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
 
 var providerHuggingFace = ProviderPreset{
 	Name:                     ProviderHuggingFace,
-	DisplayName:              "Hugging Face",
+	DisplayName:              DisplayNameProviderHuggingFace,
 	SDKType:                  spec.ProviderSDKTypeOpenAIChatCompletions,
 	Origin:                   "https://router.huggingface.co",
 	ChatCompletionPathPrefix: spec.DefaultOpenAIChatCompletionsPrefix,
@@ -397,29 +462,29 @@ var providerHuggingFace = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetHuggingFaceGPTOSS120:           modelHuggingFaceGPTOSS120,
-		PresetHuggingFaceGPTOSS20:            modelHuggingFaceGPTOSS20,
-		PresetHuggingFaceQwen3Coder30:        modelHuggingFaceQwen3Coder30,
-		PresetHuggingFaceGLM52:               modelHuggingFaceGLM52,
-		PresetHuggingFaceDeepSeekV4Flash:     modelHuggingFaceDeepSeekV4Flash,
-		PresetHuggingFaceDeepSeekV4Pro:       modelHuggingFaceDeepSeekV4Pro,
-		PresetHuggingFaceOrnith1035BFP8:      modelHuggingFaceOrnith1035BFP8,
-		PresetHuggingFaceGLM52FP8:            modelHuggingFaceGLM52FP8,
-		PresetHuggingFaceMiMoV25Pro:          modelHuggingFaceMiMoV25Pro,
-		PresetHuggingFaceNemotron3UltraNVFP4: modelHuggingFaceNemotron3UltraNVFP4,
-		PresetHuggingFaceQwen3CoderNext:      modelHuggingFaceQwen3CoderNext,
-		PresetHuggingFaceNemotron3UltraBF16:  modelHuggingFaceNemotron3UltraBF16,
-		PresetHuggingFaceGLM51:               modelHuggingFaceGLM51,
-		PresetHuggingFaceNemotron3SuperBF16:  modelHuggingFaceNemotron3SuperBF16,
-		PresetHuggingFaceMiniMaxM27:          modelHuggingFaceMiniMaxM27,
-		PresetHuggingFaceKimiK2Thinking:      modelHuggingFaceKimiK2Thinking,
-		PresetHuggingFaceGLM5:                modelHuggingFaceGLM5,
-		PresetHuggingFaceStep35Flash:         modelHuggingFaceStep35Flash,
-		PresetHuggingFaceMiniMaxM25:          modelHuggingFaceMiniMaxM25,
-		PresetHuggingFaceKimiK2Instruct:      modelHuggingFaceKimiK2Instruct,
-		PresetHuggingFaceKimiK2Instruct0905:  modelHuggingFaceKimiK2Instruct0905,
-		PresetHuggingFaceMiMoV2Flash:         modelHuggingFaceMiMoV2Flash,
-		PresetHuggingFaceGLM47:               modelHuggingFaceGLM47,
-		PresetHuggingFaceGLM51FP8:            modelHuggingFaceGLM51FP8,
+		PresetGPTOSS120BFireworksAI:           modelHuggingFaceGPTOSS120,
+		PresetGPTOSS20BFireworksAI:            modelHuggingFaceGPTOSS20,
+		PresetQwen3Coder30BA3BFireworksAI:     modelHuggingFaceQwen3Coder30,
+		PresetGLM52FireworksAI:                modelHuggingFaceGLM52,
+		PresetDeepSeekV4FlashFireworksAI:      modelHuggingFaceDeepSeekV4Flash,
+		PresetDeepSeekV4ProFireworksAI:        modelHuggingFaceDeepSeekV4Pro,
+		PresetOrnith1035BFP8DeepInfra:         modelHuggingFaceOrnith1035BFP8,
+		PresetGLM52FP8ZAI:                     modelHuggingFaceGLM52FP8,
+		PresetMiMoV25ProDeepInfra:             modelHuggingFaceMiMoV25Pro,
+		PresetNemotron3UltraNVFP4FireworksAI:  modelHuggingFaceNemotron3UltraNVFP4,
+		PresetQwen3CoderNextNovita:            modelHuggingFaceQwen3CoderNext,
+		PresetNemotron3UltraBF16DeepInfra:     modelHuggingFaceNemotron3UltraBF16,
+		PresetGLM51FireworksAI:                modelHuggingFaceGLM51,
+		PresetNemotron3SuperBF16FeatherlessAI: modelHuggingFaceNemotron3SuperBF16,
+		PresetMiniMaxM27FireworksAI:           modelHuggingFaceMiniMaxM27,
+		PresetKimiK2ThinkingFeatherlessAI:     modelHuggingFaceKimiK2Thinking,
+		PresetGLM5Novita:                      modelHuggingFaceGLM5,
+		PresetStep35FlashFeatherlessAI:        modelHuggingFaceStep35Flash,
+		PresetMiniMaxM25Novita:                modelHuggingFaceMiniMaxM25,
+		PresetKimiK2InstructNovita:            modelHuggingFaceKimiK2Instruct,
+		PresetKimiK2Instruct0905Novita:        modelHuggingFaceKimiK2Instruct0905,
+		PresetMiMoV2FlashFeatherlessAI:        modelHuggingFaceMiMoV2Flash,
+		PresetGLM47Cerebras:                   modelHuggingFaceGLM47,
+		PresetGLM51FP8FireworksAI:             modelHuggingFaceGLM51FP8,
 	},
 }

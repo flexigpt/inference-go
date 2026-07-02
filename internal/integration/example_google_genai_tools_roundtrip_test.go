@@ -42,7 +42,7 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 		ctx,
 		ps,
 		modelpreset.ProviderGoogleGemini,
-		modelpreset.PresetGoogleGemini25Flash,
+		modelpreset.PresetGemini25Flash,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding Google Gemini preset provider:", err)

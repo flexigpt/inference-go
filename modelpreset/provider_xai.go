@@ -6,26 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const (
-	PresetXAIGrokBuild01        ModelPresetID = "grokBuild01"
-	PresetXAIGrok43             ModelPresetID = "grok43"
-	PresetXAIGrok42Reasoning    ModelPresetID = "grok42Reasoning"
-	PresetXAIGrok42NonReasoning ModelPresetID = "grok42NonReasoning"
-)
-
-const (
-	ModelNameXAIGrokBuild01        spec.ModelName = "grok-build-0.1"
-	ModelNameXAIGrok43             spec.ModelName = "grok-4.3"
-	ModelNameXAIGrok42Reasoning    spec.ModelName = "grok-4.20-0309-reasoning"
-	ModelNameXAIGrok42NonReasoning spec.ModelName = "grok-4.20-0309-non-reasoning"
-)
-
 var modelXAIGrok43 = ModelPreset{
-	ID:          PresetXAIGrok43,
-	Name:        ModelNameXAIGrok43,
-	DisplayName: "xAI Grok 4.3",
+	ID:          PresetGrok43,
+	Name:        ModelNameGrok43,
+	DisplayName: DisplayNameGrok43,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameXAIGrok43,
+		Name:            ModelNameGrok43,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 65536,
@@ -52,11 +38,11 @@ var modelXAIGrok43 = ModelPreset{
 }
 
 var modelXAIGrokBuild01 = ModelPreset{
-	ID:          PresetXAIGrokBuild01,
-	Name:        ModelNameXAIGrokBuild01,
-	DisplayName: "xAI Build 0.1",
+	ID:          PresetBuild01,
+	Name:        ModelNameGrokBuild01,
+	DisplayName: DisplayNameBuild01,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameXAIGrokBuild01,
+		Name:            ModelNameGrokBuild01,
 		Stream:          true,
 		MaxPromptLength: 2000000,
 		MaxOutputLength: 65536,
@@ -73,11 +59,11 @@ var modelXAIGrokBuild01 = ModelPreset{
 }
 
 var modelXAIGrok42Reasoning = ModelPreset{
-	ID:          PresetXAIGrok42Reasoning,
-	Name:        ModelNameXAIGrok42Reasoning,
-	DisplayName: "xAI Grok 4.2 Reasoning",
+	ID:          PresetGrok42Reasoning,
+	Name:        ModelNameGrok42Reasoning,
+	DisplayName: DisplayNameGrok42Reasoning,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameXAIGrok42Reasoning,
+		Name:            ModelNameGrok42Reasoning,
 		Stream:          true,
 		MaxPromptLength: 2000000,
 		MaxOutputLength: 65536,
@@ -94,11 +80,11 @@ var modelXAIGrok42Reasoning = ModelPreset{
 }
 
 var modelXAIGrok42NonReasoning = ModelPreset{
-	ID:          PresetXAIGrok42NonReasoning,
-	Name:        ModelNameXAIGrok42NonReasoning,
-	DisplayName: "xAI Grok 4.2 Non-Reasoning",
+	ID:          PresetGrok42NonReasoning,
+	Name:        ModelNameGrok42NonReasoning,
+	DisplayName: DisplayNameGrok42NonReasoning,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameXAIGrok42NonReasoning,
+		Name:            ModelNameGrok42NonReasoning,
 		Stream:          true,
 		MaxPromptLength: 2000000,
 		MaxOutputLength: 65536,
@@ -116,7 +102,7 @@ var modelXAIGrok42NonReasoning = ModelPreset{
 
 var providerXAI = ProviderPreset{
 	Name:                     ProviderXAI,
-	DisplayName:              "xAI",
+	DisplayName:              DisplayNameProviderXAI,
 	SDKType:                  spec.ProviderSDKTypeOpenAIResponses,
 	Origin:                   "https://api.x.ai",
 	ChatCompletionPathPrefix: spec.DefaultOpenAIResponsesPrefix,
@@ -187,9 +173,9 @@ var providerXAI = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetXAIGrokBuild01:        modelXAIGrokBuild01,
-		PresetXAIGrok43:             modelXAIGrok43,
-		PresetXAIGrok42Reasoning:    modelXAIGrok42Reasoning,
-		PresetXAIGrok42NonReasoning: modelXAIGrok42NonReasoning,
+		PresetBuild01:            modelXAIGrokBuild01,
+		PresetGrok43:             modelXAIGrok43,
+		PresetGrok42Reasoning:    modelXAIGrok42Reasoning,
+		PresetGrok42NonReasoning: modelXAIGrok42NonReasoning,
 	},
 }

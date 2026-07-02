@@ -6,40 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-const (
-	PresetOpenAIResponsesGPT55         ModelPresetID = "gpt55"
-	PresetOpenAIResponsesGPT54         ModelPresetID = "gpt54"
-	PresetOpenAIResponsesGPT54Mini     ModelPresetID = "gpt54mini"
-	PresetOpenAIResponsesGPT54Nano     ModelPresetID = "gpt54nano"
-	PresetOpenAIResponsesGPT53Codex    ModelPresetID = "gpt53Codex"
-	PresetOpenAIResponsesGPT52         ModelPresetID = "gpt52"
-	PresetOpenAIResponsesGPT52Codex    ModelPresetID = "gpt52Codex"
-	PresetOpenAIResponsesGPT51         ModelPresetID = "gpt51"
-	PresetOpenAIResponsesGPT51Codex    ModelPresetID = "gpt51Codex"
-	PresetOpenAIResponsesGPT51CodexMax ModelPresetID = "gpt51CodexMax"
-	PresetOpenAIResponsesGPT5Mini      ModelPresetID = "gpt5Mini"
-)
-
-const (
-	ModelNameOpenAIResponsesGPT55         spec.ModelName = "gpt-5.5"
-	ModelNameOpenAIResponsesGPT54         spec.ModelName = "gpt-5.4"
-	ModelNameOpenAIResponsesGPT54Mini     spec.ModelName = "gpt-5.4-mini"
-	ModelNameOpenAIResponsesGPT54Nano     spec.ModelName = "gpt-5.4-nano"
-	ModelNameOpenAIResponsesGPT53Codex    spec.ModelName = "gpt-5.3-codex"
-	ModelNameOpenAIResponsesGPT52         spec.ModelName = "gpt-5.2"
-	ModelNameOpenAIResponsesGPT52Codex    spec.ModelName = "gpt-5.2-codex"
-	ModelNameOpenAIResponsesGPT51         spec.ModelName = "gpt-5.1"
-	ModelNameOpenAIResponsesGPT51Codex    spec.ModelName = "gpt-5.1-codex"
-	ModelNameOpenAIResponsesGPT51CodexMax spec.ModelName = "gpt-5.1-codex-max"
-	ModelNameOpenAIResponsesGPT5Mini      spec.ModelName = "gpt-5-mini"
-)
-
 var modelOpenAIResponsesGPT55 = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT55,
-	Name:        ModelNameOpenAIResponsesGPT55,
-	DisplayName: "OpenAI GPT 5.5",
+	ID:          PresetGPT55,
+	Name:        ModelNameGPT55,
+	DisplayName: DisplayNameGPT55,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT55,
+		Name:            ModelNameGPT55,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 128000,
@@ -58,11 +30,11 @@ var modelOpenAIResponsesGPT55 = ModelPreset{
 }
 
 var modelOpenAIResponsesGPT54 = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT54,
-	Name:        ModelNameOpenAIResponsesGPT54,
-	DisplayName: "OpenAI GPT 5.4",
+	ID:          PresetGPT54,
+	Name:        ModelNameGPT54,
+	DisplayName: DisplayNameGPT54,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT54,
+		Name:            ModelNameGPT54,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 128000,
@@ -81,11 +53,11 @@ var modelOpenAIResponsesGPT54 = ModelPreset{
 }
 
 var modelOpenAIResponsesGPT54Mini = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT54Mini,
-	Name:        ModelNameOpenAIResponsesGPT54Mini,
-	DisplayName: "OpenAI GPT 5.4 Mini",
+	ID:          PresetGPT54Mini,
+	Name:        ModelNameGPT54Mini,
+	DisplayName: DisplayNameGPT54Mini,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT54Mini,
+		Name:            ModelNameGPT54Mini,
 		Stream:          true,
 		MaxPromptLength: 200000,
 		MaxOutputLength: 128000,
@@ -104,11 +76,11 @@ var modelOpenAIResponsesGPT54Mini = ModelPreset{
 }
 
 var modelOpenAIResponsesGPT54Nano = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT54Nano,
-	Name:        ModelNameOpenAIResponsesGPT54Nano,
-	DisplayName: "OpenAI GPT 5.4 Nano",
+	ID:          PresetGPT54Nano,
+	Name:        ModelNameGPT54Nano,
+	DisplayName: DisplayNameGPT54Nano,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT54Nano,
+		Name:            ModelNameGPT54Nano,
 		Stream:          true,
 		MaxPromptLength: 400000,
 		MaxOutputLength: 128000,
@@ -127,11 +99,11 @@ var modelOpenAIResponsesGPT54Nano = ModelPreset{
 }
 
 var modelOpenAIResponsesGPT53Codex = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT53Codex,
-	Name:        ModelNameOpenAIResponsesGPT53Codex,
-	DisplayName: "OpenAI GPT 5.3 Codex",
+	ID:          PresetGPT53Codex,
+	Name:        ModelNameGPT53Codex,
+	DisplayName: DisplayNameGPT53Codex,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT53Codex,
+		Name:            ModelNameGPT53Codex,
 		Stream:          true,
 		MaxPromptLength: 400000,
 		MaxOutputLength: 128000,
@@ -149,11 +121,11 @@ var modelOpenAIResponsesGPT53Codex = ModelPreset{
 }
 
 var modelOpenAIResponsesGPT52 = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT52,
-	Name:        ModelNameOpenAIResponsesGPT52,
-	DisplayName: "OpenAI GPT 5.2",
+	ID:          PresetGPT52,
+	Name:        ModelNameGPT52,
+	DisplayName: DisplayNameGPT52,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT52,
+		Name:            ModelNameGPT52,
 		Stream:          true,
 		MaxPromptLength: 400000,
 		MaxOutputLength: 128000,
@@ -172,11 +144,11 @@ var modelOpenAIResponsesGPT52 = ModelPreset{
 }
 
 var modelOpenAIResponsesGPT52Codex = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT52Codex,
-	Name:        ModelNameOpenAIResponsesGPT52Codex,
-	DisplayName: "OpenAI GPT 5.2 Codex",
+	ID:          PresetGPT52Codex,
+	Name:        ModelNameGPT52Codex,
+	DisplayName: DisplayNameGPT52Codex,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT52Codex,
+		Name:            ModelNameGPT52Codex,
 		Stream:          true,
 		MaxPromptLength: 400000,
 		MaxOutputLength: 128000,
@@ -194,11 +166,11 @@ var modelOpenAIResponsesGPT52Codex = ModelPreset{
 }
 
 var modelOpenAIResponsesGPT51 = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT51,
-	Name:        ModelNameOpenAIResponsesGPT51,
-	DisplayName: "OpenAI GPT 5.1",
+	ID:          PresetGPT51,
+	Name:        ModelNameGPT51,
+	DisplayName: DisplayNameGPT51,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT51,
+		Name:            ModelNameGPT51,
 		Stream:          true,
 		MaxPromptLength: 400000,
 		MaxOutputLength: 128000,
@@ -216,11 +188,11 @@ var modelOpenAIResponsesGPT51 = ModelPreset{
 }
 
 var modelOpenAIResponsesGPT51Codex = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT51Codex,
-	Name:        ModelNameOpenAIResponsesGPT51Codex,
-	DisplayName: "OpenAI GPT 5.1 Codex",
+	ID:          PresetGPT51Codex,
+	Name:        ModelNameGPT51Codex,
+	DisplayName: DisplayNameGPT51Codex,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT51Codex,
+		Name:            ModelNameGPT51Codex,
 		Stream:          true,
 		MaxPromptLength: 400000,
 		MaxOutputLength: 128000,
@@ -237,11 +209,11 @@ var modelOpenAIResponsesGPT51Codex = ModelPreset{
 }
 
 var modelOpenAIResponsesGPT51CodexMax = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT51CodexMax,
-	Name:        ModelNameOpenAIResponsesGPT51CodexMax,
-	DisplayName: "OpenAI GPT 5.1 Codex Max",
+	ID:          PresetGPT51CodexMax,
+	Name:        ModelNameGPT51CodexMax,
+	DisplayName: DisplayNameGPT51CodexMax,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT51CodexMax,
+		Name:            ModelNameGPT51CodexMax,
 		Stream:          true,
 		MaxPromptLength: 400000,
 		MaxOutputLength: 128000,
@@ -258,11 +230,11 @@ var modelOpenAIResponsesGPT51CodexMax = ModelPreset{
 }
 
 var modelOpenAIResponsesGPT5Mini = ModelPreset{
-	ID:          PresetOpenAIResponsesGPT5Mini,
-	Name:        ModelNameOpenAIResponsesGPT5Mini,
-	DisplayName: "OpenAI GPT 5 Mini",
+	ID:          PresetGPT5Mini,
+	Name:        ModelNameGPT5Mini,
+	DisplayName: DisplayNameGPT5Mini,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenAIResponsesGPT5Mini,
+		Name:            ModelNameGPT5Mini,
 		Stream:          true,
 		MaxPromptLength: 400000,
 		MaxOutputLength: 128000,
@@ -294,7 +266,7 @@ func openAIResponsesReasoningOverride(levels []spec.ReasoningLevel) *capabilityo
 
 var providerOpenAIResponses = ProviderPreset{
 	Name:                     ProviderOpenAIResponses,
-	DisplayName:              "OpenAI Responses API",
+	DisplayName:              DisplayNameProviderOpenAIResponses,
 	SDKType:                  spec.ProviderSDKTypeOpenAIResponses,
 	Origin:                   spec.DefaultOpenAIOrigin,
 	ChatCompletionPathPrefix: spec.DefaultOpenAIResponsesPrefix,
@@ -359,16 +331,16 @@ var providerOpenAIResponses = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetOpenAIResponsesGPT55:         modelOpenAIResponsesGPT55,
-		PresetOpenAIResponsesGPT54:         modelOpenAIResponsesGPT54,
-		PresetOpenAIResponsesGPT54Mini:     modelOpenAIResponsesGPT54Mini,
-		PresetOpenAIResponsesGPT54Nano:     modelOpenAIResponsesGPT54Nano,
-		PresetOpenAIResponsesGPT53Codex:    modelOpenAIResponsesGPT53Codex,
-		PresetOpenAIResponsesGPT52:         modelOpenAIResponsesGPT52,
-		PresetOpenAIResponsesGPT52Codex:    modelOpenAIResponsesGPT52Codex,
-		PresetOpenAIResponsesGPT51:         modelOpenAIResponsesGPT51,
-		PresetOpenAIResponsesGPT51Codex:    modelOpenAIResponsesGPT51Codex,
-		PresetOpenAIResponsesGPT51CodexMax: modelOpenAIResponsesGPT51CodexMax,
-		PresetOpenAIResponsesGPT5Mini:      modelOpenAIResponsesGPT5Mini,
+		PresetGPT55:         modelOpenAIResponsesGPT55,
+		PresetGPT54:         modelOpenAIResponsesGPT54,
+		PresetGPT54Mini:     modelOpenAIResponsesGPT54Mini,
+		PresetGPT54Nano:     modelOpenAIResponsesGPT54Nano,
+		PresetGPT53Codex:    modelOpenAIResponsesGPT53Codex,
+		PresetGPT52:         modelOpenAIResponsesGPT52,
+		PresetGPT52Codex:    modelOpenAIResponsesGPT52Codex,
+		PresetGPT51:         modelOpenAIResponsesGPT51,
+		PresetGPT51Codex:    modelOpenAIResponsesGPT51Codex,
+		PresetGPT51CodexMax: modelOpenAIResponsesGPT51CodexMax,
+		PresetGPT5Mini:      modelOpenAIResponsesGPT5Mini,
 	},
 }

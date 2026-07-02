@@ -25,7 +25,7 @@ func Example_openAIResponses_basicConversation() {
 		ctx,
 		ps,
 		modelpreset.ProviderOpenAIResponses,
-		modelpreset.PresetOpenAIResponsesGPT5Mini,
+		modelpreset.PresetGPT5Mini,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding OpenAI Responses preset provider:", err)

@@ -5,7 +5,7 @@
 [![lint](https://github.com/flexigpt/inference-go/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/flexigpt/inference-go/actions/workflows/lint.yml)
 [![test](https://github.com/flexigpt/inference-go/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/flexigpt/inference-go/actions/workflows/test.yml)
 
-A single normalized Go interface for LLM inference across multiple providers, using their official SDKs where available.
+A single normalized Go interface for LLM inference across vendor APIs, OpenAI-compatible gateways, and local runtimes, using official SDKs where available and normalized adapter compatibility elsewhere.
 
 - [Features at a glance](#features-at-a-glance)
 - [Installation](#installation)
@@ -17,6 +17,11 @@ A single normalized Go interface for LLM inference across multiple providers, us
   - [OpenAI Responses API](#openai-responses-api)
   - [OpenAI Chat Completions API](#openai-chat-completions-api)
   - [Google Generate Content API](#google-generate-content-api)
+  - [Mistral AI API](#mistral-ai-api)
+  - [xAI API](#xai-api)
+  - [OpenRouter](#openrouter)
+  - [Hugging Face Router](#hugging-face-router)
+  - [OpenAI-compatible local and self-hosted runtimes](#openai-compatible-local-and-self-hosted-runtimes)
 - [Model presets](#model-presets)
 - [Model capabilities and normalization](#model-capabilities-and-normalization)
   - [Capability overrides](#capability-overrides)
@@ -28,11 +33,29 @@ A single normalized Go interface for LLM inference across multiple providers, us
 ## Features at a glance
 
 - Single normalized interface via `ProviderSetAPI`
-- Provider support today:
+
+- Normalized wire adapters today:
   - Anthropic Messages API via `github.com/anthropics/anthropic-sdk-go`
   - OpenAI Responses API via `github.com/openai/openai-go/v3`
   - OpenAI Chat Completions API via `github.com/openai/openai-go/v3`
   - Google Generate Content API via `google.golang.org/genai`
+
+- Runtime provider presets today:
+  - Anthropic
+  - OpenAI Responses
+  - OpenAI Chat Completions
+  - Google Gemini
+  - Mistral
+  - xAI
+  - OpenRouter
+  - Hugging Face Router
+  - LocalAI, LM Studio, llama.cpp, Ollama, SGLang, and vLLM
+
+- Common preset mappings:
+  - Anthropic and Ollama presets use the Anthropic-compatible adapter.
+  - OpenAI Chat, Hugging Face Router, Mistral, and llama.cpp presets use the OpenAI Chat Completions-compatible adapter.
+  - OpenAI Responses, xAI, OpenRouter, LocalAI, LM Studio, SGLang, and vLLM presets use the OpenAI Responses-compatible adapter.
+  - Google Gemini presets use the Google Generate Content adapter.
 
 - Normalized request/response model in `spec/`:
   - text, image, and file input content
@@ -46,8 +69,10 @@ A single normalized Go interface for LLM inference across multiple providers, us
 
 - Request normalization before provider calls:
   - capability-driven validation and safe dropping of unsupported features
+  - provider/model-specific parameter dialect selection where declared by capabilities
   - warnings returned in `FetchCompletionResponse.Warnings`
   - per-model capability override support through `FetchCompletionOptions.CapabilityResolver`
+  - preset-based provider and model capability overrides through `modelpreset`
 
 - Streaming:
   - text streaming for supported providers
@@ -88,7 +113,7 @@ providerPreset, err := modelpreset.Provider(modelpreset.ProviderOpenAIResponses)
 if err != nil {
     return err
 }
-modelPreset, err := modelpreset.Model(modelpreset.ProviderOpenAIResponses, modelpreset.PresetOpenAIResponsesGPT5Mini)
+modelPreset, err := modelpreset.Model(modelpreset.ProviderOpenAIResponses, modelpreset.PresetGPT5Mini)
 if err != nil {
     return err
 }
@@ -154,6 +179,10 @@ Available repository examples:
   - [Google Generate Content function-tool round trip](internal/integration/example_google_genai_tools_roundtrip_test.go)
   - [Google Generate Content web search + thinking + streaming](internal/integration/example_google_genai_websearch_streaming_test.go)
 
+- Preset-backed providers
+  - The same `AddProviderFromPreset` and `NewPresetCapabilityResolver` flow works for Mistral, xAI, OpenRouter, Hugging Face Router, LocalAI, LM Studio, llama.cpp, Ollama, SGLang, and vLLM.
+  - These providers reuse the normalized wire adapters listed above and rely on provider/model preset capability overrides for provider-specific behavior.
+
 - [Capability override example (get provider caps, override per-model)](./internal/integration/example_capability_override_test.go)
 
 ## Provider configuration
@@ -173,6 +202,7 @@ type AddProviderConfig struct {
 Fields:
 
 - `SDKType`
+  - Selects the normalized wire adapter, not necessarily the public provider brand.
   - `spec.ProviderSDKTypeAnthropic`
   - `spec.ProviderSDKTypeOpenAIChatCompletions`
   - `spec.ProviderSDKTypeOpenAIResponses`
@@ -181,6 +211,7 @@ Fields:
 - `Origin`
   - Required
   - Base origin for the provider or gateway/proxy
+  - May point at a hosted vendor API, a hosted router, or a local runtime.
 
 - `ChatCompletionPathPrefix`
   - Optional generic path prefix
@@ -198,6 +229,32 @@ Fields:
   - Optional extra headers added to every request
 
 ## Supported providers
+
+`ProviderSetAPI` supports four normalized wire adapters. The `modelpreset` package then supplies ready-to-use provider presets for hosted vendors, hosted routers, and local runtimes.
+
+| Preset provider         | Provider constant                     | Wire adapter                       | Notes                                                                                                          |
+| ----------------------- | ------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Anthropic               | `modelpreset.ProviderAnthropic`       | Anthropic Messages                 | Official Anthropic SDK adapter                                                                                 |
+| OpenAI Responses        | `modelpreset.ProviderOpenAIResponses` | OpenAI Responses                   | Official OpenAI SDK adapter                                                                                    |
+| OpenAI Chat Completions | `modelpreset.ProviderOpenAIChat`      | OpenAI Chat Completions            | Official OpenAI SDK adapter                                                                                    |
+| Google Gemini           | `modelpreset.ProviderGoogleGemini`    | Google Generate Content            | Official Google GenAI SDK adapter                                                                              |
+| Mistral                 | `modelpreset.ProviderMistral`         | OpenAI Chat Completions-compatible | Uses Mistral API origin with model-specific capability overrides                                               |
+| xAI                     | `modelpreset.ProviderXAI`             | OpenAI Responses-compatible        | Uses xAI API origin with model-specific reasoning overrides                                                    |
+| OpenRouter              | `modelpreset.ProviderOpenRouter`      | OpenAI Responses-compatible        | Router presets include model-level modality, output, reasoning, and tool overrides                             |
+| Hugging Face Router     | `modelpreset.ProviderHuggingFace`     | OpenAI Chat Completions-compatible | Routed backend suffixes such as `:fireworks-ai` and `:featherless-ai` are treated as distinct model identities |
+| LocalAI                 | `modelpreset.ProviderLocalAI`         | OpenAI Responses-compatible        | Local/server-compatible preset with local model defaults                                                       |
+| LM Studio               | `modelpreset.ProviderLMStudio`        | OpenAI Responses-compatible        | Local OpenAI-compatible preset                                                                                 |
+| llama.cpp               | `modelpreset.ProviderLlamaCPP`        | OpenAI Chat Completions-compatible | Local OpenAI-compatible preset                                                                                 |
+| Ollama                  | `modelpreset.ProviderOllama`          | Anthropic-compatible               | Local Anthropic-compatible preset                                                                              |
+| SGLang                  | `modelpreset.ProviderSGLang`          | OpenAI Responses-compatible        | Self-hosted OpenAI-compatible preset                                                                           |
+| vLLM                    | `modelpreset.ProviderVLLM`            | OpenAI Responses-compatible        | Self-hosted OpenAI-compatible preset                                                                           |
+
+Capability support is derived from:
+
+1. the selected wire adapter base capabilities,
+2. the provider preset override,
+3. the model preset override,
+4. any caller-supplied override.
 
 ### Anthropic Messages API
 
@@ -307,6 +364,132 @@ Normalization notes:
 - function tool output history is currently text-only
 - `ToolPolicy.DisableParallel` is not currently normalized for Google Generate Content
 
+### Mistral AI API
+
+Mistral presets use the OpenAI Chat Completions-compatible adapter with Mistral-specific connection defaults and capability overrides.
+
+| Area               | Support | Notes                                                                         |
+| ------------------ | ------- | ----------------------------------------------------------------------------- |
+| Text input/output  | yes     | Via OpenAI Chat-compatible request/response shape                             |
+| Streaming text     | yes     |                                                                               |
+| Reasoning config   | partial | Presets advertise Mistral-supported reasoning levels where applicable         |
+| Streaming thinking | no      | OpenAI Chat-compatible response path does not expose separate thinking stream |
+| Output format      | yes     | text and `jsonSchema` where model/provider capabilities allow                 |
+| Output verbosity   | no      | Mistral provider override disables verbosity                                  |
+| Stop sequences     | yes     |                                                                               |
+| Images input       | yes     | Provider preset advertises text and image input                               |
+| Files input        | no      | Not enabled by the Mistral provider preset                                    |
+| Function tools     | yes     |                                                                               |
+| Custom tools       | no      | Provider preset only advertises function tools                                |
+| Web search         | no      | Not enabled by the Mistral provider preset                                    |
+| Tool policy        | yes     | `auto`, `any`, `tool`, `none`                                                 |
+| Cache control      | no      | Provider preset disables automatic/top-level cache controls                   |
+| Usage              | yes     | Subject to what the OpenAI Chat-compatible response exposes                   |
+
+Normalization notes:
+
+- Mistral uses a provider-specific parameter dialect for `max_tokens`.
+- Some Mistral models expose reasoning through a provider-specific reasoning configuration; presets model this through capability overrides.
+
+### xAI API
+
+xAI presets use the OpenAI Responses-compatible adapter with xAI-specific connection defaults and model-level reasoning overrides.
+
+| Area               | Support | Notes                                                                             |
+| ------------------ | ------- | --------------------------------------------------------------------------------- |
+| Text input/output  | yes     | Via OpenAI Responses-compatible request/response shape                            |
+| Streaming text     | yes     |                                                                                   |
+| Reasoning/thinking | partial | Presets declare reasoning levels and encrypted reasoning support where applicable |
+| Streaming thinking | partial | Depends on what the xAI Responses-compatible endpoint emits                       |
+| Output format      | yes     | text and `jsonSchema`                                                             |
+| Output verbosity   | no      | xAI provider override disables verbosity                                          |
+| Stop sequences     | no      | xAI provider preset disables stop sequences                                       |
+| Images input       | yes     | Provider preset advertises text and image input                                   |
+| Files input        | no      | Not enabled by the xAI provider preset                                            |
+| Function tools     | yes     |                                                                                   |
+| Web search         | yes     | Provider preset advertises web search                                             |
+| Tool policy        | yes     | `auto`, `any`, `tool`, `none`                                                     |
+| Cache control      | partial | Ephemeral top-level cache key support where declared                              |
+| Usage              | yes     | Subject to what the Responses-compatible endpoint exposes                         |
+
+Normalization notes:
+
+- Some xAI model presets explicitly disable normalized reasoning config even when the provider-wide preset supports it.
+- Model-level capability overrides should be used through `NewPresetCapabilityResolver`.
+
+### OpenRouter
+
+OpenRouter presets use the OpenAI Responses-compatible adapter. The model presets are intentionally detailed because routed OpenRouter models differ significantly in modalities, reasoning levels, JSON Schema support, and tool support.
+
+| Area               | Support | Notes                                                                                                            |
+| ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| Text input/output  | yes     | Via OpenAI Responses-compatible request/response shape                                                           |
+| Streaming text     | yes     |                                                                                                                  |
+| Reasoning/thinking | partial | Model presets declare supported reasoning levels and summary support                                             |
+| Streaming thinking | partial | Depends on what the routed model/provider emits                                                                  |
+| Output format      | partial | Some model presets support text only; others support text and `jsonSchema`                                       |
+| Output verbosity   | partial | Provider-wide preset allows it, many model presets disable it                                                    |
+| Stop sequences     | no      | OpenRouter preset disables stop sequences                                                                        |
+| Images input       | partial | Model-specific                                                                                                   |
+| Files input        | partial | Provider-wide preset allows files; model-specific overrides may narrow modalities                                |
+| Audio/video input  | pending | Capability metadata can represent these modalities, but cross-provider audio/video normalization remains pending |
+| Function tools     | partial | Model-specific                                                                                                   |
+| Custom tools       | partial | Provider-wide preset allows custom tools; many model presets narrow to function tools                            |
+| Web search         | partial | Provider-wide preset advertises web search; routed model behavior can vary                                       |
+| Tool policy        | yes     | `auto`, `any`, `tool`, `none` where tools are enabled                                                            |
+| Cache control      | no      | Not enabled by the OpenRouter preset                                                                             |
+| Usage              | yes     | Subject to what OpenRouter returns for the routed model                                                          |
+
+Normalization notes:
+
+- OpenRouter model presets should be treated as model-specific contracts. Do not assume provider-wide capabilities apply unchanged to every routed model.
+- Models with `:free` suffixes or routed variants are distinct model identities when the model name itself includes the suffix.
+
+### Hugging Face Router
+
+Hugging Face Router presets use the OpenAI Chat Completions-compatible adapter. Routed backend suffixes are intentionally part of the preset identity when present in the model name.
+
+| Area                  | Support | Notes                                                                            |
+| --------------------- | ------- | -------------------------------------------------------------------------------- |
+| Text input/output     | yes     | Via OpenAI Chat-compatible request/response shape                                |
+| Streaming text        | yes     |                                                                                  |
+| Reasoning config      | partial | Provider-wide preset exposes reasoning; model presets narrow support where known |
+| Streaming thinking    | no      | OpenAI Chat-compatible response path does not expose separate thinking stream    |
+| Output format         | yes     | text and `jsonSchema` where backend supports it                                  |
+| Output verbosity      | yes     | Provider-wide preset advertises verbosity                                        |
+| Stop sequences        | yes     | Up to provider capability max                                                    |
+| Images input          | partial | Provider-wide preset allows images; backend/model support can vary               |
+| Files input           | partial | Provider-wide preset allows files; backend/model support can vary                |
+| Function/custom tools | partial | Provider-wide preset advertises tools; backend/model support can vary            |
+| Web search            | partial | Provider-wide preset advertises web search; backend/model support can vary       |
+| Tool policy           | yes     | `auto`, `any`, `tool`, `none` where tools are enabled                            |
+| Cache control         | no      | Not enabled by the Hugging Face preset                                           |
+| Usage                 | yes     | Subject to what the router/backend returns                                       |
+
+Normalization notes:
+
+- Routed backend suffixes such as `:fireworks-ai`, `:deepinfra`, `:novita`, `:featherless-ai`, and `:cerebras` are treated as distinct preset/model identities.
+- Display names for routed Hugging Face presets include the backend name to make that distinction visible to users.
+
+### OpenAI-compatible local and self-hosted runtimes
+
+The preset catalog includes local and self-hosted runtimes for common development and deployment setups.
+
+| Preset provider | Wire adapter                       | Default origin           | Notes                                                                      |
+| --------------- | ---------------------------------- | ------------------------ | -------------------------------------------------------------------------- |
+| LocalAI         | OpenAI Responses-compatible        | `http://127.0.0.1:8080`  | Local runtime with text/image/file provider preset and per-model overrides |
+| LM Studio       | OpenAI Responses-compatible        | `http://127.0.0.1:1234`  | Local OpenAI-compatible server preset                                      |
+| llama.cpp       | OpenAI Chat Completions-compatible | `http://127.0.0.1:8080`  | Local OpenAI-compatible server preset                                      |
+| Ollama          | Anthropic-compatible               | `http://127.0.0.1:11434` | Local Anthropic-compatible preset with constrained tool policy             |
+| SGLang          | OpenAI Responses-compatible        | `http://127.0.0.1:30000` | Self-hosted OpenAI-compatible server preset                                |
+| vLLM            | OpenAI Responses-compatible        | `http://127.0.0.1:8000`  | Self-hosted OpenAI-compatible server preset                                |
+
+Normalization notes:
+
+- Local runtimes vary widely by model and server version. The presets provide useful defaults, not a guarantee that every server build supports every declared feature.
+- Most local/self-hosted presets rely heavily on model-level overrides for reasoning, modalities, output format support, and stop-sequence behavior.
+- Callers should pass a preset capability resolver per completion so model-level overrides are applied.
+
 ## Model presets
 
 Package `modelpreset` provides a runtime catalog of common providers and models.
@@ -320,18 +503,37 @@ It includes:
 - model default `spec.ModelParam`
 - provider-level capability overrides
 - model-level capability overrides
-- default provider/default model hints
+
+Included preset providers:
+
+- `ProviderAnthropic`
+- `ProviderOpenAIResponses`
+- `ProviderOpenAIChat`
+- `ProviderGoogleGemini`
+- `ProviderHuggingFace`
+- `ProviderMistral`
+- `ProviderOpenRouter`
+- `ProviderXAI`
+- `ProviderLocalAI`
+- `ProviderLMStudio`
+- `ProviderLlamaCPP`
+- `ProviderOllama`
+- `ProviderSGLang`
+- `ProviderVLLM`
+
+Preset model IDs, display names, and model names are provider-agnostic where the underlying model identity is the same. Routed or backend-specific models keep distinct IDs and display names when the backend is part of the effective model identity.
 
 Typical use:
 
 ```go
 providerPreset, err := modelpreset.Provider(modelpreset.ProviderAnthropic)
-modelPreset, err := modelpreset.Model(modelpreset.ProviderAnthropic, modelpreset.PresetAnthropicSonnet46)
+modelPreset, err := modelpreset.Model(modelpreset.ProviderAnthropic, modelpreset.PresetClaudeSonnet46)
 _, err = ps.AddProviderFromPreset(ctx, providerPreset.Name, providerPreset)
 ```
 
 - The returned presets are cloned. Callers may mutate/customize returned values safely as required.
 - Apps that need persistence should treat `modelpreset` as immutable base data and store their own overlay/preference fields separately.
+- Apps that persist preset IDs should expect catalog IDs to be stable within a release line, but should still be prepared to migrate IDs when model identities are renamed or provider routing becomes part of the identity.
 
 ## Model capabilities and normalization
 
@@ -343,6 +545,15 @@ Default provider capability profiles live in:
 - OpenAI Responses: [`internal/openairesponsessdk/capability.go`](./internal/openairesponsessdk/capability.go)
 - OpenAI Chat: [`internal/openaichatsdk/capability.go`](./internal/openaichatsdk/capability.go)
 - Google Generate Content: [`internal/googlegeneratecontentsdk/capability.go`](./internal/googlegeneratecontentsdk/capability.go)
+
+Preset capability overrides live in:
+
+- provider presets in [`modelpreset`](./modelpreset)
+- provider-wide override fields on `ProviderPreset`
+- model-level override fields on `ModelPreset`
+
+Hosted routers and local runtimes generally reuse one of the default provider capability profiles and then patch it with preset overrides.
+For example, OpenRouter uses the OpenAI Responses-compatible adapter plus model-specific overrides, while Mistral and Hugging Face Router use the OpenAI Chat-compatible adapter plus provider/model overrides.
 
 You can inspect the active provider-wide default via:
 
@@ -359,6 +570,8 @@ Normalization behavior:
   - OpenAI Responses: only encrypted reasoning history is retained
   - OpenAI Chat: reasoning history is dropped
   - Google: only valid signed Google thought history is retained
+- provider and model preset overrides can narrow broad adapter capabilities
+  - examples: disabling stop sequences, limiting reasoning levels, changing tool support, changing output format support, or selecting parameter dialects
 
 For per-model capability differences, pass a custom `spec.ModelCapabilityResolver` in `FetchCompletionOptions`.
 
@@ -375,6 +588,7 @@ Provider SDKs expose broad provider-level capabilities. Real models often differ
 - one model may only allow a subset of reasoning levels
 - one gateway may use a different parameter dialect
 - one model may require temperature to be omitted when reasoning is enabled
+- one routed model may support JSON Schema while another model from the same router only supports text output
 
 `capabilityoverride.ModelCapabilitiesOverride` is a patch-like form of `spec.ModelCapabilities`.
 
@@ -408,6 +622,7 @@ opts := &spec.FetchCompletionOptions{
 
 `AddProviderFromPreset` only configures the provider connection. Capability overrides are applied per completion through `FetchCompletionOptions`, because
 the active model can differ from call to call.
+This is especially important for gateway providers such as OpenRouter and Hugging Face Router, and for local/self-hosted runtimes where model support can vary significantly.
 
 ## HTTP debugging
 

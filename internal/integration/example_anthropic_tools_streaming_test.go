@@ -45,7 +45,7 @@ func Example_anthropic_toolsAndThinkingStreaming() {
 		ctx,
 		ps,
 		modelpreset.ProviderAnthropic,
-		modelpreset.PresetAnthropicSonnet46,
+		modelpreset.PresetClaudeSonnet46,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding Anthropic preset provider:", err)
@@ -187,7 +187,7 @@ func Example_anthropic_functionToolRoundTrip() {
 		ctx,
 		ps,
 		modelpreset.ProviderAnthropic,
-		modelpreset.PresetAnthropicSonnet46,
+		modelpreset.PresetClaudeSonnet46,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding Anthropic preset provider:", err)

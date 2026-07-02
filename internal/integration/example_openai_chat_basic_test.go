@@ -25,7 +25,7 @@ func Example_openAIChat_basicConversation() {
 		ctx,
 		ps,
 		modelpreset.ProviderOpenAIChat,
-		modelpreset.PresetOpenAIChatGPT41Mini,
+		modelpreset.PresetGPT41Mini,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding OpenAI Chat preset provider:", err)
