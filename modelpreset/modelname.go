@@ -53,6 +53,7 @@ const (
 
 const (
 	ModelNameGrokBuild01        spec.ModelName = "grok-build-0.1"
+	ModelNameGrok45             spec.ModelName = "grok-4.5"
 	ModelNameGrok43             spec.ModelName = "grok-4.3"
 	ModelNameGrok42Reasoning    spec.ModelName = "grok-4.20-0309-reasoning"
 	ModelNameGrok42NonReasoning spec.ModelName = "grok-4.20-0309-non-reasoning"

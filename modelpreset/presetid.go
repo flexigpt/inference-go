@@ -42,6 +42,7 @@ const (
 	PresetMistralLarge3   ModelPresetID = "mistralLarge3"
 	PresetDevstral2       ModelPresetID = "devstral2"
 
+	PresetGrok45             ModelPresetID = "grok45"
 	PresetGrok43             ModelPresetID = "grok43"
 	PresetBuild01            ModelPresetID = "grokBuild01"
 	PresetGrok42Reasoning    ModelPresetID = "grok42Reasoning"

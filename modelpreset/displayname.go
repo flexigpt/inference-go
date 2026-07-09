@@ -59,6 +59,7 @@ const (
 	DisplayNameMistralLarge3   = "Mistral Large 3"
 	DisplayNameDevstral2       = "Devstral 2"
 
+	DisplayNameGrok45             = "Grok 4.5"
 	DisplayNameGrok43             = "Grok 4.3"
 	DisplayNameBuild01            = "Build 0.1"
 	DisplayNameGrok42Reasoning    = "Grok 4.2 Reasoning"

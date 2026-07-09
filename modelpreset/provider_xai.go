@@ -6,6 +6,37 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+var modelXAIGrok45 = ModelPreset{
+	ID:          PresetGrok45,
+	Name:        ModelNameGrok45,
+	DisplayName: DisplayNameGrok45,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGrok45,
+		Stream:          true,
+		MaxPromptLength: 500000,
+		MaxOutputLength: 65536,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         3600,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelNone,
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+	},
+}
+
 var modelXAIGrok43 = ModelPreset{
 	ID:          PresetGrok43,
 	Name:        ModelNameGrok43,
@@ -174,6 +205,7 @@ var providerXAI = ProviderPreset{
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
 		PresetBuild01:            modelXAIGrokBuild01,
+		PresetGrok45:             modelXAIGrok45,
 		PresetGrok43:             modelXAIGrok43,
 		PresetGrok42Reasoning:    modelXAIGrok42Reasoning,
 		PresetGrok42NonReasoning: modelXAIGrok42NonReasoning,
