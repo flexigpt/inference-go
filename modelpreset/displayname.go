@@ -23,6 +23,10 @@ const (
 	DisplayNameGPT4o     = "GPT 4o"
 	DisplayNameGPT4oMini = "GPT 4o Mini"
 
+	DisplayNameGPT56Sol   = "GPT 5.6 Sol"
+	DisplayNameGPT56Terra = "GPT 5.6 Terra"
+	DisplayNameGPT56Luna  = "GPT 5.6 Luna"
+
 	DisplayNameGPT55         = "GPT 5.5"
 	DisplayNameGPT54         = "GPT 5.4"
 	DisplayNameGPT54Mini     = "GPT 5.4 Mini"

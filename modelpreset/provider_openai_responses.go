@@ -6,6 +6,78 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+var modelOpenAIResponsesGPT56Sol = ModelPreset{
+	ID:          PresetGPT56Sol,
+	Name:        ModelNameGPT56Sol,
+	DisplayName: DisplayNameGPT56Sol,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGPT56Sol,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelNone,
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+		spec.ReasoningLevelMax,
+	}),
+}
+
+var modelOpenAIResponsesGPT56Terra = ModelPreset{
+	ID:          PresetGPT56Terra,
+	Name:        ModelNameGPT56Terra,
+	DisplayName: DisplayNameGPT56Terra,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGPT56Terra,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelNone,
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+		spec.ReasoningLevelMax,
+	}),
+}
+
+var modelOpenAIResponsesGPT56Luna = ModelPreset{
+	ID:          PresetGPT56Luna,
+	Name:        ModelNameGPT56Luna,
+	DisplayName: DisplayNameGPT56Luna,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGPT56Luna,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelNone,
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+		spec.ReasoningLevelMax,
+	}),
+}
+
 var modelOpenAIResponsesGPT55 = ModelPreset{
 	ID:          PresetGPT55,
 	Name:        ModelNameGPT55,
@@ -331,6 +403,9 @@ var providerOpenAIResponses = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetGPT56Sol:      modelOpenAIResponsesGPT56Sol,
+		PresetGPT56Terra:    modelOpenAIResponsesGPT56Terra,
+		PresetGPT56Luna:     modelOpenAIResponsesGPT56Luna,
 		PresetGPT55:         modelOpenAIResponsesGPT55,
 		PresetGPT54:         modelOpenAIResponsesGPT54,
 		PresetGPT54Mini:     modelOpenAIResponsesGPT54Mini,

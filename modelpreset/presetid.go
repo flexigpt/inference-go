@@ -1,22 +1,30 @@
 package modelpreset
 
 const (
-	PresetGPT41     ModelPresetID = "gpt41"
-	PresetGPT41Mini ModelPresetID = "gpt41Mini"
-	PresetGPT4o     ModelPresetID = "gpt4o"
-	PresetGPT4oMini ModelPresetID = "gpt4oMini"
+	PresetGPT56Sol   ModelPresetID = "gpt56sol"
+	PresetGPT56Terra ModelPresetID = "gpt56terra"
+	PresetGPT56Luna  ModelPresetID = "gpt56luna"
 
-	PresetGPT55         ModelPresetID = "gpt55"
-	PresetGPT54         ModelPresetID = "gpt54"
-	PresetGPT54Mini     ModelPresetID = "gpt54mini"
-	PresetGPT54Nano     ModelPresetID = "gpt54nano"
-	PresetGPT53Codex    ModelPresetID = "gpt53Codex"
+	PresetGPT55 ModelPresetID = "gpt55"
+
+	PresetGPT54     ModelPresetID = "gpt54"
+	PresetGPT54Mini ModelPresetID = "gpt54mini"
+	PresetGPT54Nano ModelPresetID = "gpt54nano"
+
+	PresetGPT53Codex ModelPresetID = "gpt53Codex"
+
 	PresetGPT52         ModelPresetID = "gpt52"
 	PresetGPT52Codex    ModelPresetID = "gpt52Codex"
 	PresetGPT51         ModelPresetID = "gpt51"
 	PresetGPT51Codex    ModelPresetID = "gpt51Codex"
 	PresetGPT51CodexMax ModelPresetID = "gpt51CodexMax"
-	PresetGPT5Mini      ModelPresetID = "gpt5Mini"
+
+	PresetGPT41     ModelPresetID = "gpt41"
+	PresetGPT41Mini ModelPresetID = "gpt41Mini"
+	PresetGPT4o     ModelPresetID = "gpt4o"
+	PresetGPT4oMini ModelPresetID = "gpt4oMini"
+
+	PresetGPT5Mini ModelPresetID = "gpt5Mini"
 
 	PresetClaudeFable5   ModelPresetID = "fable5"
 	PresetClaudeOpus48   ModelPresetID = "opus48"

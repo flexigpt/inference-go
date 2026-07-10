@@ -3,22 +3,31 @@ package modelpreset
 import "github.com/flexigpt/inference-go/spec"
 
 const (
+	ModelNameGPT56Sol   spec.ModelName = "gpt-5.6-sol"
+	ModelNameGPT56Terra spec.ModelName = "gpt-5.6-terra"
+	ModelNameGPT56Luna  spec.ModelName = "gpt-5.6-luna"
+
+	ModelNameGPT55 spec.ModelName = "gpt-5.5"
+
+	ModelNameGPT54     spec.ModelName = "gpt-5.4"
+	ModelNameGPT54Mini spec.ModelName = "gpt-5.4-mini"
+	ModelNameGPT54Nano spec.ModelName = "gpt-5.4-nano"
+
+	ModelNameGPT53Codex spec.ModelName = "gpt-5.3-codex"
+
+	ModelNameGPT52      spec.ModelName = "gpt-5.2"
+	ModelNameGPT52Codex spec.ModelName = "gpt-5.2-codex"
+
+	ModelNameGPT51         spec.ModelName = "gpt-5.1"
+	ModelNameGPT51Codex    spec.ModelName = "gpt-5.1-codex"
+	ModelNameGPT51CodexMax spec.ModelName = "gpt-5.1-codex-max"
+
+	ModelNameGPT5Mini spec.ModelName = "gpt-5-mini"
+
 	ModelNameGPT41     spec.ModelName = "gpt-4.1"
 	ModelNameGPT41Mini spec.ModelName = "gpt-4.1-mini"
 	ModelNameGPT4o     spec.ModelName = "gpt-4o"
 	ModelNameGPT4oMini spec.ModelName = "gpt-4o-mini"
-
-	ModelNameGPT55         spec.ModelName = "gpt-5.5"
-	ModelNameGPT54         spec.ModelName = "gpt-5.4"
-	ModelNameGPT54Mini     spec.ModelName = "gpt-5.4-mini"
-	ModelNameGPT54Nano     spec.ModelName = "gpt-5.4-nano"
-	ModelNameGPT53Codex    spec.ModelName = "gpt-5.3-codex"
-	ModelNameGPT52         spec.ModelName = "gpt-5.2"
-	ModelNameGPT52Codex    spec.ModelName = "gpt-5.2-codex"
-	ModelNameGPT51         spec.ModelName = "gpt-5.1"
-	ModelNameGPT51Codex    spec.ModelName = "gpt-5.1-codex"
-	ModelNameGPT51CodexMax spec.ModelName = "gpt-5.1-codex-max"
-	ModelNameGPT5Mini      spec.ModelName = "gpt-5-mini"
 )
 
 const (

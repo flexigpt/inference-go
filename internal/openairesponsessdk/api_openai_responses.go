@@ -230,10 +230,9 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 			spec.ReasoningLevelLow,
 			spec.ReasoningLevelMedium,
 			spec.ReasoningLevelHigh,
-			spec.ReasoningLevelXHigh:
+			spec.ReasoningLevelXHigh,
+			spec.ReasoningLevelMax:
 			r.Effort = shared.ReasoningEffort(string(rp.Level))
-		case spec.ReasoningLevelMax:
-			r.Effort = shared.ReasoningEffortXhigh
 		default:
 			return nil, fmt.Errorf("invalid reasoning level %q for singleWithLevels", rp.Level)
 		}

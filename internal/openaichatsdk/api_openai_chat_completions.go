@@ -229,10 +229,10 @@ func (api *OpenAIChatCompletionsAPI) FetchCompletion(
 			spec.ReasoningLevelLow,
 			spec.ReasoningLevelMedium,
 			spec.ReasoningLevelHigh,
-			spec.ReasoningLevelXHigh:
+			spec.ReasoningLevelXHigh,
+			spec.ReasoningLevelMax:
 			params.ReasoningEffort = shared.ReasoningEffort(string(rp.Level))
-		case spec.ReasoningLevelMax:
-			params.ReasoningEffort = shared.ReasoningEffortXhigh
+
 		default:
 			return nil, fmt.Errorf("invalid level %q for singleWithLevels", rp.Level)
 
