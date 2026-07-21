@@ -14,6 +14,22 @@ tasks:
       - echo "{{.GREETING}}"
     silent: true
 
+  cloc:
+    cmds:
+      - |
+        cloc --vcs=git --ignored=ignored.txt \
+             --force-lang=Mustache,tmpl --force-lang=INI,env --force-lang=INI,dev --force-lang=INI,prod \
+             --exclude_ext=yaml,sum,mod,md5 --not-match-f='LICENSE$|\.gitignore$' \
+             .
+
+  tagstats:
+    cmds:
+      - ./scripts/git_tag_stats.sh
+
+  godepgraph:
+    cmds:
+      - godepgraph -s -o github.com/flexigpt/inference-go,command-line-arguments provider_set.go | dot -Tpng -o godepgraph.png
+
   installtools:
     cmds:
       # Install task, go, golangci-lint, cloc externally. E.g via asdf. the needed versions are pinned in .tool-versions file.
@@ -23,26 +39,15 @@ tasks:
       - go install github.com/ppipada/refdir@v0.7.1
       - go install github.com/vladopajic/go-test-coverage/v2@v2.18.8
 
-  cloc:
+  upgrade-do:
     cmds:
-      - |
-        cloc --vcs=git --ignored=ignored.txt \
-             --force-lang=Mustache,tmpl --force-lang=INI,env --force-lang=INI,dev --force-lang=INI,prod \
-             --exclude_ext=yaml,sum,mod,md5 --not-match-f='LICENSE$|\.gitignore$' \
-             .
+      - go-mod-upgrade -v -f
+      - go mod tidy
 
-  checkupgrade:
+  upgrade-check:
     cmds:
       - gomajor list
       - go-mod-upgrade -l
-
-  godepgraph:
-    cmds:
-      - godepgraph -s -o github.com/flexigpt/inference-go,command-line-arguments provider_set.go | dot -Tpng -o godepgraph.png
-
-  tagstats:
-    cmds:
-      - ./scripts/git_tag_stats.sh
 
   lint-gopls:
     cmds:
