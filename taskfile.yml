@@ -30,7 +30,7 @@ tasks:
     cmds:
       - godepgraph -s -o github.com/flexigpt/inference-go,command-line-arguments provider_set.go | dot -Tpng -o godepgraph.png
 
-  installtools:
+  install-tools:
     cmds:
       # Install task, go, golangci-lint, cloc externally. E.g via asdf. the needed versions are pinned in .tool-versions file.
       - go install golang.org/x/tools/gopls@v0.23.0
