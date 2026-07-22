@@ -51,10 +51,12 @@ const (
 	DisplayNameClaudeSonnet4  = "Claude Sonnet 4"
 	DisplayNameClaudeHaiku45  = "Claude Haiku 4.5"
 
-	DisplayNameGemini31Pro       = "Gemini 3.1 Pro"
+	DisplayNameGemini36Flash     = "Gemini 3.6 Flash"
 	DisplayNameGemini35Flash     = "Gemini 3.5 Flash"
-	DisplayNameGemini3Flash      = "Gemini 3 Flash"
+	DisplayNameGemini35FlashLite = "Gemini 3.5 Flash Lite"
+	DisplayNameGemini31Pro       = "Gemini 3.1 Pro"
 	DisplayNameGemini31FlashLite = "Gemini 3.1 Flash Lite"
+	DisplayNameGemini3Flash      = "Gemini 3 Flash"
 	DisplayNameGemini25Flash     = "Gemini 2.5 Flash"
 	DisplayNameGemini25FlashLite = "Gemini 2.5 Flash Lite"
 

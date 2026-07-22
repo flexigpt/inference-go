@@ -45,10 +45,12 @@ const (
 )
 
 const (
-	ModelNameGemini31Pro       spec.ModelName = "gemini-3.1-pro-preview"
+	ModelNameGemini36Flash     spec.ModelName = "gemini-3.6-flash"
 	ModelNameGemini35Flash     spec.ModelName = "gemini-3.5-flash"
+	ModelNameGemini35FlashLite spec.ModelName = "gemini-3.5-flash-lite"
+	ModelNameGemini31Pro       spec.ModelName = "gemini-3.1-pro-preview"
+	ModelNameGemini31FlashLite spec.ModelName = "gemini-3.1-flash-lite"
 	ModelNameGemini3Flash      spec.ModelName = "gemini-3-flash-preview"
-	ModelNameGemini31FlashLite spec.ModelName = "gemini-3.1-flash-lite-preview"
 	ModelNameGemini25Flash     spec.ModelName = "gemini-2.5-flash"
 	ModelNameGemini25FlashLite spec.ModelName = "gemini-2.5-flash-lite-preview-06-17"
 )

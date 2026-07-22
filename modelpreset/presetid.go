@@ -38,10 +38,12 @@ const (
 	PresetClaudeSonnet4  ModelPresetID = "sonnet4"
 	PresetClaudeHaiku45  ModelPresetID = "haiku45"
 
-	PresetGemini31Pro       ModelPresetID = "gemini31Pro"
+	PresetGemini36Flash     ModelPresetID = "gemini36Flash"
 	PresetGemini35Flash     ModelPresetID = "gemini35Flash"
-	PresetGemini3Flash      ModelPresetID = "gemini3Flash"
+	PresetGemini35FlashLite ModelPresetID = "gemini35FlashLite"
+	PresetGemini31Pro       ModelPresetID = "gemini31Pro"
 	PresetGemini31FlashLite ModelPresetID = "gemini31FlashLite"
+	PresetGemini3Flash      ModelPresetID = "gemini3Flash"
 	PresetGemini25Flash     ModelPresetID = "gemini25Flash"
 	PresetGemini25FlashLite ModelPresetID = "gemini25FlashLite"
 

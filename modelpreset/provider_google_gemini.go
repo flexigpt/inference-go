@@ -6,12 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
-var modelGoogleGemini31Pro = ModelPreset{
-	ID:          PresetGemini31Pro,
-	Name:        ModelNameGemini31Pro,
-	DisplayName: DisplayNameGemini31Pro,
+var modelGoogleGemini36Flash = ModelPreset{
+	ID:          PresetGemini36Flash,
+	Name:        ModelNameGemini36Flash,
+	DisplayName: DisplayNameGemini36Flash,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameGemini31Pro,
+		Name:            ModelNameGemini36Flash,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 65536,
@@ -27,6 +27,7 @@ var modelGoogleGemini31Pro = ModelPreset{
 				spec.ReasoningTypeSingleWithLevels,
 			},
 			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelMinimal,
 				spec.ReasoningLevelLow,
 				spec.ReasoningLevelMedium,
 				spec.ReasoningLevelHigh,
@@ -67,12 +68,12 @@ var modelGoogleGemini35Flash = ModelPreset{
 	},
 }
 
-var modelGoogleGemini3Flash = ModelPreset{
-	ID:          PresetGemini3Flash,
-	Name:        ModelNameGemini3Flash,
-	DisplayName: DisplayNameGemini3Flash,
+var modelGoogleGemini35FlashLite = ModelPreset{
+	ID:          PresetGemini35FlashLite,
+	Name:        ModelNameGemini35FlashLite,
+	DisplayName: DisplayNameGemini35FlashLite,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameGemini3Flash,
+		Name:            ModelNameGemini35FlashLite,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 65536,
@@ -98,12 +99,73 @@ var modelGoogleGemini3Flash = ModelPreset{
 	},
 }
 
+var modelGoogleGemini31Pro = ModelPreset{
+	ID:          PresetGemini31Pro,
+	Name:        ModelNameGemini31Pro,
+	DisplayName: DisplayNameGemini31Pro,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGemini31Pro,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 65536,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+	},
+}
+
 var modelGoogleGemini31FlashLite = ModelPreset{
 	ID:          PresetGemini31FlashLite,
 	Name:        ModelNameGemini31FlashLite,
 	DisplayName: DisplayNameGemini31FlashLite,
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameGemini31FlashLite,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 65536,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelMinimal,
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+	},
+}
+
+var modelGoogleGemini3Flash = ModelPreset{
+	ID:          PresetGemini3Flash,
+	Name:        ModelNameGemini3Flash,
+	DisplayName: DisplayNameGemini3Flash,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGemini3Flash,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 65536,
@@ -260,9 +322,11 @@ var providerGoogleGemini = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetGemini31Pro:       modelGoogleGemini31Pro,
+		PresetGemini36Flash:     modelGoogleGemini36Flash,
 		PresetGemini35Flash:     modelGoogleGemini35Flash,
+		PresetGemini35FlashLite: modelGoogleGemini35FlashLite,
 		PresetGemini3Flash:      modelGoogleGemini3Flash,
+		PresetGemini31Pro:       modelGoogleGemini31Pro,
 		PresetGemini31FlashLite: modelGoogleGemini31FlashLite,
 		PresetGemini25Flash:     modelGoogleGemini25Flash,
 		PresetGemini25FlashLite: modelGoogleGemini25FlashLite,
