@@ -1042,7 +1042,7 @@ func anthropicServerToolInputToWebSearchCallItems(
 
 func mapAnthropicStopReasonToStatus(stopReason anthropic.StopReason) spec.Status {
 	switch stopReason {
-	case anthropic.StopReasonMaxTokens:
+	case anthropic.StopReasonMaxTokens, anthropic.StopReasonModelContextWindowExceeded:
 		return spec.StatusIncomplete
 	case anthropic.StopReasonRefusal, anthropic.StopReasonPauseTurn, anthropic.StopReasonStopSequence:
 		return spec.StatusFailed

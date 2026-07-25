@@ -27,6 +27,7 @@ const (
 	PresetGPT5Mini ModelPresetID = "gpt5Mini"
 
 	PresetClaudeFable5   ModelPresetID = "fable5"
+	PresetClaudeOpus5    ModelPresetID = "opus5"
 	PresetClaudeOpus48   ModelPresetID = "opus48"
 	PresetClaudeOpus47   ModelPresetID = "opus47"
 	PresetClaudeOpus46   ModelPresetID = "opus46"

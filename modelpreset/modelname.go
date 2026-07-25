@@ -32,6 +32,7 @@ const (
 
 const (
 	ModelNameClaudeFable5   spec.ModelName = "claude-fable-5"
+	ModelNameClaudeOpus5    spec.ModelName = "claude-opus-5"
 	ModelNameClaudeOpus48   spec.ModelName = "claude-opus-4-8"
 	ModelNameClaudeOpus47   spec.ModelName = "claude-opus-4-7"
 	ModelNameClaudeOpus46   spec.ModelName = "claude-opus-4-6"

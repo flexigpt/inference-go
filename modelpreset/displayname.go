@@ -40,6 +40,7 @@ const (
 	DisplayNameGPT5Mini      = "GPT 5 Mini"
 
 	DisplayNameClaudeFable5   = "Claude Fable 5"
+	DisplayNameClaudeOpus5    = "Claude Opus 5"
 	DisplayNameClaudeOpus48   = "Claude Opus 4.8"
 	DisplayNameClaudeOpus47   = "Claude Opus 4.7"
 	DisplayNameClaudeOpus46   = "Claude Opus 4.6"

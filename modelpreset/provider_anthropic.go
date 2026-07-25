@@ -36,6 +36,37 @@ var modelAnthropicFable5 = ModelPreset{
 	},
 }
 
+var modelAnthropicOpus5 = ModelPreset{
+	ID:          PresetClaudeOpus5,
+	Name:        ModelNameClaudeOpus5,
+	DisplayName: DisplayNameClaudeOpus5,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameClaudeOpus5,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+		CacheControl:    cacheEphemeral5m(),
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+				spec.ReasoningLevelMax,
+			},
+		},
+	},
+}
+
 var modelAnthropicOpus48 = ModelPreset{
 	ID:          PresetClaudeOpus48,
 	Name:        ModelNameClaudeOpus48,
@@ -373,6 +404,7 @@ var providerAnthropic = ProviderPreset{
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
 		PresetClaudeFable5:   modelAnthropicFable5,
+		PresetClaudeOpus5:    modelAnthropicOpus5,
 		PresetClaudeOpus48:   modelAnthropicOpus48,
 		PresetClaudeOpus47:   modelAnthropicOpus47,
 		PresetClaudeOpus46:   modelAnthropicOpus46,
