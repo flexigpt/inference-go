@@ -371,7 +371,7 @@ func (api *OpenAIResponsesAPI) doStreaming(
 	streamCfg := sdkutil.ResolveStreamConfig(opts)
 
 	emitText := func(chunk string) error {
-		if strings.TrimSpace(chunk) == "" {
+		if chunk == "" {
 			return nil
 		}
 		event := spec.StreamEvent{
@@ -387,7 +387,7 @@ func (api *OpenAIResponsesAPI) doStreaming(
 	}
 
 	emitThinking := func(chunk string) error {
-		if strings.TrimSpace(chunk) == "" {
+		if chunk == "" {
 			return nil
 		}
 		event := spec.StreamEvent{
@@ -402,12 +402,12 @@ func (api *OpenAIResponsesAPI) doStreaming(
 		return sdkutil.SafeCallStreamHandler(opts.StreamHandler, event)
 	}
 
-	writeTextData, flushTextData := sdkutil.NewBufferedStreamer(
+	writeTextData, flushTextData := sdkutil.NewBufferedStreamerWithError(
 		emitText,
 		streamCfg.FlushInterval,
 		streamCfg.FlushChunkSize,
 	)
-	writeThinkingData, flushThinkingData := sdkutil.NewBufferedStreamer(
+	writeThinkingData, flushThinkingData := sdkutil.NewBufferedStreamerWithError(
 		emitThinking,
 		streamCfg.FlushInterval,
 		streamCfg.FlushChunkSize,
@@ -422,9 +422,16 @@ func (api *OpenAIResponsesAPI) doStreaming(
 	)
 	defer func() { _ = stream.Close() }()
 
+	streamStartedAt := time.Now()
+	lastEventAt := streamStartedAt
+	eventCount := 0
+	sawTerminal := false
+
 	var streamWriteErr error
 	for stream.Next() {
 		chunk := stream.Current()
+		eventCount++
+		lastEventAt = time.Now()
 
 		// Incremental assistant text.
 		if chunk.Type == "response.output_text.delta" {
@@ -452,12 +459,14 @@ func (api *OpenAIResponsesAPI) doStreaming(
 
 		if chunk.Type == "response.completed" {
 			oaiResp = chunk.Response
+			sawTerminal = true
 			// Normal completion.
 			break
 		}
 
 		if chunk.Type == "response.failed" {
 			oaiResp = chunk.Response
+			sawTerminal = true
 			errJSON := oaiResp.Error.RawJSON()
 			if errJSON == "" {
 				errJSON = "unknown error"
@@ -468,20 +477,44 @@ func (api *OpenAIResponsesAPI) doStreaming(
 
 		if chunk.Type == "response.incomplete" {
 			oaiResp = chunk.Response
+			sawTerminal = true
 			reason := oaiResp.IncompleteDetails.Reason
 			streamWriteErr = fmt.Errorf("API finished as incomplete, %s", reason)
 			break
 		}
 
 	}
+	var flushErr error
 	if flushTextData != nil {
-		flushTextData()
+		flushErr = errors.Join(flushErr, flushTextData())
 	}
 	if flushThinkingData != nil {
-		flushThinkingData()
+		flushErr = errors.Join(flushErr, flushThinkingData())
 	}
 
-	streamErr := errors.Join(stream.Err(), streamWriteErr)
+	iteratorErr := stream.Err()
+	if !sawTerminal && iteratorErr == nil && streamWriteErr == nil {
+		streamWriteErr = errors.New(
+			"openai responses stream ended before a terminal response event",
+		)
+	}
+
+	streamErr := errors.Join(iteratorErr, streamWriteErr, flushErr)
+	if streamErr != nil {
+		logutil.Error(
+			"openai responses stream terminated",
+			"provider", string(providerName),
+			"model", string(modelName),
+			"duration", time.Since(streamStartedAt),
+			"lastEventAgo", time.Since(lastEventAt),
+			"eventCount", eventCount,
+			"sawTerminal", sawTerminal,
+			"iteratorErr", iteratorErr,
+			"streamWriteErr", streamWriteErr,
+			"flushErr", flushErr,
+			"contextErr", ctx.Err(),
+		)
+	}
 
 	resp.Usage = usageFromOpenAIResponse(&oaiResp)
 	if streamErr != nil {

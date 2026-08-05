@@ -86,14 +86,18 @@ func NewHTTPCompletionDebugger(config *DebugConfig) *HTTPCompletionDebugger {
 // HTTPClient implements spec.CompletionDebugger.HTTPClient.
 func (d *HTTPCompletionDebugger) HTTPClient(base *http.Client) *http.Client {
 	if base == nil {
-		base = &http.Client{Transport: http.DefaultTransport}
+		base = newStreamingHTTPClient()
 	}
 	rt := base.Transport
 	if rt == nil {
-		rt = http.DefaultTransport
+		rt = defaultStreamingHTTPTransport
 	}
 
 	clone := *base
+	// "http.Client.Timeout" includes the complete response body lifetime. Keep it
+	// disabled for streaming SDKs; callers and provider request options own the
+	// total deadline.
+	clone.Timeout = 0
 	clone.Transport = &logTransport{
 		base: rt,
 	}

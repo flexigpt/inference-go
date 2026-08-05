@@ -1,6 +1,7 @@
 package sdkutil
 
 import (
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"strings"
@@ -16,43 +17,61 @@ const (
 	FlushChunkSize = 1024
 )
 
-// NewBufferedStreamer returns two functions:
-//   - write(chunk)  -> use this instead of onDataFlush
-//   - flush()       -> call once when streaming is finished
-func NewBufferedStreamer(
+// NewBufferedStreamerWithError buffers stream data while preserving callback
+// errors from size-based, timer-based, and final flushes.
+func NewBufferedStreamerWithError(
 	onDataFlush func(string) error,
 	flushInterval time.Duration,
 	maxSize int,
-) (write func(string) error, flush func()) {
+) (write func(string) error, flush func() error) {
 	if flushInterval <= 0 {
 		flushInterval = FlushInterval
 	}
 	if maxSize <= 0 {
 		maxSize = FlushChunkSize
 	}
+
 	var mu sync.Mutex
 	var buf strings.Builder
+	var firstErr error
+	var closed bool
+
 	ticker := time.NewTicker(flushInterval)
 	done := make(chan struct{})
+	stopped := make(chan struct{})
+
+	// The caller must hold mu. Keeping mu locked while invoking the callback
+	// prevents this streamer's timer and size-based flushes from racing.
+	flushBufferLocked := func() error {
+		if firstErr != nil {
+			return firstErr
+		}
+		if buf.Len() == 0 {
+			return nil
+		}
+
+		data := buf.String()
+		buf.Reset()
+		if err := onDataFlush(data); err != nil {
+			firstErr = err
+			return err
+		}
+		return nil
+	}
 
 	// Background goroutine time-based flush.
 	go func() {
 		defer Recover("buffered streamer background flush panic")
+		defer close(stopped)
+		defer ticker.Stop()
 
 		for {
 			select {
 			case <-ticker.C:
 				mu.Lock()
-				if buf.Len() > 0 {
-					data := buf.String()
-					buf.Reset()
-					mu.Unlock()
-					_ = onDataFlush(data)
-				} else {
-					mu.Unlock()
-				}
+				_ = flushBufferLocked()
+				mu.Unlock()
 			case <-done:
-				ticker.Stop()
 				return
 			}
 		}
@@ -61,34 +80,43 @@ func NewBufferedStreamer(
 	// Returns the wrapped write.
 	write = func(chunk string) error {
 		mu.Lock()
-		buf.WriteString(chunk)
-		over := buf.Len() >= maxSize
-		if over {
-			data := buf.String()
-			buf.Reset()
-			mu.Unlock()
-			// Size-based flush.
-			return onDataFlush(data)
+		defer mu.Unlock()
+
+		if firstErr != nil {
+			return firstErr
 		}
-		mu.Unlock()
+		if closed {
+			return errors.New("buffered streamer is closed")
+		}
+		if chunk == "" {
+			return nil
+		}
+
+		buf.WriteString(chunk)
+		if buf.Len() >= maxSize {
+			return flushBufferLocked()
+		}
 		return nil
 	}
 
 	var once sync.Once
-	// Flush everything, stop ticker.
-	flush = func() {
+	var flushErr error
+
+	// Flush everything, stop the ticker, and report callback errors.
+	flush = func() error {
 		once.Do(func() {
-			close(done)
 			mu.Lock()
-			if buf.Len() > 0 {
-				data := buf.String()
-				buf.Reset()
-				mu.Unlock()
-				_ = onDataFlush(data)
-				return
-			}
+			closed = true
+			mu.Unlock()
+
+			close(done)
+			<-stopped
+
+			mu.Lock()
+			flushErr = flushBufferLocked()
 			mu.Unlock()
 		})
+		return flushErr
 	}
 
 	return write, flush

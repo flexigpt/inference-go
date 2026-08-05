@@ -342,7 +342,7 @@ func (api *AnthropicMessagesAPI) doStreaming(
 	streamCfg := sdkutil.ResolveStreamConfig(opts)
 
 	emitText := func(chunk string) error {
-		if strings.TrimSpace(chunk) == "" {
+		if chunk == "" {
 			return nil
 		}
 		event := spec.StreamEvent{
@@ -358,7 +358,7 @@ func (api *AnthropicMessagesAPI) doStreaming(
 	}
 
 	emitThinking := func(chunk string) error {
-		if strings.TrimSpace(chunk) == "" {
+		if chunk == "" {
 			return nil
 		}
 		event := spec.StreamEvent{
@@ -371,12 +371,12 @@ func (api *AnthropicMessagesAPI) doStreaming(
 		return sdkutil.SafeCallStreamHandler(opts.StreamHandler, event)
 	}
 
-	writeTextData, flushTextData := sdkutil.NewBufferedStreamer(
+	writeTextData, flushTextData := sdkutil.NewBufferedStreamerWithError(
 		emitText,
 		streamCfg.FlushInterval,
 		streamCfg.FlushChunkSize,
 	)
-	writeThinkingData, flushThinkingData := sdkutil.NewBufferedStreamer(
+	writeThinkingData, flushThinkingData := sdkutil.NewBufferedStreamerWithError(
 		emitThinking,
 		streamCfg.FlushInterval,
 		streamCfg.FlushChunkSize,
@@ -394,9 +394,16 @@ func (api *AnthropicMessagesAPI) doStreaming(
 		streamWriteErr      error
 		streamAccumulateErr error
 	)
+	streamStartedAt := time.Now()
+	lastEventAt := streamStartedAt
+	eventCount := 0
+	sawMessageStop := false
 
 	for stream.Next() {
 		event := stream.Current()
+		eventCount++
+		lastEventAt = time.Now()
+
 		err := respFull.Accumulate(event)
 		if err != nil {
 			streamAccumulateErr = err
@@ -410,6 +417,8 @@ func (api *AnthropicMessagesAPI) doStreaming(
 			// Top-level message metadata changes; nothing to stream to user.
 		case anthropic.MessageStopEvent:
 			// Conversation turn complete.
+			sawMessageStop = true
+
 		case anthropic.ContentBlockStopEvent:
 			// Content block done.
 		case anthropic.ContentBlockStartEvent:
@@ -431,15 +440,43 @@ func (api *AnthropicMessagesAPI) doStreaming(
 		}
 	}
 
+	var flushErr error
 	if flushTextData != nil {
-		flushTextData()
+		flushErr = errors.Join(flushErr, flushTextData())
 	}
 
 	if flushThinkingData != nil {
-		flushThinkingData()
+		flushErr = errors.Join(flushErr, flushThinkingData())
 	}
 
-	streamErr := errors.Join(stream.Err(), streamAccumulateErr, streamWriteErr)
+	iteratorErr := stream.Err()
+	if !sawMessageStop &&
+		iteratorErr == nil &&
+		streamAccumulateErr == nil &&
+		streamWriteErr == nil {
+		streamWriteErr = errors.New(
+			"anthropic stream ended before message_stop",
+		)
+	}
+
+	streamErr := errors.Join(iteratorErr, streamAccumulateErr, streamWriteErr, flushErr)
+	if streamErr != nil {
+		logutil.Error(
+			"anthropic messages stream terminated",
+			"provider", string(providerName),
+			"model", string(modelName),
+			"duration", time.Since(streamStartedAt),
+			"lastEventAgo", time.Since(lastEventAt),
+			"eventCount", eventCount,
+			"sawMessageStop", sawMessageStop,
+			"iteratorErr", iteratorErr,
+			"accumulateErr", streamAccumulateErr,
+			"streamWriteErr", streamWriteErr,
+			"flushErr", flushErr,
+			"contextErr", ctx.Err(),
+		)
+	}
+
 	resp.Usage = usageFromAnthropicMessage(&respFull)
 	if streamErr != nil {
 		resp.Error = &spec.Error{Message: streamErr.Error()}

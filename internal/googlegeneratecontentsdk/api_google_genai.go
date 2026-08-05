@@ -412,8 +412,12 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 	}
 
 	// Flush calls are for end cleaning not for continuation.
-	writeText, flushText := sdkutil.NewBufferedStreamer(emitText, streamCfg.FlushInterval, streamCfg.FlushChunkSize)
-	writeThinking, flushThinking := sdkutil.NewBufferedStreamer(
+	writeText, flushText := sdkutil.NewBufferedStreamerWithError(
+		emitText,
+		streamCfg.FlushInterval,
+		streamCfg.FlushChunkSize,
+	)
+	writeThinking, flushThinking := sdkutil.NewBufferedStreamerWithError(
 		emitThinking,
 		streamCfg.FlushInterval,
 		streamCfg.FlushChunkSize,
@@ -429,6 +433,11 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 		streamWriteErr error
 		streamErr      error
 	)
+	streamStartedAt := time.Now()
+	lastEventAt := streamStartedAt
+	eventCount := 0
+	sawFinishReason := false
+
 	stream := client.Models.GenerateContentStream(streamCtx, string(modelName), contents, streamConfig)
 	for chunkResp, chunkErr := range stream {
 		if chunkErr != nil {
@@ -438,6 +447,8 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 		if chunkResp == nil {
 			continue
 		}
+		eventCount++
+		lastEventAt = time.Now()
 
 		if chunkResp.UsageMetadata != nil {
 			accUsage = chunkResp.UsageMetadata
@@ -452,6 +463,7 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 		cand := chunkResp.Candidates[0]
 		if cand.FinishReason != "" {
 			accFinish = cand.FinishReason
+			sawFinishReason = true
 		}
 		if cand.GroundingMetadata != nil {
 			accGrounding = mergeGoogleGenerateContentGroundingMetadata(accGrounding, cand.GroundingMetadata)
@@ -490,11 +502,35 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 		}
 	}
 
+	var flushErr error
 	if flushText != nil {
-		flushText()
+		flushErr = errors.Join(flushErr, flushText())
 	}
 	if flushThinking != nil {
-		flushThinking()
+		flushErr = errors.Join(flushErr, flushThinking())
+	}
+
+	if !sawFinishReason && streamErr == nil && streamWriteErr == nil {
+		streamErr = errors.New(
+			"google GenerateContent stream ended before a finish reason",
+		)
+	}
+
+	combinedErr := errors.Join(streamErr, streamWriteErr, flushErr)
+	if combinedErr != nil {
+		logutil.Error(
+			"google GenerateContent stream terminated",
+			"provider", string(providerName),
+			"model", string(modelName),
+			"duration", time.Since(streamStartedAt),
+			"lastEventAgo", time.Since(lastEventAt),
+			"eventCount", eventCount,
+			"sawFinishReason", sawFinishReason,
+			"streamErr", streamErr,
+			"streamWriteErr", streamWriteErr,
+			"flushErr", flushErr,
+			"contextErr", streamCtx.Err(),
+		)
 	}
 
 	// Consolidate raw per-chunk stream parts into the canonical single-part-per-kind
@@ -505,8 +541,6 @@ func (api *GoogleGenerateContentAPI) doStreaming(
 	// ReasoningMessage / OutputMessage entries instead of the single signed entries that
 	// callers and the multi-turn round-trip path expect.
 	accParts = consolidateGoogleGenerateContentStreamParts(accParts)
-
-	combinedErr := errors.Join(streamErr, streamWriteErr)
 
 	// Build a synthetic GenerateContentResponse from all accumulated state so
 	// the shared outputsFromGenAIResponse path can process it uniformly.

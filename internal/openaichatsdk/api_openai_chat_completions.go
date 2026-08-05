@@ -380,7 +380,7 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 	streamCfg := sdkutil.ResolveStreamConfig(opts)
 	// No thinking data available in openai chat completions API, hence no thinking writer.
 	emitText := func(chunk string) error {
-		if strings.TrimSpace(chunk) == "" {
+		if chunk == "" {
 			return nil
 		}
 		event := spec.StreamEvent{
@@ -396,7 +396,7 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 	}
 
 	// No thinking data available in openai chat completions API, hence no thinking writer.
-	writeText, flushText := sdkutil.NewBufferedStreamer(
+	writeText, flushText := sdkutil.NewBufferedStreamerWithError(
 		emitText,
 		streamCfg.FlushInterval,
 		streamCfg.FlushChunkSize,
@@ -410,9 +410,24 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 	defer func() { _ = stream.Close() }()
 
 	acc := openai.ChatCompletionAccumulator{}
+	streamStartedAt := time.Now()
+	lastEventAt := streamStartedAt
+	eventCount := 0
+	sawFinishReason := false
+
 	var streamWriteErr error
 	for stream.Next() {
 		chunk := stream.Current()
+		eventCount++
+		lastEventAt = time.Now()
+
+		for _, choice := range chunk.Choices {
+			if choice.FinishReason != "" {
+				sawFinishReason = true
+				break
+			}
+		}
+
 		acc.AddChunk(chunk)
 
 		// When JustFinished* triggers, the current chunk isn't textual content.
@@ -429,18 +444,42 @@ func (api *OpenAIChatCompletionsAPI) doStreaming(
 		}
 
 		// Best to use chunks after handling JustFinished events.
-		if len(chunk.Choices) > 0 && strings.TrimSpace(chunk.Choices[0].Delta.Content) != "" {
+		if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.Content != "" {
 			streamWriteErr = writeText(chunk.Choices[0].Delta.Content)
 			if streamWriteErr != nil {
 				break
 			}
 		}
 	}
+
+	var flushErr error
 	if flushText != nil {
-		flushText()
+		flushErr = flushText()
 	}
 
-	streamErr := errors.Join(stream.Err(), streamWriteErr)
+	iteratorErr := stream.Err()
+	if !sawFinishReason && iteratorErr == nil && streamWriteErr == nil {
+		streamWriteErr = errors.New(
+			"openai chat completions stream ended before a finish_reason",
+		)
+	}
+
+	streamErr := errors.Join(iteratorErr, streamWriteErr, flushErr)
+	if streamErr != nil {
+		logutil.Error(
+			"openai chat completions stream terminated",
+			"provider", string(providerName),
+			"model", string(modelName),
+			"duration", time.Since(streamStartedAt),
+			"lastEventAgo", time.Since(lastEventAt),
+			"eventCount", eventCount,
+			"sawFinishReason", sawFinishReason,
+			"iteratorErr", iteratorErr,
+			"streamWriteErr", streamWriteErr,
+			"flushErr", flushErr,
+			"contextErr", ctx.Err(),
+		)
+	}
 
 	resp.Usage = usageFromOpenAIChatCompletion(&acc.ChatCompletion)
 	if streamErr != nil {
