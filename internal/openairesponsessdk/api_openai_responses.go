@@ -482,7 +482,6 @@ func (api *OpenAIResponsesAPI) doStreaming(
 			streamWriteErr = fmt.Errorf("API finished as incomplete, %s", reason)
 			break
 		}
-
 	}
 	var flushErr error
 	if flushTextData != nil {
