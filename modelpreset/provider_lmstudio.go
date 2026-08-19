@@ -6,6 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	ProviderLMStudio spec.ProviderName = "lmstudio"
+
+	DisplayNameProviderLMStudio = "LM Studio"
+)
+
 var modelLMStudioGemma426BA4B = ModelPreset{
 	ID:          PresetGemma426BA4B,
 	Name:        ModelNameGemma426BA4BRepo,

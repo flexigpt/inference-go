@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	ModelNameLlama4BehemothLocal spec.ModelName = "llama4-behemoth"
-	ModelNameLlama4MaverickLocal spec.ModelName = "llama4-maverick"
-	ModelNameLlama4ScoutLocal    spec.ModelName = "llama4-scout"
+	ProviderLlamaCPP spec.ProviderName = "llamacpp"
+
+	DisplayNameProviderLlamaCPP = "llama.cpp"
 )
 
 var modelLlamaCPPBehemoth = ModelPreset{

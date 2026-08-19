@@ -7,10 +7,24 @@ import (
 )
 
 const (
+	ProviderMistral spec.ProviderName = "mistral"
+
+	DisplayNameProviderMistral = "Mistral AI"
+)
+
+const (
 	ModelNameMistralMedium35 spec.ModelName = "mistral-medium-3-5"
 	ModelNameMistralSmall4   spec.ModelName = "mistral-small-2603"
 	ModelNameMistralLarge3   spec.ModelName = "mistral-large-2512"
 	ModelNameDevstral2       spec.ModelName = "devstral-2512"
+
+	ModelNameMinistral314BRepo  spec.ModelName = "mistralai/Ministral-3-14B-Instruct-2512"
+	ModelNameMinistral314BLocal spec.ModelName = "ministral-3-14b"
+
+	ModelNameDevstral224BRepo  spec.ModelName = "mistralai/Devstral-Small-2-24B-Instruct-2512"
+	ModelNameDevstral224BLocal spec.ModelName = "devstral-small-2-24b"
+
+	ModelNameMinistral314BOllama spec.ModelName = "ministral-3:14b"
 )
 
 const (
@@ -18,6 +32,9 @@ const (
 	DisplayNameMistralSmall4   = "Mistral Small 4"
 	DisplayNameMistralLarge3   = "Mistral Large 3"
 	DisplayNameDevstral2       = "Devstral 2"
+
+	DisplayNameMinistral314B = "Ministral 3 14B"
+	DisplayNameDevstral224B  = "Devstral Small 2 24B"
 )
 
 const (
@@ -25,6 +42,9 @@ const (
 	PresetMistralSmall4   ModelPresetID = "mistralSmall4"
 	PresetMistralLarge3   ModelPresetID = "mistralLarge3"
 	PresetDevstral2       ModelPresetID = "devstral2"
+
+	PresetMinistral314B ModelPresetID = "ministral314b"
+	PresetDevstral224B  ModelPresetID = "devstral224b"
 )
 
 var modelMistralMedium35 = ModelPreset{

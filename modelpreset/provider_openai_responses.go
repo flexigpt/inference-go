@@ -7,6 +7,12 @@ import (
 )
 
 const (
+	ProviderOpenAIResponses spec.ProviderName = "openairesponses"
+
+	DisplayNameProviderOpenAIResponses = "OpenAI Responses API"
+)
+
+const (
 	ModelNameGPT56Sol      spec.ModelName = "gpt-5.6-sol"
 	ModelNameGPT56Terra    spec.ModelName = "gpt-5.6-terra"
 	ModelNameGPT56Luna     spec.ModelName = "gpt-5.6-luna"
@@ -21,10 +27,19 @@ const (
 	ModelNameGPT51Codex    spec.ModelName = "gpt-5.1-codex"
 	ModelNameGPT51CodexMax spec.ModelName = "gpt-5.1-codex-max"
 	ModelNameGPT5Mini      spec.ModelName = "gpt-5-mini"
-	ModelNameGPT41         spec.ModelName = "gpt-4.1"
-	ModelNameGPT41Mini     spec.ModelName = "gpt-4.1-mini"
-	ModelNameGPT4o         spec.ModelName = "gpt-4o"
-	ModelNameGPT4oMini     spec.ModelName = "gpt-4o-mini"
+
+	ModelNameGPT41     spec.ModelName = "gpt-4.1"
+	ModelNameGPT41Mini spec.ModelName = "gpt-4.1-mini"
+	ModelNameGPT4o     spec.ModelName = "gpt-4o"
+	ModelNameGPT4oMini spec.ModelName = "gpt-4o-mini"
+
+	ModelNameGPTOSS20BRepo  spec.ModelName = "openai/gpt-oss-20b"
+	ModelNameGPTOSS20BLocal spec.ModelName = "gpt-oss-20b"
+
+	ModelNameGPTOSS120BFireworksAI spec.ModelName = "openai/gpt-oss-120b:fireworks-ai"
+	ModelNameGPTOSS20BFireworksAI  spec.ModelName = "openai/gpt-oss-20b:fireworks-ai"
+
+	ModelNameGPTOSS20BOllama spec.ModelName = "gpt-oss:20b"
 )
 
 const (
@@ -42,10 +57,17 @@ const (
 	DisplayNameGPT51Codex    = "GPT 5.1 Codex"
 	DisplayNameGPT51CodexMax = "GPT 5.1 Codex Max"
 	DisplayNameGPT5Mini      = "GPT 5 Mini"
-	DisplayNameGPT41         = "GPT 4.1"
-	DisplayNameGPT41Mini     = "GPT 4.1 Mini"
-	DisplayNameGPT4o         = "GPT 4o"
-	DisplayNameGPT4oMini     = "GPT 4o Mini"
+
+	DisplayNameGPT41     = "GPT 4.1"
+	DisplayNameGPT41Mini = "GPT 4.1 Mini"
+	DisplayNameGPT4o     = "GPT 4o"
+	DisplayNameGPT4oMini = "GPT 4o Mini"
+
+	DisplayNameGPTOSS120B = "gpt-oss 120B"
+	DisplayNameGPTOSS20B  = "gpt-oss 20B"
+
+	DisplayNameGPTOSS120BFireworksAI = "gpt-oss 120B (Fireworks AI)"
+	DisplayNameGPTOSS20BFireworksAI  = "gpt-oss 20B (Fireworks AI)"
 )
 
 const (
@@ -63,10 +85,17 @@ const (
 	PresetGPT51Codex    ModelPresetID = "gpt51Codex"
 	PresetGPT51CodexMax ModelPresetID = "gpt51CodexMax"
 	PresetGPT5Mini      ModelPresetID = "gpt5Mini"
-	PresetGPT41         ModelPresetID = "gpt41"
-	PresetGPT41Mini     ModelPresetID = "gpt41Mini"
-	PresetGPT4o         ModelPresetID = "gpt4o"
-	PresetGPT4oMini     ModelPresetID = "gpt4oMini"
+
+	PresetGPT41     ModelPresetID = "gpt41"
+	PresetGPT41Mini ModelPresetID = "gpt41Mini"
+	PresetGPT4o     ModelPresetID = "gpt4o"
+	PresetGPT4oMini ModelPresetID = "gpt4oMini"
+
+	PresetGPTOSS120B ModelPresetID = "gptoss120b"
+	PresetGPTOSS20B  ModelPresetID = "gptoss20b"
+
+	PresetGPTOSS120BFireworksAI ModelPresetID = "gptoss120bFireworksAI"
+	PresetGPTOSS20BFireworksAI  ModelPresetID = "gptoss20bFireworksAI"
 )
 
 var modelOpenAIResponsesGPT56Sol = ModelPreset{

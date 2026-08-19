@@ -8,6 +8,7 @@ includes:
     checksum: a4bb1a41eab7cc097d7224f58b1c31cdfde8b9cc75a4a967488cef26071f9da2
     # Required for remote Taskfiles so commands execute in this repository.
     dir: "{{.ROOT_DIR}}"
+    flatten: true
     vars:
       GREETING: Hello, these are Inference Go tasks!
       DEPGRAPH_ENTRY_POINT: provider_set.go
@@ -16,10 +17,6 @@ dotenv:
   - .env
 
 tasks:
-  default:
-    cmds:
-      - task: go:default
-
   test:anthropic:
     cmds:
       - go test -count=1 -v ./internal/integration -run '^(Example_anthropic_basicConversation|Example_anthropic_toolsAndThinkingStreaming|Example_anthropic_functionToolRoundTrip)$'

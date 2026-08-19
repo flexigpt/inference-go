@@ -7,6 +7,12 @@ import (
 )
 
 const (
+	ProviderGoogleGemini spec.ProviderName = "googlegemini"
+
+	DisplayNameProviderGoogleGemini = "Google Gemini API"
+)
+
+const (
 	ModelNameGemini37Flash     spec.ModelName = "gemini-3.7-flash"
 	ModelNameGemini36Flash     spec.ModelName = "gemini-3.6-flash"
 	ModelNameGemini35Flash     spec.ModelName = "gemini-3.5-flash"
@@ -16,6 +22,12 @@ const (
 	ModelNameGemini3Flash      spec.ModelName = "gemini-3-flash-preview"
 	ModelNameGemini25Flash     spec.ModelName = "gemini-2.5-flash"
 	ModelNameGemini25FlashLite spec.ModelName = "gemini-2.5-flash-lite-preview-06-17"
+
+	ModelNameGemma426BA4BRepo  spec.ModelName = "google/gemma-4-26b-a4b"
+	ModelNameGemma426BA4BLocal spec.ModelName = "gemma4-26b-a4b"
+
+	ModelNameGemma426BOllama spec.ModelName = "gemma4:26b"
+	ModelNameGemma4E4BOllama spec.ModelName = "gemma4:e4b"
 )
 
 const (
@@ -28,6 +40,10 @@ const (
 	DisplayNameGemini3Flash      = "Gemini 3 Flash"
 	DisplayNameGemini25Flash     = "Gemini 2.5 Flash"
 	DisplayNameGemini25FlashLite = "Gemini 2.5 Flash Lite"
+
+	DisplayNameGemma426BA4B = "Gemma 4 26B A4B"
+	DisplayNameGemma426B    = "Gemma 4 26B"
+	DisplayNameGemma4E4B    = "Gemma 4 E4B"
 )
 
 const (
@@ -40,6 +56,10 @@ const (
 	PresetGemini3Flash      ModelPresetID = "gemini3Flash"
 	PresetGemini25Flash     ModelPresetID = "gemini25Flash"
 	PresetGemini25FlashLite ModelPresetID = "gemini25FlashLite"
+
+	PresetGemma426BA4B ModelPresetID = "gemma426ba4b"
+	PresetGemma426B    ModelPresetID = "gemma426b"
+	PresetGemma4E4B    ModelPresetID = "gemma4e4b"
 )
 
 var modelGoogleGemini37Flash = ModelPreset{

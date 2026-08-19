@@ -7,24 +7,9 @@ import (
 )
 
 const (
-	ModelNameOpenRouterDeepSeekV4Flash      spec.ModelName = "deepseek/deepseek-v4-flash"
-	ModelNameOpenRouterXiaomiMiMoV25        spec.ModelName = "xiaomi/mimo-v2.5"
-	ModelNameOpenRouterTencentHy3Preview    spec.ModelName = "tencent/hy3-preview"
-	ModelNameOpenRouterMiniMaxM3            spec.ModelName = "minimax/minimax-m3"
-	ModelNameOpenRouterZAIGLM52             spec.ModelName = "z-ai/glm-5.2"
-	ModelNameOpenRouterDeepSeekV4Pro        spec.ModelName = "deepseek/deepseek-v4-pro"
-	ModelNameOpenRouterStep37Flash          spec.ModelName = "stepfun/step-3.7-flash"
-	ModelNameOpenRouterNemotron3UltraFree   spec.ModelName = "nvidia/nemotron-3-ultra-550b-a55b:free"
-	ModelNameOpenRouterPoolsideLagunaM1Free spec.ModelName = "poolside/laguna-m.1:free"
-	ModelNameOpenRouterXiaomiMiMoV25Pro     spec.ModelName = "xiaomi/mimo-v2.5-pro"
-	ModelNameOpenRouterNemotron3SuperFree   spec.ModelName = "nvidia/nemotron-3-super-120b-a12b:free"
-	ModelNameOpenRouterMoonshotKimiK26      spec.ModelName = "moonshotai/kimi-k2.6"
-	ModelNameOpenRouterQwen37Max            spec.ModelName = "qwen/qwen3.7-max"
-	ModelNameOpenRouterZAIGLM51             spec.ModelName = "z-ai/glm-5.1"
-	ModelNameOpenRouterMoonshotKimiK27Code  spec.ModelName = "moonshotai/kimi-k2.7-code"
-	ModelNameOpenRouterQwen37Plus           spec.ModelName = "qwen/qwen3.7-plus"
-	ModelNameOpenRouterMiniMaxM27           spec.ModelName = "minimax/minimax-m2.7"
-	ModelNameOpenRouterMiniMaxM25Free       spec.ModelName = "minimax/minimax-m2.5:free"
+	ProviderOpenRouter spec.ProviderName = "openrouter"
+
+	DisplayNameProviderOpenRouter = "OpenRouter"
 )
 
 var modelOpenRouterDeepSeekV4Flash = ModelPreset{

@@ -7,6 +7,12 @@ import (
 )
 
 const (
+	ProviderXAI spec.ProviderName = "xai"
+
+	DisplayNameProviderXAI = "xAI"
+)
+
+const (
 	ModelNameGrok46             spec.ModelName = "grok-4.6"
 	ModelNameGrok45             spec.ModelName = "grok-4.5"
 	ModelNameGrok43             spec.ModelName = "grok-4.3"

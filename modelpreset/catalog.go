@@ -52,6 +52,23 @@ type Catalog struct {
 	Providers map[spec.ProviderName]ProviderPreset `json:"providers"`
 }
 
+var catalogProviders = map[spec.ProviderName]ProviderPreset{
+	ProviderAnthropic:       providerAnthropic,
+	ProviderLocalAI:         providerLocalAI,
+	ProviderLMStudio:        providerLMStudio,
+	ProviderGoogleGemini:    providerGoogleGemini,
+	ProviderHuggingFace:     providerHuggingFace,
+	ProviderLlamaCPP:        providerLlamaCPP,
+	ProviderMistral:         providerMistral,
+	ProviderOllama:          providerOllama,
+	ProviderOpenAIChat:      providerOpenAIChat,
+	ProviderOpenAIResponses: providerOpenAIResponses,
+	ProviderOpenRouter:      providerOpenRouter,
+	ProviderSGLang:          providerSGLang,
+	ProviderVLLM:            providerVLLM,
+	ProviderXAI:             providerXAI,
+}
+
 func DefaultCatalog() Catalog {
 	return CloneCatalog(Catalog{
 		Providers: catalogProviders,

@@ -6,6 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	ProviderOpenAIChat spec.ProviderName = "openai"
+
+	DisplayNameProviderOpenAIChat = "OpenAI Chat Completions API"
+)
+
 var openAIChatNoReasoningOverride = &capabilityoverride.ModelCapabilitiesOverride{
 	ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
 		SupportedReasoningTypes:  []spec.ReasoningType{},

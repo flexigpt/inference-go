@@ -6,6 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	ProviderSGLang spec.ProviderName = "sglang"
+
+	DisplayNameProviderSGLang = "SGLang"
+)
+
 var modelSGLangGemma426BA4B = ModelPreset{
 	ID:          PresetGemma426BA4B,
 	Name:        ModelNameGemma426BA4BRepo,

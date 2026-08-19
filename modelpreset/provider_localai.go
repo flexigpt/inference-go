@@ -6,6 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	ProviderLocalAI spec.ProviderName = "localai"
+
+	DisplayNameProviderLocalAI = "LocalAI"
+)
+
 var modelLocalAIGemma426BA4B = ModelPreset{
 	ID:          PresetGemma426BA4B,
 	Name:        ModelNameGemma426BA4BLocal,

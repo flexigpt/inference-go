@@ -6,16 +6,9 @@ import (
 )
 
 const (
-	ModelNameGemma426BOllama        spec.ModelName = "gemma4:26b"
-	ModelNameGemma4E4BOllama        spec.ModelName = "gemma4:e4b"
-	ModelNameGPTOSS20BOllama        spec.ModelName = "gpt-oss:20b"
-	ModelNameQwen3635BOllama        spec.ModelName = "qwen3.6:35b"
-	ModelNameQwen3627BOllama        spec.ModelName = "qwen3.6:27b"
-	ModelNameDeepSeekR18BOllama     spec.ModelName = "deepseek-r1:8b"
-	ModelNameQwen3VL30BOllama       spec.ModelName = "qwen3-vl:30b"
-	ModelNameMinistral314BOllama    spec.ModelName = "ministral-3:14b"
-	ModelNameQwen3Coder30BOllama    spec.ModelName = "qwen3-coder:30b"
-	ModelNamePhi4Reasoning14BOllama spec.ModelName = "phi4-reasoning:14b"
+	ProviderOllama spec.ProviderName = "ollama"
+
+	DisplayNameProviderOllama = "Ollama"
 )
 
 var modelOllamaGemma426B = ModelPreset{
