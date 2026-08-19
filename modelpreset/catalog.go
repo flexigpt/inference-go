@@ -2,44 +2,12 @@ package modelpreset
 
 import (
 	"errors"
+	"maps"
 	"slices"
 
 	"github.com/flexigpt/inference-go/capabilityoverride"
+	"github.com/flexigpt/inference-go/internal/sdkutil"
 	"github.com/flexigpt/inference-go/spec"
-)
-
-const (
-	ProviderAnthropic       spec.ProviderName = "anthropic"
-	ProviderLocalAI         spec.ProviderName = "localai"
-	ProviderLMStudio        spec.ProviderName = "lmstudio"
-	ProviderGoogleGemini    spec.ProviderName = "googlegemini"
-	ProviderHuggingFace     spec.ProviderName = "huggingface"
-	ProviderLlamaCPP        spec.ProviderName = "llamacpp"
-	ProviderMistral         spec.ProviderName = "mistral"
-	ProviderOllama          spec.ProviderName = "ollama"
-	ProviderOpenAIChat      spec.ProviderName = "openai"
-	ProviderOpenAIResponses spec.ProviderName = "openairesponses"
-	ProviderOpenRouter      spec.ProviderName = "openrouter"
-	ProviderSGLang          spec.ProviderName = "sglang"
-	ProviderVLLM            spec.ProviderName = "vllm"
-	ProviderXAI             spec.ProviderName = "xai"
-)
-
-const (
-	DisplayNameProviderAnthropic       = "Anthropic"
-	DisplayNameProviderGoogleGemini    = "Google Gemini API"
-	DisplayNameProviderHuggingFace     = "Hugging Face"
-	DisplayNameProviderLlamaCPP        = "llama.cpp"
-	DisplayNameProviderLMStudio        = "LM Studio"
-	DisplayNameProviderLocalAI         = "LocalAI"
-	DisplayNameProviderMistral         = "Mistral AI"
-	DisplayNameProviderOllama          = "Ollama"
-	DisplayNameProviderOpenAIChat      = "OpenAI Chat Completions API"
-	DisplayNameProviderOpenAIResponses = "OpenAI Responses API"
-	DisplayNameProviderOpenRouter      = "OpenRouter"
-	DisplayNameProviderSGLang          = "SGLang"
-	DisplayNameProviderVLLM            = "vLLM"
-	DisplayNameProviderXAI             = "xAI"
 )
 
 var (
@@ -47,21 +15,41 @@ var (
 	ErrModelNotFound    = errors.New("model preset not found")
 )
 
-var catalogProviders = map[spec.ProviderName]ProviderPreset{
-	ProviderAnthropic:       providerAnthropic,
-	ProviderLocalAI:         providerLocalAI,
-	ProviderLMStudio:        providerLMStudio,
-	ProviderGoogleGemini:    providerGoogleGemini,
-	ProviderHuggingFace:     providerHuggingFace,
-	ProviderLlamaCPP:        providerLlamaCPP,
-	ProviderMistral:         providerMistral,
-	ProviderOllama:          providerOllama,
-	ProviderOpenAIChat:      providerOpenAIChat,
-	ProviderOpenAIResponses: providerOpenAIResponses,
-	ProviderOpenRouter:      providerOpenRouter,
-	ProviderSGLang:          providerSGLang,
-	ProviderVLLM:            providerVLLM,
-	ProviderXAI:             providerXAI,
+type ModelPresetID string
+
+type ModelPreset struct {
+	ID          ModelPresetID  `json:"id"`
+	Name        spec.ModelName `json:"name"`
+	DisplayName string         `json:"displayName"`
+
+	// ModelParam is the default runtime request model configuration.
+	// Callers should treat values returned by this package as immutable.
+	ModelParam spec.ModelParam `json:"modelParam"`
+
+	// CapabilitiesOverride is a runtime capability patch applied over provider/base SDK capabilities.
+	// It is not the derived/effective capability profile.
+	CapabilitiesOverride *capabilityoverride.ModelCapabilitiesOverride `json:"capabilitiesOverride,omitempty"`
+}
+
+type ProviderPreset struct {
+	Name        spec.ProviderName    `json:"name"`
+	DisplayName string               `json:"displayName"`
+	SDKType     spec.ProviderSDKType `json:"sdkType"`
+
+	Origin                   string            `json:"origin"`
+	ChatCompletionPathPrefix string            `json:"chatCompletionPathPrefix"`
+	APIKeyHeaderKey          string            `json:"apiKeyHeaderKey"`
+	DefaultHeaders           map[string]string `json:"defaultHeaders,omitempty"`
+
+	// CapabilitiesOverride is a provider-wide runtime capability patch.
+	// Model preset overrides are applied after this.
+	CapabilitiesOverride *capabilityoverride.ModelCapabilitiesOverride `json:"capabilitiesOverride,omitempty"`
+
+	ModelPresets map[ModelPresetID]ModelPreset `json:"modelPresets"`
+}
+
+type Catalog struct {
+	Providers map[spec.ProviderName]ProviderPreset `json:"providers"`
 }
 
 func DefaultCatalog() Catalog {
@@ -111,6 +99,86 @@ func ModelPresetIDs(provider spec.ProviderName) ([]ModelPresetID, error) {
 	}
 	slices.Sort(ids)
 	return ids, nil
+}
+
+func CloneCatalog(in Catalog) Catalog {
+	out := Catalog{
+		Providers: make(map[spec.ProviderName]ProviderPreset, len(in.Providers)),
+	}
+	for k, v := range in.Providers {
+		out.Providers[k] = CloneProviderPreset(v)
+	}
+	return out
+}
+
+func CloneProviderPreset(in ProviderPreset) ProviderPreset {
+	out := in
+	out.DefaultHeaders = maps.Clone(in.DefaultHeaders)
+	out.CapabilitiesOverride = capabilityoverride.CloneModelCapabilitiesOverride(in.CapabilitiesOverride)
+	out.ModelPresets = make(map[ModelPresetID]ModelPreset, len(in.ModelPresets))
+	for k, v := range in.ModelPresets {
+		out.ModelPresets[k] = CloneModelPreset(v)
+	}
+	return out
+}
+
+func CloneModelPreset(in ModelPreset) ModelPreset {
+	out := in
+	out.ModelParam = cloneModelParam(in.ModelParam)
+	out.CapabilitiesOverride = capabilityoverride.CloneModelCapabilitiesOverride(in.CapabilitiesOverride)
+	return out
+}
+
+func cloneModelParam(in spec.ModelParam) spec.ModelParam {
+	out := in
+	out.Temperature = sdkutil.CloneFloat64Ptr(in.Temperature)
+	out.Reasoning = cloneReasoningParam(in.Reasoning)
+	out.CacheControl = cloneCacheControl(in.CacheControl)
+	out.OutputParam = cloneOutputParam(in.OutputParam)
+	out.StopSequences = slices.Clone(in.StopSequences)
+	out.AdditionalParametersRawJSON = sdkutil.CloneStringPtr(in.AdditionalParametersRawJSON)
+	return out
+}
+
+func cloneCacheControl(in *spec.CacheControl) *spec.CacheControl {
+	if in == nil {
+		return nil
+	}
+	out := *in
+	return &out
+}
+
+func cloneReasoningParam(in *spec.ReasoningParam) *spec.ReasoningParam {
+	if in == nil {
+		return nil
+	}
+	out := *in
+	if in.SummaryStyle != nil {
+		v := *in.SummaryStyle
+		out.SummaryStyle = &v
+	}
+	return &out
+}
+
+func cloneOutputParam(in *spec.OutputParam) *spec.OutputParam {
+	if in == nil {
+		return nil
+	}
+	out := *in
+	if in.Verbosity != nil {
+		v := *in.Verbosity
+		out.Verbosity = &v
+	}
+	if in.Format != nil {
+		f := *in.Format
+		if f.JSONSchemaParam != nil {
+			j := *f.JSONSchemaParam
+			j.Schema = maps.Clone(j.Schema)
+			f.JSONSchemaParam = &j
+		}
+		out.Format = &f
+	}
+	return &out
 }
 
 func reasoningLevels(includeNone bool) []spec.ReasoningLevel {
