@@ -2,8 +2,15 @@
 
 version: "3"
 
-vars:
-  GREETING: Hello, these are Inference Go tasks!
+includes:
+  go:
+    taskfile: https://raw.githubusercontent.com/flexigpt/.github/refs/heads/main/tasks/go.yml
+    checksum: a4bb1a41eab7cc097d7224f58b1c31cdfde8b9cc75a4a967488cef26071f9da2
+    # Required for remote Taskfiles so commands execute in this repository.
+    dir: "{{.ROOT_DIR}}"
+    vars:
+      GREETING: Hello, these are Inference Go tasks!
+      DEPGRAPH_ENTRY_POINT: provider_set.go
 
 dotenv:
   - .env
@@ -11,59 +18,7 @@ dotenv:
 tasks:
   default:
     cmds:
-      - echo "{{.GREETING}}"
-    silent: true
-
-  cloc:
-    cmds:
-      - |
-        cloc --vcs=git --ignored=ignored.txt \
-             --force-lang=Mustache,tmpl --force-lang=INI,env --force-lang=INI,dev --force-lang=INI,prod \
-             --exclude_ext=yaml,sum,mod,md5 --not-match-f='LICENSE$|\.gitignore$' \
-             .
-
-  tagstats:
-    cmds:
-      - ./scripts/git_tag_stats.sh
-
-  godepgraph:
-    cmds:
-      - godepgraph -s -o github.com/flexigpt/inference-go,command-line-arguments provider_set.go | dot -Tpng -o godepgraph.png
-
-  install-tools:
-    cmds:
-      # Install task, go, golangci-lint, cloc externally. E.g via asdf. the needed versions are pinned in .tool-versions file.
-      - go install golang.org/x/tools/gopls@v0.23.0
-      - go install github.com/oligot/go-mod-upgrade@v0.12.0
-      - go install github.com/kisielk/godepgraph@v1.0.0
-      - go install github.com/ppipada/refdir@v0.7.1
-      - go install github.com/vladopajic/go-test-coverage/v2@v2.18.8
-
-  upgrade-do:
-    cmds:
-      - go-mod-upgrade -v -f
-      - go mod tidy
-
-  upgrade-check:
-    cmds:
-      - gomajor list
-      - go-mod-upgrade -l
-
-  lint-gopls:
-    cmds:
-      - ./scripts/lint_gopls_check.sh
-
-  lint-godotfix:
-    cmds:
-      - golangci-lint run --fix --enable-only=godot
-
-  lint-gosort:
-    cmds:
-      - refdir ./...
-
-  lint:
-    cmds:
-      - golangci-lint run ./... -v
+      - task: go:default
 
   test:anthropic:
     cmds:
@@ -80,16 +35,3 @@ tasks:
   test:google:
     cmds:
       - go test -count=1 -v ./internal/integration -run '^(Example_googleGenerateContent_basicConversation|Example_googleGenerateContent_functionToolRoundTrip|Example_googleGenerateContent_webSearchAndThinkingStreaming|TestGoogleGenerateContent_FunctionToolRoundTripLoop)$'
-
-  test:
-    cmds:
-      # The count=1 is needed to disable test caching. this is so that coverage doesnt show stale data.
-      # Issue: https://github.com/golang/go/issues/74873
-      - go test -count=1 -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
-      - go tool cover -func=coverage.out
-      - go-test-coverage --config=./.testcoverage.yml
-
-  lt:
-    cmds:
-      - task: lint
-      - task: test
