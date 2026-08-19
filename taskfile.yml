@@ -5,10 +5,9 @@ version: "3"
 includes:
   go:
     taskfile: https://raw.githubusercontent.com/flexigpt/.github/refs/heads/main/tasks/go.yml
-    checksum: a4bb1a41eab7cc097d7224f58b1c31cdfde8b9cc75a4a967488cef26071f9da2
-    # Required for remote Taskfiles so commands execute in this repository.
-    dir: "{{.ROOT_DIR}}"
+    checksum: 03c767b893839644d0116ce06a5b35b3c89279d591639bfcd9cc8753136abc38
     flatten: true
+    dir: "{{.ROOT_DIR}}"
     vars:
       GREETING: Hello, these are Inference Go tasks!
       DEPGRAPH_ENTRY_POINT: provider_set.go
