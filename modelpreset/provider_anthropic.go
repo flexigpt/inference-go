@@ -5,6 +5,51 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	ModelNameClaudeFable5   spec.ModelName = "claude-fable-5"
+	ModelNameClaudeOpus5    spec.ModelName = "claude-opus-5"
+	ModelNameClaudeOpus48   spec.ModelName = "claude-opus-4-8"
+	ModelNameClaudeOpus47   spec.ModelName = "claude-opus-4-7"
+	ModelNameClaudeOpus46   spec.ModelName = "claude-opus-4-6"
+	ModelNameClaudeOpus45   spec.ModelName = "claude-opus-4-5-20251101"
+	ModelNameClaudeOpus41   spec.ModelName = "claude-opus-4-1-20250805"
+	ModelNameClaudeSonnet5  spec.ModelName = "claude-sonnet-5"
+	ModelNameClaudeSonnet46 spec.ModelName = "claude-sonnet-4-6"
+	ModelNameClaudeSonnet45 spec.ModelName = "claude-sonnet-4-5-20250929"
+	ModelNameClaudeSonnet4  spec.ModelName = "claude-sonnet-4-20250514"
+	ModelNameClaudeHaiku45  spec.ModelName = "claude-haiku-4-5-20251001"
+)
+
+const (
+	DisplayNameClaudeFable5   = "Claude Fable 5"
+	DisplayNameClaudeOpus5    = "Claude Opus 5"
+	DisplayNameClaudeOpus48   = "Claude Opus 4.8"
+	DisplayNameClaudeOpus47   = "Claude Opus 4.7"
+	DisplayNameClaudeOpus46   = "Claude Opus 4.6"
+	DisplayNameClaudeOpus45   = "Claude Opus 4.5"
+	DisplayNameClaudeOpus41   = "Claude Opus 4.1"
+	DisplayNameClaudeSonnet5  = "Claude Sonnet 5"
+	DisplayNameClaudeSonnet46 = "Claude Sonnet 4.6"
+	DisplayNameClaudeSonnet45 = "Claude Sonnet 4.5"
+	DisplayNameClaudeSonnet4  = "Claude Sonnet 4"
+	DisplayNameClaudeHaiku45  = "Claude Haiku 4.5"
+)
+
+const (
+	PresetClaudeFable5   ModelPresetID = "fable5"
+	PresetClaudeOpus5    ModelPresetID = "opus5"
+	PresetClaudeOpus48   ModelPresetID = "opus48"
+	PresetClaudeOpus47   ModelPresetID = "opus47"
+	PresetClaudeOpus46   ModelPresetID = "opus46"
+	PresetClaudeOpus45   ModelPresetID = "opus45"
+	PresetClaudeOpus41   ModelPresetID = "opus41"
+	PresetClaudeSonnet5  ModelPresetID = "sonnet5"
+	PresetClaudeSonnet46 ModelPresetID = "sonnet46"
+	PresetClaudeSonnet45 ModelPresetID = "sonnet45"
+	PresetClaudeSonnet4  ModelPresetID = "sonnet4"
+	PresetClaudeHaiku45  ModelPresetID = "haiku45"
+)
+
 var modelAnthropicFable5 = ModelPreset{
 	ID:          PresetClaudeFable5,
 	Name:        ModelNameClaudeFable5,

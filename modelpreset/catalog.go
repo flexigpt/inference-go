@@ -25,6 +25,23 @@ const (
 	ProviderXAI             spec.ProviderName = "xai"
 )
 
+const (
+	DisplayNameProviderAnthropic       = "Anthropic"
+	DisplayNameProviderGoogleGemini    = "Google Gemini API"
+	DisplayNameProviderHuggingFace     = "Hugging Face"
+	DisplayNameProviderLlamaCPP        = "llama.cpp"
+	DisplayNameProviderLMStudio        = "LM Studio"
+	DisplayNameProviderLocalAI         = "LocalAI"
+	DisplayNameProviderMistral         = "Mistral AI"
+	DisplayNameProviderOllama          = "Ollama"
+	DisplayNameProviderOpenAIChat      = "OpenAI Chat Completions API"
+	DisplayNameProviderOpenAIResponses = "OpenAI Responses API"
+	DisplayNameProviderOpenRouter      = "OpenRouter"
+	DisplayNameProviderSGLang          = "SGLang"
+	DisplayNameProviderVLLM            = "vLLM"
+	DisplayNameProviderXAI             = "xAI"
+)
+
 var (
 	ErrProviderNotFound = errors.New("provider preset not found")
 	ErrModelNotFound    = errors.New("model preset not found")

@@ -6,6 +6,12 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	ModelNameLlama4BehemothLocal spec.ModelName = "llama4-behemoth"
+	ModelNameLlama4MaverickLocal spec.ModelName = "llama4-maverick"
+	ModelNameLlama4ScoutLocal    spec.ModelName = "llama4-scout"
+)
+
 var modelLlamaCPPBehemoth = ModelPreset{
 	ID:          PresetLlama4Behemoth,
 	Name:        ModelNameLlama4BehemothLocal,

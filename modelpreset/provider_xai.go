@@ -6,6 +6,64 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	ModelNameGrok46             spec.ModelName = "grok-4.6"
+	ModelNameGrok45             spec.ModelName = "grok-4.5"
+	ModelNameGrok43             spec.ModelName = "grok-4.3"
+	ModelNameGrokBuild01        spec.ModelName = "grok-build-0.1"
+	ModelNameGrok42Reasoning    spec.ModelName = "grok-4.20-0309-reasoning"
+	ModelNameGrok42NonReasoning spec.ModelName = "grok-4.20-0309-non-reasoning"
+)
+
+const (
+	DisplayNameGrok46             = "Grok 4.6"
+	DisplayNameGrok45             = "Grok 4.5"
+	DisplayNameGrok43             = "Grok 4.3"
+	DisplayNameBuild01            = "Build 0.1"
+	DisplayNameGrok42Reasoning    = "Grok 4.2 Reasoning"
+	DisplayNameGrok42NonReasoning = "Grok 4.2 Non-Reasoning"
+)
+
+const (
+	PresetGrok46             ModelPresetID = "grok46"
+	PresetGrok45             ModelPresetID = "grok45"
+	PresetGrok43             ModelPresetID = "grok43"
+	PresetBuild01            ModelPresetID = "grokBuild01"
+	PresetGrok42Reasoning    ModelPresetID = "grok42Reasoning"
+	PresetGrok42NonReasoning ModelPresetID = "grok42NonReasoning"
+)
+
+var modelXAIGrok46 = ModelPreset{
+	ID:          PresetGrok46,
+	Name:        ModelNameGrok46,
+	DisplayName: DisplayNameGrok46,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGrok46,
+		Stream:          true,
+		MaxPromptLength: 500000,
+		MaxOutputLength: 65536,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         3600,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+	},
+}
+
 var modelXAIGrok45 = ModelPreset{
 	ID:          PresetGrok45,
 	Name:        ModelNameGrok45,
@@ -27,7 +85,6 @@ var modelXAIGrok45 = ModelPreset{
 				spec.ReasoningTypeSingleWithLevels,
 			},
 			SupportedReasoningLevels: []spec.ReasoningLevel{
-				spec.ReasoningLevelNone,
 				spec.ReasoningLevelLow,
 				spec.ReasoningLevelMedium,
 				spec.ReasoningLevelHigh,
@@ -204,9 +261,10 @@ var providerXAI = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetBuild01:            modelXAIGrokBuild01,
+		PresetGrok46:             modelXAIGrok46,
 		PresetGrok45:             modelXAIGrok45,
 		PresetGrok43:             modelXAIGrok43,
+		PresetBuild01:            modelXAIGrokBuild01,
 		PresetGrok42Reasoning:    modelXAIGrok42Reasoning,
 		PresetGrok42NonReasoning: modelXAIGrok42NonReasoning,
 	},

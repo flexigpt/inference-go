@@ -6,6 +6,72 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	ModelNameGemini37Flash     spec.ModelName = "gemini-3.7-flash"
+	ModelNameGemini36Flash     spec.ModelName = "gemini-3.6-flash"
+	ModelNameGemini35Flash     spec.ModelName = "gemini-3.5-flash"
+	ModelNameGemini35FlashLite spec.ModelName = "gemini-3.5-flash-lite"
+	ModelNameGemini31Pro       spec.ModelName = "gemini-3.1-pro-preview"
+	ModelNameGemini31FlashLite spec.ModelName = "gemini-3.1-flash-lite"
+	ModelNameGemini3Flash      spec.ModelName = "gemini-3-flash-preview"
+	ModelNameGemini25Flash     spec.ModelName = "gemini-2.5-flash"
+	ModelNameGemini25FlashLite spec.ModelName = "gemini-2.5-flash-lite-preview-06-17"
+)
+
+const (
+	DisplayNameGemini37Flash     = "Gemini 3.7 Flash"
+	DisplayNameGemini36Flash     = "Gemini 3.6 Flash"
+	DisplayNameGemini35Flash     = "Gemini 3.5 Flash"
+	DisplayNameGemini35FlashLite = "Gemini 3.5 Flash Lite"
+	DisplayNameGemini31Pro       = "Gemini 3.1 Pro"
+	DisplayNameGemini31FlashLite = "Gemini 3.1 Flash Lite"
+	DisplayNameGemini3Flash      = "Gemini 3 Flash"
+	DisplayNameGemini25Flash     = "Gemini 2.5 Flash"
+	DisplayNameGemini25FlashLite = "Gemini 2.5 Flash Lite"
+)
+
+const (
+	PresetGemini37Flash     ModelPresetID = "gemini37Flash"
+	PresetGemini36Flash     ModelPresetID = "gemini36Flash"
+	PresetGemini35Flash     ModelPresetID = "gemini35Flash"
+	PresetGemini35FlashLite ModelPresetID = "gemini35FlashLite"
+	PresetGemini31Pro       ModelPresetID = "gemini31Pro"
+	PresetGemini31FlashLite ModelPresetID = "gemini31FlashLite"
+	PresetGemini3Flash      ModelPresetID = "gemini3Flash"
+	PresetGemini25Flash     ModelPresetID = "gemini25Flash"
+	PresetGemini25FlashLite ModelPresetID = "gemini25FlashLite"
+)
+
+var modelGoogleGemini37Flash = ModelPreset{
+	ID:          PresetGemini37Flash,
+	Name:        ModelNameGemini37Flash,
+	DisplayName: DisplayNameGemini37Flash,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGemini37Flash,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 65536,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+	},
+}
+
 var modelGoogleGemini36Flash = ModelPreset{
 	ID:          PresetGemini36Flash,
 	Name:        ModelNameGemini36Flash,
@@ -322,6 +388,7 @@ var providerGoogleGemini = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetGemini37Flash:     modelGoogleGemini37Flash,
 		PresetGemini36Flash:     modelGoogleGemini36Flash,
 		PresetGemini35Flash:     modelGoogleGemini35Flash,
 		PresetGemini35FlashLite: modelGoogleGemini35FlashLite,

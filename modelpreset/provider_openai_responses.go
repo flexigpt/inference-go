@@ -6,6 +6,69 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	ModelNameGPT56Sol      spec.ModelName = "gpt-5.6-sol"
+	ModelNameGPT56Terra    spec.ModelName = "gpt-5.6-terra"
+	ModelNameGPT56Luna     spec.ModelName = "gpt-5.6-luna"
+	ModelNameGPT55         spec.ModelName = "gpt-5.5"
+	ModelNameGPT54         spec.ModelName = "gpt-5.4"
+	ModelNameGPT54Mini     spec.ModelName = "gpt-5.4-mini"
+	ModelNameGPT54Nano     spec.ModelName = "gpt-5.4-nano"
+	ModelNameGPT53Codex    spec.ModelName = "gpt-5.3-codex"
+	ModelNameGPT52         spec.ModelName = "gpt-5.2"
+	ModelNameGPT52Codex    spec.ModelName = "gpt-5.2-codex"
+	ModelNameGPT51         spec.ModelName = "gpt-5.1"
+	ModelNameGPT51Codex    spec.ModelName = "gpt-5.1-codex"
+	ModelNameGPT51CodexMax spec.ModelName = "gpt-5.1-codex-max"
+	ModelNameGPT5Mini      spec.ModelName = "gpt-5-mini"
+	ModelNameGPT41         spec.ModelName = "gpt-4.1"
+	ModelNameGPT41Mini     spec.ModelName = "gpt-4.1-mini"
+	ModelNameGPT4o         spec.ModelName = "gpt-4o"
+	ModelNameGPT4oMini     spec.ModelName = "gpt-4o-mini"
+)
+
+const (
+	DisplayNameGPT56Sol      = "GPT 5.6 Sol"
+	DisplayNameGPT56Terra    = "GPT 5.6 Terra"
+	DisplayNameGPT56Luna     = "GPT 5.6 Luna"
+	DisplayNameGPT55         = "GPT 5.5"
+	DisplayNameGPT54         = "GPT 5.4"
+	DisplayNameGPT54Mini     = "GPT 5.4 Mini"
+	DisplayNameGPT54Nano     = "GPT 5.4 Nano"
+	DisplayNameGPT53Codex    = "GPT 5.3 Codex"
+	DisplayNameGPT52         = "GPT 5.2"
+	DisplayNameGPT52Codex    = "GPT 5.2 Codex"
+	DisplayNameGPT51         = "GPT 5.1"
+	DisplayNameGPT51Codex    = "GPT 5.1 Codex"
+	DisplayNameGPT51CodexMax = "GPT 5.1 Codex Max"
+	DisplayNameGPT5Mini      = "GPT 5 Mini"
+	DisplayNameGPT41         = "GPT 4.1"
+	DisplayNameGPT41Mini     = "GPT 4.1 Mini"
+	DisplayNameGPT4o         = "GPT 4o"
+	DisplayNameGPT4oMini     = "GPT 4o Mini"
+)
+
+const (
+	PresetGPT56Sol      ModelPresetID = "gpt56sol"
+	PresetGPT56Terra    ModelPresetID = "gpt56terra"
+	PresetGPT56Luna     ModelPresetID = "gpt56luna"
+	PresetGPT55         ModelPresetID = "gpt55"
+	PresetGPT54         ModelPresetID = "gpt54"
+	PresetGPT54Mini     ModelPresetID = "gpt54mini"
+	PresetGPT54Nano     ModelPresetID = "gpt54nano"
+	PresetGPT53Codex    ModelPresetID = "gpt53Codex"
+	PresetGPT52         ModelPresetID = "gpt52"
+	PresetGPT52Codex    ModelPresetID = "gpt52Codex"
+	PresetGPT51         ModelPresetID = "gpt51"
+	PresetGPT51Codex    ModelPresetID = "gpt51Codex"
+	PresetGPT51CodexMax ModelPresetID = "gpt51CodexMax"
+	PresetGPT5Mini      ModelPresetID = "gpt5Mini"
+	PresetGPT41         ModelPresetID = "gpt41"
+	PresetGPT41Mini     ModelPresetID = "gpt41Mini"
+	PresetGPT4o         ModelPresetID = "gpt4o"
+	PresetGPT4oMini     ModelPresetID = "gpt4oMini"
+)
+
 var modelOpenAIResponsesGPT56Sol = ModelPreset{
 	ID:          PresetGPT56Sol,
 	Name:        ModelNameGPT56Sol,

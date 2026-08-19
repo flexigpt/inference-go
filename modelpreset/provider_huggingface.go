@@ -6,6 +6,39 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	DisplayNameGPTOSS120BFireworksAI = "gpt-oss 120B (Fireworks AI)"
+	DisplayNameGPTOSS20BFireworksAI  = "gpt-oss 20B (Fireworks AI)"
+
+	DisplayNameQwen3Coder30BA3BFireworksAI    = "Qwen3-Coder 30B A3B (Fireworks AI)"
+	DisplayNameGLM52FireworksAI               = "GLM 5.2 (Fireworks AI)"
+	DisplayNameDeepSeekV4FlashFireworksAI     = "DeepSeek V4 Flash (Fireworks AI)"
+	DisplayNameDeepSeekV4ProFireworksAI       = "DeepSeek V4 Pro (Fireworks AI)"
+	DisplayNameNemotron3UltraNVFP4FireworksAI = "NVIDIA Nemotron 3 Ultra 550B A55B NVFP4 (Fireworks AI)"
+	DisplayNameGLM51FireworksAI               = "GLM 5.1 (Fireworks AI)"
+	DisplayNameMiniMaxM27FireworksAI          = "MiniMax M2.7 (Fireworks AI)"
+	DisplayNameGLM51FP8FireworksAI            = "GLM 5.1 FP8 (Fireworks AI)"
+
+	DisplayNameOrnith1035BFP8DeepInfra     = "Ornith 1.0 35B FP8 (DeepInfra)"
+	DisplayNameMiMoV25ProDeepInfra         = "MiMo V2.5 Pro (DeepInfra)"
+	DisplayNameNemotron3UltraBF16DeepInfra = "NVIDIA Nemotron 3 Ultra 550B A55B BF16 (DeepInfra)"
+
+	DisplayNameGLM52FP8ZAI = "GLM 5.2 FP8 (Z.AI)"
+
+	DisplayNameQwen3CoderNextNovita     = "Qwen3-Coder Next (Novita)"
+	DisplayNameGLM5Novita               = "GLM 5 (Novita)"
+	DisplayNameMiniMaxM25Novita         = "MiniMax M2.5 (Novita)"
+	DisplayNameKimiK2InstructNovita     = "Kimi K2 Instruct (Novita)"
+	DisplayNameKimiK2Instruct0905Novita = "Kimi K2 Instruct 0905 (Novita)"
+
+	DisplayNameNemotron3SuperBF16FeatherlessAI = "NVIDIA Nemotron 3 Super 120B A12B BF16 (Featherless AI)"
+	DisplayNameKimiK2ThinkingFeatherlessAI     = "Kimi K2 Thinking (Featherless AI)"
+	DisplayNameStep35FlashFeatherlessAI        = "Step 3.5 Flash (Featherless AI)"
+	DisplayNameMiMoV2FlashFeatherlessAI        = "MiMo V2 Flash (Featherless AI)"
+
+	DisplayNameGLM47Cerebras = "GLM 4.7 (Cerebras)"
+)
+
 var modelHuggingFaceGPTOSS120 = ModelPreset{
 	ID:          PresetGPTOSS120BFireworksAI,
 	Name:        ModelNameGPTOSS120BFireworksAI,

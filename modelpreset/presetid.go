@@ -1,66 +1,6 @@
 package modelpreset
 
 const (
-	PresetGPT56Sol   ModelPresetID = "gpt56sol"
-	PresetGPT56Terra ModelPresetID = "gpt56terra"
-	PresetGPT56Luna  ModelPresetID = "gpt56luna"
-
-	PresetGPT55 ModelPresetID = "gpt55"
-
-	PresetGPT54     ModelPresetID = "gpt54"
-	PresetGPT54Mini ModelPresetID = "gpt54mini"
-	PresetGPT54Nano ModelPresetID = "gpt54nano"
-
-	PresetGPT53Codex ModelPresetID = "gpt53Codex"
-
-	PresetGPT52         ModelPresetID = "gpt52"
-	PresetGPT52Codex    ModelPresetID = "gpt52Codex"
-	PresetGPT51         ModelPresetID = "gpt51"
-	PresetGPT51Codex    ModelPresetID = "gpt51Codex"
-	PresetGPT51CodexMax ModelPresetID = "gpt51CodexMax"
-
-	PresetGPT41     ModelPresetID = "gpt41"
-	PresetGPT41Mini ModelPresetID = "gpt41Mini"
-	PresetGPT4o     ModelPresetID = "gpt4o"
-	PresetGPT4oMini ModelPresetID = "gpt4oMini"
-
-	PresetGPT5Mini ModelPresetID = "gpt5Mini"
-
-	PresetClaudeFable5   ModelPresetID = "fable5"
-	PresetClaudeOpus5    ModelPresetID = "opus5"
-	PresetClaudeOpus48   ModelPresetID = "opus48"
-	PresetClaudeOpus47   ModelPresetID = "opus47"
-	PresetClaudeOpus46   ModelPresetID = "opus46"
-	PresetClaudeOpus45   ModelPresetID = "opus45"
-	PresetClaudeOpus41   ModelPresetID = "opus41"
-	PresetClaudeSonnet5  ModelPresetID = "sonnet5"
-	PresetClaudeSonnet46 ModelPresetID = "sonnet46"
-	PresetClaudeSonnet45 ModelPresetID = "sonnet45"
-	PresetClaudeSonnet4  ModelPresetID = "sonnet4"
-	PresetClaudeHaiku45  ModelPresetID = "haiku45"
-
-	PresetGemini36Flash     ModelPresetID = "gemini36Flash"
-	PresetGemini35Flash     ModelPresetID = "gemini35Flash"
-	PresetGemini35FlashLite ModelPresetID = "gemini35FlashLite"
-	PresetGemini31Pro       ModelPresetID = "gemini31Pro"
-	PresetGemini31FlashLite ModelPresetID = "gemini31FlashLite"
-	PresetGemini3Flash      ModelPresetID = "gemini3Flash"
-	PresetGemini25Flash     ModelPresetID = "gemini25Flash"
-	PresetGemini25FlashLite ModelPresetID = "gemini25FlashLite"
-
-	PresetMistralMedium35 ModelPresetID = "mistralMedium35"
-	PresetMistralSmall4   ModelPresetID = "mistralSmall4"
-	PresetMistralLarge3   ModelPresetID = "mistralLarge3"
-	PresetDevstral2       ModelPresetID = "devstral2"
-
-	PresetGrok45             ModelPresetID = "grok45"
-	PresetGrok43             ModelPresetID = "grok43"
-	PresetBuild01            ModelPresetID = "grokBuild01"
-	PresetGrok42Reasoning    ModelPresetID = "grok42Reasoning"
-	PresetGrok42NonReasoning ModelPresetID = "grok42NonReasoning"
-)
-
-const (
 	PresetGPTOSS120B ModelPresetID = "gptoss120b"
 	PresetGPTOSS20B  ModelPresetID = "gptoss20b"
 

@@ -6,6 +6,27 @@ import (
 	"github.com/flexigpt/inference-go/spec"
 )
 
+const (
+	ModelNameMistralMedium35 spec.ModelName = "mistral-medium-3-5"
+	ModelNameMistralSmall4   spec.ModelName = "mistral-small-2603"
+	ModelNameMistralLarge3   spec.ModelName = "mistral-large-2512"
+	ModelNameDevstral2       spec.ModelName = "devstral-2512"
+)
+
+const (
+	DisplayNameMistralMedium35 = "Mistral Medium 3.5"
+	DisplayNameMistralSmall4   = "Mistral Small 4"
+	DisplayNameMistralLarge3   = "Mistral Large 3"
+	DisplayNameDevstral2       = "Devstral 2"
+)
+
+const (
+	PresetMistralMedium35 ModelPresetID = "mistralMedium35"
+	PresetMistralSmall4   ModelPresetID = "mistralSmall4"
+	PresetMistralLarge3   ModelPresetID = "mistralLarge3"
+	PresetDevstral2       ModelPresetID = "devstral2"
+)
+
 var modelMistralMedium35 = ModelPreset{
 	ID:          PresetMistralMedium35,
 	Name:        ModelNameMistralMedium35,
