@@ -1,6 +1,7 @@
 package modelpreset
 
 import (
+	"github.com/flexigpt/inference-go/capabilityoverride"
 	"github.com/flexigpt/inference-go/spec"
 )
 
@@ -79,3 +80,10 @@ const (
 	PresetNemotron3UltraBF16DeepInfra     ModelPresetID = "nemotron3ultraBF16DeepInfra"
 	PresetNemotron3SuperBF16FeatherlessAI ModelPresetID = "nemotron3superBF16FeatherlessAI"
 )
+
+var noReasoningOverride = &capabilityoverride.ModelCapabilitiesOverride{
+	ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+		SupportedReasoningTypes:  []spec.ReasoningType{},
+		SupportedReasoningLevels: []spec.ReasoningLevel{},
+	},
+}

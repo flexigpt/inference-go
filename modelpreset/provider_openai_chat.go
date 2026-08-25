@@ -12,13 +12,6 @@ const (
 	DisplayNameProviderOpenAIChat = "OpenAI Chat Completions API"
 )
 
-var openAIChatNoReasoningOverride = &capabilityoverride.ModelCapabilitiesOverride{
-	ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
-		SupportedReasoningTypes:  []spec.ReasoningType{},
-		SupportedReasoningLevels: []spec.ReasoningLevel{},
-	},
-}
-
 var modelOpenAIChatGPT41 = ModelPreset{
 	ID:          PresetGPT41,
 	Name:        ModelNameGPT41,
@@ -32,7 +25,7 @@ var modelOpenAIChatGPT41 = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIChatNoReasoningOverride,
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelOpenAIChatGPT41Mini = ModelPreset{
@@ -48,7 +41,7 @@ var modelOpenAIChatGPT41Mini = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIChatNoReasoningOverride,
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelOpenAIChatGPT4o = ModelPreset{
@@ -64,7 +57,7 @@ var modelOpenAIChatGPT4o = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIChatNoReasoningOverride,
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelOpenAIChatGPT4oMini = ModelPreset{
@@ -80,7 +73,7 @@ var modelOpenAIChatGPT4oMini = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIChatNoReasoningOverride,
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var providerOpenAIChat = ProviderPreset{

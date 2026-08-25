@@ -18,27 +18,25 @@ const (
 )
 
 const (
-	ModelNameGLM53                    spec.ModelName = "glm-5.3"
-	ModelNameGLM52                    spec.ModelName = "glm-5.2"
-	ModelNameGLM51                    spec.ModelName = "glm-5.1"
-	ModelNameGLM5                     spec.ModelName = "glm-5"
-	ModelNameGLM5Turbo                spec.ModelName = "glm-5-turbo"
-	ModelNameGLM47                    spec.ModelName = "glm-4.7"
-	ModelNameGLM47FlashX              spec.ModelName = "glm-4.7-flashx"
-	ModelNameGLM47Flash               spec.ModelName = "glm-4.7-flash"
-	ModelNameGLM46                    spec.ModelName = "glm-4.6"
-	ModelNameGLM45                    spec.ModelName = "glm-4.5"
-	ModelNameGLM45X                   spec.ModelName = "glm-4.5-x"
-	ModelNameGLM45Air                 spec.ModelName = "glm-4.5-air"
-	ModelNameGLM45AirX                spec.ModelName = "glm-4.5-airx"
-	ModelNameGLM45Flash               spec.ModelName = "glm-4.5-flash"
-	ModelNameGLM432B0414128K          spec.ModelName = "glm-4-32b-0414-128k"
-	ModelNameGLM5VTurbo               spec.ModelName = "glm-5v-turbo"
-	ModelNameGLM46V                   spec.ModelName = "glm-4.6v"
-	ModelNameGLM46VFlash              spec.ModelName = "glm-4.6v-flash"
-	ModelNameGLM46VFlashX             spec.ModelName = "glm-4.6v-flashx"
-	ModelNameGLM45V                   spec.ModelName = "glm-4.5v"
-	ModelNameAutoGLMPhoneMultilingual spec.ModelName = "autoglm-phone-multilingual"
+	ModelNameGLM53        spec.ModelName = "glm-5.3"
+	ModelNameGLM52        spec.ModelName = "glm-5.2"
+	ModelNameGLM51        spec.ModelName = "glm-5.1"
+	ModelNameGLM5         spec.ModelName = "glm-5"
+	ModelNameGLM5Turbo    spec.ModelName = "glm-5-turbo"
+	ModelNameGLM47        spec.ModelName = "glm-4.7"
+	ModelNameGLM47FlashX  spec.ModelName = "glm-4.7-flashx"
+	ModelNameGLM47Flash   spec.ModelName = "glm-4.7-flash"
+	ModelNameGLM46        spec.ModelName = "glm-4.6"
+	ModelNameGLM45        spec.ModelName = "glm-4.5"
+	ModelNameGLM45X       spec.ModelName = "glm-4.5-x"
+	ModelNameGLM45Air     spec.ModelName = "glm-4.5-air"
+	ModelNameGLM45AirX    spec.ModelName = "glm-4.5-airx"
+	ModelNameGLM45Flash   spec.ModelName = "glm-4.5-flash"
+	ModelNameGLM5VTurbo   spec.ModelName = "glm-5v-turbo"
+	ModelNameGLM46V       spec.ModelName = "glm-4.6v"
+	ModelNameGLM46VFlash  spec.ModelName = "glm-4.6v-flash"
+	ModelNameGLM46VFlashX spec.ModelName = "glm-4.6v-flashx"
+	ModelNameGLM45V       spec.ModelName = "glm-4.5v"
 
 	ModelNameGLM47Flash30BA3BRepo  spec.ModelName = "zai-org/GLM-4.7-Flash"
 	ModelNameGLM47Flash30BA3BLocal spec.ModelName = "glm-4.7-flash"
@@ -57,23 +55,21 @@ const (
 )
 
 const (
-	DisplayNameGLM53                    = "GLM 5.3"
-	DisplayNameGLM5Turbo                = "GLM 5 Turbo"
-	DisplayNameGLM47FlashX              = "GLM 4.7 FlashX"
-	DisplayNameGLM47Flash               = "GLM 4.7 Flash"
-	DisplayNameGLM46                    = "GLM 4.6"
-	DisplayNameGLM45                    = "GLM 4.5"
-	DisplayNameGLM45X                   = "GLM 4.5 X"
-	DisplayNameGLM45Air                 = "GLM 4.5 Air"
-	DisplayNameGLM45AirX                = "GLM 4.5 AirX"
-	DisplayNameGLM45Flash               = "GLM 4.5 Flash"
-	DisplayNameGLM432B0414128K          = "GLM 4 32B 0414 128K"
-	DisplayNameGLM5VTurbo               = "GLM 5V Turbo"
-	DisplayNameGLM46V                   = "GLM 4.6V"
-	DisplayNameGLM46VFlash              = "GLM 4.6V Flash"
-	DisplayNameGLM46VFlashX             = "GLM 4.6V FlashX"
-	DisplayNameGLM45V                   = "GLM 4.5V"
-	DisplayNameAutoGLMPhoneMultilingual = "AutoGLM Phone Multilingual"
+	DisplayNameGLM53        = "GLM 5.3"
+	DisplayNameGLM5Turbo    = "GLM 5 Turbo"
+	DisplayNameGLM47FlashX  = "GLM 4.7 FlashX"
+	DisplayNameGLM47Flash   = "GLM 4.7 Flash"
+	DisplayNameGLM46        = "GLM 4.6"
+	DisplayNameGLM45        = "GLM 4.5"
+	DisplayNameGLM45X       = "GLM 4.5 X"
+	DisplayNameGLM45Air     = "GLM 4.5 Air"
+	DisplayNameGLM45AirX    = "GLM 4.5 AirX"
+	DisplayNameGLM45Flash   = "GLM 4.5 Flash"
+	DisplayNameGLM5VTurbo   = "GLM 5V Turbo"
+	DisplayNameGLM46V       = "GLM 4.6V"
+	DisplayNameGLM46VFlash  = "GLM 4.6V Flash"
+	DisplayNameGLM46VFlashX = "GLM 4.6V FlashX"
+	DisplayNameGLM45V       = "GLM 4.5V"
 
 	DisplayNameGLM47Flash30BA3B = "GLM-4.7 Flash 30B A3B"
 	DisplayNameGLM47            = "GLM 4.7"
@@ -96,23 +92,21 @@ const (
 )
 
 const (
-	PresetGLM53                    ModelPresetID = "glm53"
-	PresetGLM5Turbo                ModelPresetID = "glm5Turbo"
-	PresetGLM47FlashX              ModelPresetID = "glm47FlashX"
-	PresetGLM47Flash               ModelPresetID = "glm47Flash"
-	PresetGLM46                    ModelPresetID = "glm46"
-	PresetGLM45                    ModelPresetID = "glm45"
-	PresetGLM45X                   ModelPresetID = "glm45X"
-	PresetGLM45Air                 ModelPresetID = "glm45Air"
-	PresetGLM45AirX                ModelPresetID = "glm45AirX"
-	PresetGLM45Flash               ModelPresetID = "glm45Flash"
-	PresetGLM432B0414128K          ModelPresetID = "glm432B0414128K"
-	PresetGLM5VTurbo               ModelPresetID = "glm5VTurbo"
-	PresetGLM46V                   ModelPresetID = "glm46V"
-	PresetGLM46VFlash              ModelPresetID = "glm46VFlash"
-	PresetGLM46VFlashX             ModelPresetID = "glm46VFlashX"
-	PresetGLM45V                   ModelPresetID = "glm45V"
-	PresetAutoGLMPhoneMultilingual ModelPresetID = "autoglmPhoneMultilingual"
+	PresetGLM53        ModelPresetID = "glm53"
+	PresetGLM5Turbo    ModelPresetID = "glm5Turbo"
+	PresetGLM47FlashX  ModelPresetID = "glm47FlashX"
+	PresetGLM47Flash   ModelPresetID = "glm47Flash"
+	PresetGLM46        ModelPresetID = "glm46"
+	PresetGLM45        ModelPresetID = "glm45"
+	PresetGLM45X       ModelPresetID = "glm45X"
+	PresetGLM45Air     ModelPresetID = "glm45Air"
+	PresetGLM45AirX    ModelPresetID = "glm45AirX"
+	PresetGLM45Flash   ModelPresetID = "glm45Flash"
+	PresetGLM5VTurbo   ModelPresetID = "glm5VTurbo"
+	PresetGLM46V       ModelPresetID = "glm46V"
+	PresetGLM46VFlash  ModelPresetID = "glm46VFlash"
+	PresetGLM46VFlashX ModelPresetID = "glm46VFlashX"
+	PresetGLM45V       ModelPresetID = "glm45V"
 
 	PresetGLM47Flash30BA3B ModelPresetID = "glm47flash30ba3b"
 	PresetGLM47            ModelPresetID = "glm47"
@@ -213,6 +207,7 @@ var modelZAIPayAsYouGoGLM51 = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 131072,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
@@ -231,13 +226,11 @@ var modelZAIPayAsYouGoGLM5 = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 131072,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM5Turbo = ModelPreset{
@@ -249,13 +242,11 @@ var modelZAIPayAsYouGoGLM5Turbo = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 131072,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM47 = ModelPreset{
@@ -267,13 +258,11 @@ var modelZAIPayAsYouGoGLM47 = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 131072,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM47FlashX = ModelPreset{
@@ -285,13 +274,11 @@ var modelZAIPayAsYouGoGLM47FlashX = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 131072,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM47Flash = ModelPreset{
@@ -303,13 +290,11 @@ var modelZAIPayAsYouGoGLM47Flash = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 131072,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM46 = ModelPreset{
@@ -321,13 +306,11 @@ var modelZAIPayAsYouGoGLM46 = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 131072,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM45 = ModelPreset{
@@ -339,13 +322,11 @@ var modelZAIPayAsYouGoGLM45 = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 131072,
 		MaxOutputLength: 98304,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM45X = ModelPreset{
@@ -357,13 +338,11 @@ var modelZAIPayAsYouGoGLM45X = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 131072,
 		MaxOutputLength: 98304,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM45Air = ModelPreset{
@@ -375,13 +354,11 @@ var modelZAIPayAsYouGoGLM45Air = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 131072,
 		MaxOutputLength: 98304,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM45AirX = ModelPreset{
@@ -393,13 +370,11 @@ var modelZAIPayAsYouGoGLM45AirX = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 131072,
 		MaxOutputLength: 98304,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM45Flash = ModelPreset{
@@ -411,31 +386,11 @@ var modelZAIPayAsYouGoGLM45Flash = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 98304,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
-}
-
-var modelZAIPayAsYouGoGLM432B = ModelPreset{
-	ID:          PresetGLM432B0414128K,
-	Name:        ModelNameGLM432B0414128K,
-	DisplayName: DisplayNameGLM432B0414128K,
-	ModelParam: spec.ModelParam{
-		Name:            ModelNameGLM432B0414128K,
-		Stream:          true,
-		MaxPromptLength: 131072,
-		MaxOutputLength: 16384,
-		SystemPrompt:    "",
-		Timeout:         1800,
-	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn:  []spec.Modality{spec.ModalityTextIn},
-		ModalitiesOut: []spec.Modality{spec.ModalityTextOut},
-	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM5VTurbo = ModelPreset{
@@ -447,9 +402,11 @@ var modelZAIPayAsYouGoGLM5VTurbo = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 131072,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM46V = ModelPreset{
@@ -461,9 +418,11 @@ var modelZAIPayAsYouGoGLM46V = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 131072,
 		MaxOutputLength: 32768,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM46VFlash = ModelPreset{
@@ -475,9 +434,11 @@ var modelZAIPayAsYouGoGLM46VFlash = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 131072,
 		MaxOutputLength: 32768,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM46VFlashX = ModelPreset{
@@ -489,9 +450,11 @@ var modelZAIPayAsYouGoGLM46VFlashX = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 131072,
 		MaxOutputLength: 32768,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAIPayAsYouGoGLM45V = ModelPreset{
@@ -503,10 +466,15 @@ var modelZAIPayAsYouGoGLM45V = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 65536,
 		MaxOutputLength: 16384,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
 	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes:  []spec.ReasoningType{},
+			SupportedReasoningLevels: []spec.ReasoningLevel{},
+		},
 		ToolCapabilities: &capabilityoverride.ToolCapabilitiesOverride{
 			SupportedToolTypes:        []spec.ToolType{},
 			SupportedToolPolicyModes:  []spec.ToolPolicyMode{},
@@ -516,20 +484,6 @@ var modelZAIPayAsYouGoGLM45V = ModelPreset{
 				spec.ToolOutputFormatKindString,
 			},
 		},
-	},
-}
-
-var modelZAIPayAsYouGoAutoGLMPhoneMultilingual = ModelPreset{
-	ID:          PresetAutoGLMPhoneMultilingual,
-	Name:        ModelNameAutoGLMPhoneMultilingual,
-	DisplayName: DisplayNameAutoGLMPhoneMultilingual,
-	ModelParam: spec.ModelParam{
-		Name:            ModelNameAutoGLMPhoneMultilingual,
-		Stream:          true,
-		MaxPromptLength: 0,
-		MaxOutputLength: 4096,
-		SystemPrompt:    "",
-		Timeout:         1800,
 	},
 }
 
@@ -573,9 +527,11 @@ var modelZAICodingPlanGLM5Turbo = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 131072,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var modelZAICodingPlanGLM47 = ModelPreset{
@@ -587,25 +543,23 @@ var modelZAICodingPlanGLM47 = ModelPreset{
 		Stream:          true,
 		MaxPromptLength: 204800,
 		MaxOutputLength: 131072,
+		Temperature:     new(1.0),
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: noReasoningOverride,
 }
 
 var providerZAI = ProviderPreset{
 	Name:        ProviderZAI,
 	DisplayName: DisplayNameProviderZAI,
 
-	// Z.AI documents the standard pay-as-you-go endpoint as Chat Completions.
-	// This Responses configuration intentionally probes the analogous route:
-	// POST https://api.z.ai/api/paas/v4/responses.
-	//
-	// If this route returns 404 or rejects the Responses request/response schema,
-	// change this provider only to OpenAI Chat Completions and use the documented
-	// /api/paas/v4/chat/completions route. Do not reuse Coding Plan credentials.
-	SDKType:                  spec.ProviderSDKTypeOpenAIResponses,
+	// Z.AI documents pay-as-you-go through its OpenAI-compatible Chat
+	// Completions endpoint. The OpenAI Chat adapter strips the terminal
+	// chat/completions suffix before configuring the SDK base URL.
+	SDKType:                  spec.ProviderSDKTypeOpenAIChatCompletions,
 	Origin:                   "https://api.z.ai",
-	ChatCompletionPathPrefix: "/api/paas/v4/responses",
+	ChatCompletionPathPrefix: "/api/paas/v4/chat/completions",
 	APIKeyHeaderKey:          spec.DefaultAuthorizationHeaderKey,
 	DefaultHeaders: map[string]string{
 		spec.DefaultContentTypeHeaderKey: spec.DefaultContentTypeHeader,
@@ -660,29 +614,30 @@ var providerZAI = ProviderPreset{
 				SupportsKey:    new(false),
 			},
 		},
+		ParamDialect: &capabilityoverride.ParamDialectOverride{
+			MaxOutputTokensParamName: new(spec.MaxOutputTokensParamNameMaxTokens),
+		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetGLM53:                    modelZAIPayAsYouGoGLM53,
-		PresetGLM52:                    modelZAIPayAsYouGoGLM52,
-		PresetGLM51:                    modelZAIPayAsYouGoGLM51,
-		PresetGLM5:                     modelZAIPayAsYouGoGLM5,
-		PresetGLM5Turbo:                modelZAIPayAsYouGoGLM5Turbo,
-		PresetGLM47:                    modelZAIPayAsYouGoGLM47,
-		PresetGLM47FlashX:              modelZAIPayAsYouGoGLM47FlashX,
-		PresetGLM47Flash:               modelZAIPayAsYouGoGLM47Flash,
-		PresetGLM46:                    modelZAIPayAsYouGoGLM46,
-		PresetGLM45:                    modelZAIPayAsYouGoGLM45,
-		PresetGLM45X:                   modelZAIPayAsYouGoGLM45X,
-		PresetGLM45Air:                 modelZAIPayAsYouGoGLM45Air,
-		PresetGLM45AirX:                modelZAIPayAsYouGoGLM45AirX,
-		PresetGLM45Flash:               modelZAIPayAsYouGoGLM45Flash,
-		PresetGLM432B0414128K:          modelZAIPayAsYouGoGLM432B,
-		PresetGLM5VTurbo:               modelZAIPayAsYouGoGLM5VTurbo,
-		PresetGLM46V:                   modelZAIPayAsYouGoGLM46V,
-		PresetGLM46VFlash:              modelZAIPayAsYouGoGLM46VFlash,
-		PresetGLM46VFlashX:             modelZAIPayAsYouGoGLM46VFlashX,
-		PresetGLM45V:                   modelZAIPayAsYouGoGLM45V,
-		PresetAutoGLMPhoneMultilingual: modelZAIPayAsYouGoAutoGLMPhoneMultilingual,
+		PresetGLM53:        modelZAIPayAsYouGoGLM53,
+		PresetGLM52:        modelZAIPayAsYouGoGLM52,
+		PresetGLM51:        modelZAIPayAsYouGoGLM51,
+		PresetGLM5:         modelZAIPayAsYouGoGLM5,
+		PresetGLM5Turbo:    modelZAIPayAsYouGoGLM5Turbo,
+		PresetGLM47:        modelZAIPayAsYouGoGLM47,
+		PresetGLM47FlashX:  modelZAIPayAsYouGoGLM47FlashX,
+		PresetGLM47Flash:   modelZAIPayAsYouGoGLM47Flash,
+		PresetGLM46:        modelZAIPayAsYouGoGLM46,
+		PresetGLM45:        modelZAIPayAsYouGoGLM45,
+		PresetGLM45X:       modelZAIPayAsYouGoGLM45X,
+		PresetGLM45Air:     modelZAIPayAsYouGoGLM45Air,
+		PresetGLM45AirX:    modelZAIPayAsYouGoGLM45AirX,
+		PresetGLM45Flash:   modelZAIPayAsYouGoGLM45Flash,
+		PresetGLM5VTurbo:   modelZAIPayAsYouGoGLM5VTurbo,
+		PresetGLM46V:       modelZAIPayAsYouGoGLM46V,
+		PresetGLM46VFlash:  modelZAIPayAsYouGoGLM46VFlash,
+		PresetGLM46VFlashX: modelZAIPayAsYouGoGLM46VFlashX,
+		PresetGLM45V:       modelZAIPayAsYouGoGLM45V,
 	},
 }
 
