@@ -63,14 +63,18 @@ var catalogProviders = map[spec.ProviderName]ProviderPreset{
 	ProviderMeta:            providerMeta,
 	ProviderMiniMax:         providerMiniMax,
 	ProviderMistral:         providerMistral,
+	ProviderMoonshot:        providerMoonshot,
 	ProviderOllama:          providerOllama,
 	ProviderOpenAIChat:      providerOpenAIChat,
 	ProviderOpenAIResponses: providerOpenAIResponses,
 	ProviderOpenRouter:      providerOpenRouter,
+	ProviderQwen:            providerQwen,
 	ProviderSGLang:          providerSGLang,
 	ProviderVLLM:            providerVLLM,
 	ProviderXAI:             providerXAI,
 	ProviderXiaomi:          providerXiaomi,
+	ProviderZAI:             providerZAI,
+	ProviderZAICodingPlan:   providerZAICodingPlan,
 }
 
 func DefaultCatalog() Catalog {

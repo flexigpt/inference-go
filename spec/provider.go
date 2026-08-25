@@ -17,6 +17,8 @@ const (
 	DefaultAnthropicOrigin                 = "https://api.anthropic.com"
 	DefaultAnthropicChatCompletionPrefix   = "/v1/messages"
 	DefaultAnthropicAuthorizationHeaderKey = "x-api-key"
+	DefaultAnthropicVersionHeaderKey       = "anthropic-version"
+	DefaultAnthropicVersionHeader          = "2023-06-01"
 
 	DefaultOpenAIOrigin                = "https://api.openai.com"
 	DefaultOpenAIChatCompletionsPrefix = "/v1/chat/completions"

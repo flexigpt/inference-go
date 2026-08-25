@@ -391,9 +391,9 @@ var providerAnthropic = ProviderPreset{
 	ChatCompletionPathPrefix: spec.DefaultAnthropicChatCompletionPrefix,
 	APIKeyHeaderKey:          spec.DefaultAnthropicAuthorizationHeaderKey,
 	DefaultHeaders: map[string]string{
-		spec.DefaultContentTypeHeaderKey: spec.DefaultContentTypeHeader,
-		"accept":                         spec.DefaultContentTypeHeader,
-		"anthropic-version":              "2023-06-01",
+		spec.DefaultContentTypeHeaderKey:      spec.DefaultContentTypeHeader,
+		spec.DefaultAcceptHeaderKey:           spec.DefaultContentTypeHeader,
+		spec.DefaultAnthropicVersionHeaderKey: spec.DefaultAnthropicVersionHeader,
 	},
 	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
 		ModalitiesIn: []spec.Modality{
