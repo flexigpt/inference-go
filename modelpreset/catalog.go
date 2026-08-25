@@ -54,11 +54,14 @@ type Catalog struct {
 
 var catalogProviders = map[spec.ProviderName]ProviderPreset{
 	ProviderAnthropic:       providerAnthropic,
+	ProviderDeepSeek:        providerDeepSeek,
 	ProviderLocalAI:         providerLocalAI,
 	ProviderLMStudio:        providerLMStudio,
 	ProviderGoogleGemini:    providerGoogleGemini,
 	ProviderHuggingFace:     providerHuggingFace,
 	ProviderLlamaCPP:        providerLlamaCPP,
+	ProviderMeta:            providerMeta,
+	ProviderMiniMax:         providerMiniMax,
 	ProviderMistral:         providerMistral,
 	ProviderOllama:          providerOllama,
 	ProviderOpenAIChat:      providerOpenAIChat,
@@ -67,6 +70,7 @@ var catalogProviders = map[spec.ProviderName]ProviderPreset{
 	ProviderSGLang:          providerSGLang,
 	ProviderVLLM:            providerVLLM,
 	ProviderXAI:             providerXAI,
+	ProviderXiaomiMiMo:      providerXiaomiMiMo,
 }
 
 func DefaultCatalog() Catalog {
