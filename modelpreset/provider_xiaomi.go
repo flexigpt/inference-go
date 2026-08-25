@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	ProviderXiaomiMiMo spec.ProviderName = "xiaomi"
+	ProviderXiaomi spec.ProviderName = "xiaomi"
 
-	DisplayNameProviderXiaomiMiMo = "Xiaomi"
+	DisplayNameProviderXiaomi = "Xiaomi"
 )
 
 const (
@@ -86,9 +86,9 @@ var modelXiaomiMiMoV25 = ModelPreset{
 	},
 }
 
-var providerXiaomiMiMo = ProviderPreset{
-	Name:                     ProviderXiaomiMiMo,
-	DisplayName:              DisplayNameProviderXiaomiMiMo,
+var providerXiaomi = ProviderPreset{
+	Name:                     ProviderXiaomi,
+	DisplayName:              DisplayNameProviderXiaomi,
 	SDKType:                  spec.ProviderSDKTypeOpenAIResponses,
 	Origin:                   "https://api.xiaomimimo.com",
 	ChatCompletionPathPrefix: spec.DefaultOpenAIResponsesPrefix,

@@ -70,7 +70,7 @@ var catalogProviders = map[spec.ProviderName]ProviderPreset{
 	ProviderSGLang:          providerSGLang,
 	ProviderVLLM:            providerVLLM,
 	ProviderXAI:             providerXAI,
-	ProviderXiaomiMiMo:      providerXiaomiMiMo,
+	ProviderXiaomi:          providerXiaomi,
 }
 
 func DefaultCatalog() Catalog {
