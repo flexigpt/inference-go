@@ -1101,7 +1101,7 @@ func toolOutputToOpenAIResponses(
 		if s, ok := toolOutputAsSingleString(toolOutput); ok {
 			return &responses.ResponseInputItemUnionParam{
 				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-					CallID: toolOutput.CallID,
+					CallID: param.NewOpt(toolOutput.CallID),
 					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 						OfString: param.NewOpt(s),
 					},
@@ -1117,7 +1117,7 @@ func toolOutputToOpenAIResponses(
 		if len(items) > 0 {
 			return &responses.ResponseInputItemUnionParam{
 				OfFunctionCallOutput: &responses.ResponseInputItemFunctionCallOutputParam{
-					CallID: toolOutput.CallID,
+					CallID: param.NewOpt(toolOutput.CallID),
 					Output: responses.ResponseInputItemFunctionCallOutputOutputUnionParam{
 						OfResponseFunctionCallOutputItemArray: items,
 					},

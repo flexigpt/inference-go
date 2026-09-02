@@ -384,7 +384,6 @@ func TestCatalogReturnsIndependentCopies(t *testing.T) {
 		t.Fatal("Anthropic capabilities override unexpectedly incomplete")
 	}
 
-	provider.DisplayName = "mutated provider"
 	provider.DefaultHeaders["x-mutated"] = "true"
 	provider.CapabilitiesOverride.ModalitiesIn[0] = spec.ModalityAudioIn
 

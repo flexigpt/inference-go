@@ -12,6 +12,7 @@ const (
 )
 
 const (
+	ModelNameClaudeFable51  spec.ModelName = "claude-fable-5-1"
 	ModelNameClaudeFable5   spec.ModelName = "claude-fable-5"
 	ModelNameClaudeOpus5    spec.ModelName = "claude-opus-5"
 	ModelNameClaudeOpus48   spec.ModelName = "claude-opus-4-8"
@@ -27,6 +28,7 @@ const (
 )
 
 const (
+	DisplayNameClaudeFable51  = "Claude Fable 5.1"
 	DisplayNameClaudeFable5   = "Claude Fable 5"
 	DisplayNameClaudeOpus5    = "Claude Opus 5"
 	DisplayNameClaudeOpus48   = "Claude Opus 4.8"
@@ -42,6 +44,7 @@ const (
 )
 
 const (
+	PresetClaudeFable51  ModelPresetID = "fable51"
 	PresetClaudeFable5   ModelPresetID = "fable5"
 	PresetClaudeOpus5    ModelPresetID = "opus5"
 	PresetClaudeOpus48   ModelPresetID = "opus48"
@@ -55,6 +58,37 @@ const (
 	PresetClaudeSonnet4  ModelPresetID = "sonnet4"
 	PresetClaudeHaiku45  ModelPresetID = "haiku45"
 )
+
+var modelAnthropicFable51 = ModelPreset{
+	ID:          PresetClaudeFable51,
+	Name:        ModelNameClaudeFable51,
+	DisplayName: DisplayNameClaudeFable51,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameClaudeFable51,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+		CacheControl:    cacheEphemeral5m(),
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+				spec.ReasoningLevelMax,
+			},
+		},
+	},
+}
 
 var modelAnthropicFable5 = ModelPreset{
 	ID:          PresetClaudeFable5,
@@ -455,6 +489,7 @@ var providerAnthropic = ProviderPreset{
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
 		PresetClaudeFable5:   modelAnthropicFable5,
+		PresetClaudeFable51:  modelAnthropicFable51,
 		PresetClaudeOpus5:    modelAnthropicOpus5,
 		PresetClaudeOpus48:   modelAnthropicOpus48,
 		PresetClaudeOpus47:   modelAnthropicOpus47,
