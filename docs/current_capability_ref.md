@@ -1,23 +1,47 @@
-# API capability, preset provider, and normalization done and pending reference
+# Inference-Go Capability Reference
 
-This document is the current implementation reference for normalized API capability support across wire adapters, provider presets, hosted routers, and local runtimes.
+This document is the implementation reference for normalized capability support across:
 
-Terminology used here:
+- Wire adapters
+- Provider presets
+- Model presets
+- Hosted routers
+- Local runtimes
+- Request normalization
+- Response normalization
+
+The effective capability profile for a request is determined by:
+
+1. The base capability profile of the selected adapter.
+2. The provider preset capability override.
+3. The model preset capability override.
+4. Any application-provided capability override.
+
+A compatible HTTP endpoint does not automatically support the complete feature set of the adapter family. Always use `ProviderSetAPI.NewPresetCapabilityResolver` with catalog providers and models.
+
+## Terminology
 
 - Done
-  - implemented today in code
-  - includes both request normalization and response normalization
-- Dropped with warning
-  - accepted at the normalized layer, then removed during normalization
-  - warning appears in `FetchCompletionResponse.Warnings`
-- Sanitized
-  - provider adapter removes or transforms provider-incompatible history/content before building the vendor request
-- Pending
-  - not implemented yet, partially implemented, or intentionally deferred until the normalized surface is clarified
+  - Implemented in the current codebase.
+  - Includes request normalization, request conversion, or response conversion as applicable.
 
-Primary capability sources:
+- Dropped with warning
+  - Accepted by the normalized request model but removed during capability normalization.
+  - A warning is returned in `FetchCompletionResponse.Warnings`.
+
+- Sanitized
+  - Provider-incompatible history or content is removed or transformed before a vendor request is built.
+
+- Model-dependent
+  - Support varies by model preset or application-specific capability override.
+
+- Pending
+  - Not implemented, partially implemented, or deliberately excluded from the normalized API.
+
+## Capability sources
 
 - `spec/capability.go`
+- `spec/param_reasoning.go`
 - `internal/anthropicsdk/capability.go`
 - `internal/openairesponsessdk/capability.go`
 - `internal/openaichatsdk/capability.go`
@@ -25,29 +49,7 @@ Primary capability sources:
 - `capabilityoverride`
 - `modelpreset`
 
-## Table of contents <!-- omit from toc -->
-
-- [Cross-provider Reference](#cross-provider-reference)
-  - [Done](#done)
-  - [Pending](#pending)
-- [Anthropic Messages API Reference](#anthropic-messages-api-reference)
-  - [Done Anthropic Reference](#done-anthropic-reference)
-  - [Pending Anthropic Reference](#pending-anthropic-reference)
-- [OpenAI Responses API Reference](#openai-responses-api-reference)
-  - [Done OpenAI Responses Reference](#done-openai-responses-reference)
-  - [Pending OpenAI Responses Reference](#pending-openai-responses-reference)
-- [OpenAI Chat Completions API Reference](#openai-chat-completions-api-reference)
-  - [Done OpenAI Chat Completions Reference](#done-openai-chat-completions-reference)
-  - [Pending OpenAI Chat Completions Reference](#pending-openai-chat-completions-reference)
-- [Google Generate Content API Reference](#google-generate-content-api-reference)
-  - [Done Google Generate Content Reference](#done-google-generate-content-reference)
-  - [Pending Google Generate Content Reference](#pending-google-generate-content-reference)
-- [Preset Provider Catalog Reference](#preset-provider-catalog-reference)
-  - [Done Presets Reference](#done-presets-reference)
-  - [Pending Presets Reference](#pending-presets-reference)
-- [Cross-provider Pending Backlog Reference](#cross-provider-pending-backlog-reference)
-
-## Cross-provider Reference
+## Normalized request and response support
 
 ### Done
 
@@ -56,657 +58,516 @@ Primary capability sources:
   - OpenAI Responses
   - OpenAI Chat Completions
   - Google Generate Content
-  - Mistral through OpenAI Chat-compatible adapter presets
-  - Hugging Face Router through OpenAI Chat-compatible adapter presets
-  - llama.cpp through OpenAI Chat-compatible adapter presets
-  - xAI through OpenAI Responses-compatible adapter presets
-  - OpenRouter through OpenAI Responses-compatible adapter presets
-  - LocalAI through OpenAI Responses-compatible adapter presets
-  - LM Studio through OpenAI Responses-compatible adapter presets
-  - SGLang through OpenAI Responses-compatible adapter presets
-  - vLLM through OpenAI Responses-compatible adapter presets
-  - Ollama through Anthropic-compatible adapter presets
+  - Anthropic-compatible provider presets
+  - OpenAI Responses-compatible provider presets
+  - OpenAI Chat Completions-compatible provider presets
 
-- Normalized request/response model
+- Normalized request and response contracts
   - `spec.FetchCompletionRequest`
   - `spec.FetchCompletionResponse`
+  - `spec.ModelParam`
+  - `spec.ReasoningParam`
   - `spec.InputUnion`
   - `spec.OutputUnion`
-  - `spec.ModelParam`
   - `spec.ToolChoice`
   - `spec.ToolPolicy`
+  - `spec.CacheControl`
+  - `spec.OutputParam`
+
+- Request normalization
+  - Request deep cloning
+  - Input-modality validation
+  - Reasoning-type validation
+  - Reasoning-level validation
+  - Summary-style capability handling
+  - Reasoning-context capability handling
+  - Reasoning-mode capability handling
+  - Stop-sequence normalization
+  - Output-format validation
+  - Output-verbosity capability handling
+  - Tool and tool-policy validation
+  - Client tool-output normalization
+  - Cache-control normalization
+  - Capability-driven warnings
 
 - Streaming
-  - normalized text streaming
-  - normalized thinking streaming where the provider exposes it
+  - Text streaming where exposed by the upstream provider
+  - Thinking/reasoning streaming for Anthropic, OpenAI Responses, and Google Generate Content where exposed upstream
+  - Buffered streaming with configurable flush interval and chunk size
+  - Stream-handler panic conversion to errors
 
 - Usage normalization
-  - input tokens
-  - output tokens
-  - cached token accounting where exposed
-  - reasoning token accounting where exposed
+  - Input-token totals
+  - Cached input tokens where exposed
+  - Uncached input tokens where exposed
+  - Output tokens
+  - Reasoning tokens where exposed
 
-- Capability-driven normalization
-  - request cloning
-  - modality validation
-  - reasoning validation
-  - stop-sequence normalization
-  - output-format validation
-  - tool capability validation
-  - cache-control normalization
-  - parameter dialect overrides where declared
-  - warnings returned in `FetchCompletionResponse.Warnings`
-  - reasoning summary-style translation
-  - reasoning context and mode capability gating
+- Capability overrides
+  - Adapter base capabilities
+  - Provider preset overrides
+  - Model preset overrides
+  - Application-defined overrides
+  - Completion-key capability resolvers
+  - Deep-cloned resolver capabilities
 
-- Capability override layering
-  - SDK/provider base capabilities
-  - provider preset overrides
-  - model preset overrides
-  - caller/user overrides
+### Cross-provider limitations
 
-- Preset catalog
-  - provider connection defaults
-  - provider-level capability overrides
-  - model default params
-  - model-level capability overrides
+The following remain intentionally non-portable or only partially normalized:
 
-- Debugging
-  - `CompletionDebugger`
-  - `debugclient.HTTPCompletionDebugger`
+- Audio input and output
+- Video input and output
+- Image generation and image output
+- Provider-native stored conversations
+- Previous-response identifiers
+- Background jobs
+- Prompt resources
+- Uploaded-file lifecycle management
+- Arbitrary provider-specific parameter passthrough
+- Multi-candidate response selection
+- Provider-native safety, metadata, service-tier, and user identifiers
 
-### Pending
+## Adapter capability reference
 
-- Audio input/output normalization
-- Video input/output normalization
-- Image output normalization
-- Richer cross-provider citation normalization beyond URL/basic grounding forms
-- Safe allowlisted passthrough for `ModelParam.AdditionalParametersRawJSON`
-- Full capability-vs-adapter enforcement for modalities that can be represented in presets but are not yet normalized end to end
-  - examples: audio and video input advertised by some gateway model metadata
-- Explicit capability signal for `ToolPolicy.DisableParallel`
-  - today this is not represented separately in the capability model
-  - some providers can disable parallel tool calls, some cannot, and docs must currently describe that per provider
+### Anthropic Messages adapter
 
-## Anthropic Messages API Reference
-
-Capability source:
-
-- `internal/anthropicsdk/capability.go`
-
-Adapter references:
+Source files:
 
 - `internal/anthropicsdk/api_anthropic_messages.go`
 - `internal/anthropicsdk/input_processing.go`
 - `internal/anthropicsdk/thinking.go`
 - `internal/anthropicsdk/cache_control.go`
+- `internal/anthropicsdk/capability.go`
 
-### Done Anthropic Reference
+| Capability              | Support                                                 |
+| ----------------------- | ------------------------------------------------------- |
+| Text input/output       | Supported                                               |
+| Image input             | Supported                                               |
+| File input              | Partial, PDF-focused                                    |
+| Text streaming          | Supported                                               |
+| Thinking streaming      | Supported when upstream thinking is emitted             |
+| Reasoning type          | Hybrid token budget and level-based reasoning           |
+| Reasoning history       | Anthropic signed thinking and redacted thinking         |
+| Summary style           | Supported through adaptive-thinking display translation |
+| Reasoning context       | Unsupported and dropped with warning                    |
+| Reasoning mode          | Unsupported and dropped with warning                    |
+| JSON Schema output      | Supported                                               |
+| Output verbosity        | Supported through Anthropic effort                      |
+| Stop sequences          | Supported                                               |
+| Function tools          | Supported                                               |
+| Custom tools            | Supported                                               |
+| Web search              | Supported                                               |
+| Tool policies           | `auto`, `any`, `tool`, `none`                           |
+| Parallel tools          | Supported                                               |
+| Cache control           | Top-level, message, tool, and tool-output scopes        |
+| Reasoning cache control | Unsupported                                             |
+| URL citations           | Supported where returned by Anthropic                   |
+| Output modalities       | Text only in the normalized surface                     |
 
-- Message/input normalization
-  - user input messages
-  - assistant output messages
-  - reasoning messages
-  - function/custom tool calls
-  - function/custom tool outputs
-  - web-search tool calls
-  - web-search tool outputs
-  - top-level system prompt
+#### Anthropic reasoning summary mapping
 
-- Modalities
-  - text input
-  - image input
-  - file input
-  - text output
+Anthropic adaptive thinking supports only two display values:
 
-- Streaming
-  - text streaming
-  - thinking streaming
+- `omitted`
+- `summarized`
 
-- Reasoning/thinking
-  - reasoning request config
-  - signed thinking history pass-back
-  - redacted thinking history pass-back
-  - thinking override logic for tool-result turn boundaries
-  - reasoning output normalization
-  - summary-style translation for adaptive thinking
-    - `omitted` becomes Anthropic `display="omitted"`
-    - unspecified, `auto`, `concise`, and `detailed` become `display="summarized"`
-  - `ReasoningParam.Context` and `ReasoningParam.Mode`
-    - unsupported
-    - dropped with warning
+Normalized mapping:
 
-- Output controls
-  - text output format
-  - JSON Schema output format
-  - verbosity mapped to Anthropic effort
+| `ReasoningSummaryStyle` | Anthropic adaptive display |
+| ----------------------- | -------------------------- |
+| Unspecified             | `summarized`               |
+| `omitted`               | `omitted`                  |
+| `auto`                  | `summarized`               |
+| `concise`               | `summarized`               |
+| `detailed`              | `summarized`               |
 
-- Stop sequences
-  - supported and normalized
+This mapping applies to `ReasoningTypeSingleWithLevels`, which uses Anthropic adaptive thinking.
 
-- Tools
-  - function tools
-  - custom tools
-  - web search tool
-  - tool policy: `auto`, `any`, `tool`, `none`
-  - forced single-tool constraint via `MaxForcedTools = 1`
-  - parallel tool usage supported
+Fixed-budget Anthropic thinking does not expose an equivalent summary-display control.
 
-- Cache control
-  - top-level cache control
-  - input/output content cache control
-  - tool choice cache control
-  - tool call cache control
-  - tool output cache control
+#### Anthropic reasoning history
 
-- Citations
-  - URL citations normalized from supported Anthropic citation data
+- Signed thinking is replayed only when it includes a valid Anthropic signature.
+- Redacted thinking is replayed as Anthropic redacted-thinking content.
+- Unsigned plaintext reasoning is not replayed as Anthropic thinking.
+- Tool-result turn ordering is validated because Anthropic requires matching client tool results immediately after assistant tool-use turns.
+- Temperature can be removed with a warning when effective Anthropic reasoning capabilities disallow temperature while thinking is enabled.
 
-- Usage
-  - input tokens
-  - cached input tokens
-  - output tokens
+#### Anthropic pending items
 
-### Pending Anthropic Reference
+- Plain-text `text/*` file conversion to Anthropic document input
+- Richer citation normalization beyond current URL citation support
+- Reasoning-content cache control
+- Image, audio, and video output
+- Safe allowlisted passthrough for advanced Anthropic parameters
 
-- File/document handling
-  - plain-text `text/*` file document mapping is still pending
-  - current adapter skips non-PDF base64 file content for Anthropic documents
+### OpenAI Responses adapter
 
-- Cache control
-  - reasoning-content cache control is not normalized
-
-- Citations
-  - richer citation location variants beyond current URL-style normalization
-
-- Output modalities
-  - image output
-  - audio/video output
-
-- Safe passthrough candidates
-  - `metadata.user_id`
-  - `service_tier`
-  - `top_k`
-
-## OpenAI Responses API Reference
-
-Capability source:
-
-- `internal/openairesponsessdk/capability.go`
-
-Adapter references:
+Source files:
 
 - `internal/openairesponsessdk/api_openai_responses.go`
 - `internal/openairesponsessdk/thinking.go`
 - `internal/openairesponsessdk/cache_control.go`
+- `internal/openairesponsessdk/capability.go`
 
-### Done OpenAI Responses Reference
+| Capability                    | Support                                               |
+| ----------------------------- | ----------------------------------------------------- |
+| Text input/output             | Supported                                             |
+| Image input                   | Supported                                             |
+| File input                    | Supported                                             |
+| Text streaming                | Supported                                             |
+| Thinking streaming            | Supported when reasoning deltas are emitted           |
+| Reasoning type                | Level-based reasoning                                 |
+| Hybrid token-budget reasoning | Unsupported                                           |
+| Reasoning history             | Encrypted reasoning content only                      |
+| Summary style                 | Supported                                             |
+| Reasoning context             | Supported by base adapter capability                  |
+| Reasoning mode                | Supported by base adapter capability                  |
+| JSON Schema output            | Supported                                             |
+| Output verbosity              | Supported                                             |
+| Stop sequences                | Unsupported and dropped with warning                  |
+| Function tools                | Supported                                             |
+| Custom tools                  | Supported through compatible function-style transport |
+| Web search                    | Supported where provider/model supports it            |
+| Tool policies                 | `auto`, `any`, `tool`, `none`                         |
+| Parallel tools                | Supported where provider/model allows it              |
+| Cache control                 | Top-level prompt cache key and retention              |
+| Per-message cache control     | Unsupported and dropped with warning                  |
+| URL citations                 | Supported where returned by provider                  |
+| Output modalities             | Text only in the normalized surface                   |
 
-- Message/input normalization
-  - user input messages
-  - assistant output messages
-  - reasoning messages
-  - function/custom tool calls
-  - function/custom tool outputs
-  - web-search tool calls
-  - system prompt via top-level instructions
+#### OpenAI Responses summary mapping
 
-- Modalities
-  - text input
-  - image input
-  - file input
-  - text output
+| `ReasoningSummaryStyle` | OpenAI Responses `reasoning.summary` |
+| ----------------------- | ------------------------------------ |
+| Unspecified             | `auto`                               |
+| `omitted`               | `concise`                            |
+| `auto`                  | `auto`                               |
+| `concise`               | `concise`                            |
+| `detailed`              | `detailed`                           |
 
-- Streaming
-  - text streaming
-  - thinking/reasoning streaming
+#### OpenAI Responses context and mode
 
-- Reasoning/thinking
-  - reasoning config via effort/summary
-  - reasoning output normalization
-  - encrypted reasoning input history pass-back
-  - reasoning history sanitization to encrypted-only form
-  - summary-style mapping
-    - `omitted` becomes OpenAI `summary="concise"`
-    - `auto`, `concise`, and `detailed` retain native mappings
-    - an unspecified style uses OpenAI `summary="auto"`
-  - reasoning context
-    - `auto`
-    - `current_turn`
-    - `all_turns`
-  - reasoning mode
-    - `standard`
-    - `pro`
+The OpenAI Responses adapter supports:
 
-- Output controls
-  - text output format
-  - JSON Schema output format
-  - verbosity
+- `ReasoningContextAuto`
+- `ReasoningContextCurrentTurn`
+- `ReasoningContextAllTurns`
+- `ReasoningModeStandard`
+- `ReasoningModePro`
 
-- Tools
-  - function tools
-  - custom tools
-  - web search tool
-  - tool policy: `auto`, `any`, `tool`, `none`
-  - parallel tool calls supported
+The official `modelpreset.ProviderOpenAIResponses` preset enables both context and mode.
 
-- Cache control
-  - top-level prompt cache key
-  - top-level prompt cache retention (`in-memory`, `24h`)
-  - per-message/per-item cache controls dropped with warning
+Responses-compatible presets for non-OpenAI providers intentionally disable both controls unless their provider/model capability profile explicitly enables them.
 
-- Citations
-  - URL citations normalized
+When disabled, normalization removes them with:
 
-- Usage
-  - input tokens
-  - cached input tokens
-  - output tokens
-  - reasoning tokens
+- `reasoning_context_dropped_unsupported`
+- `reasoning_mode_dropped_unsupported`
 
-### Pending OpenAI Responses Reference
+#### OpenAI Responses reasoning history
 
-- Stop sequences
-  - unsupported by Responses API
-  - dropped with warning
+- Encrypted reasoning content is preserved for OpenAI Responses continuation.
+- If no encrypted reasoning content is present, reasoning history is dropped.
+- If encrypted and plaintext reasoning are mixed, only encrypted reasoning content is retained.
+- Anthropic signatures, Google thought signatures, and plaintext reasoning must not be reused as OpenAI Responses reasoning input.
 
-- Tool definitions
-  - custom tool definitions are currently emitted as function tools in the adapter
+#### OpenAI Responses pending items
 
-- Web-search result normalization
-  - structured web-search result output is limited
-  - many search results surface through text/citations rather than a full round-trippable tool-output object
+- Provider-native stateful conversations
+- `previous_response_id`
+- `store`
+- `background`
+- Prompt objects
+- Full web-search result round-trip representation
+- Custom tool definitions without function-style fallback
+- Safe allowlisted passthrough for `include`, `truncation`, `service_tier`, metadata, and stream options
 
-- Stateful/provider-native features intentionally not normalized
-  - `previous_response_id`
-  - `store`
-  - `background`
-  - conversation state
-  - prompt objects
+### OpenAI Chat Completions adapter
 
-- Safe passthrough candidates
-  - `include`
-  - `truncation`
-  - `service_tier`
-  - `metadata`
-  - safety/user identifiers
-  - stream options
-
-## OpenAI Chat Completions API Reference
-
-Capability source:
-
-- `internal/openaichatsdk/capability.go`
-
-Adapter references:
+Source files:
 
 - `internal/openaichatsdk/api_openai_chat_completions.go`
 - `internal/openaichatsdk/cache_control.go`
+- `internal/openaichatsdk/capability.go`
 
-### Done OpenAI Chat Completions Reference
+| Capability                | Support                                               |
+| ------------------------- | ----------------------------------------------------- |
+| Text input/output         | Supported                                             |
+| Image input               | Supported                                             |
+| File input                | Supported                                             |
+| Text streaming            | Supported                                             |
+| Thinking streaming        | Unsupported                                           |
+| Reasoning type            | Level-based effort where accepted by model/provider   |
+| Reasoning history         | Unsupported                                           |
+| Summary style             | Unsupported and dropped with warning                  |
+| Reasoning context         | Unsupported and dropped with warning                  |
+| Reasoning mode            | Unsupported and dropped with warning                  |
+| JSON Schema output        | Supported                                             |
+| Output verbosity          | Supported                                             |
+| Stop sequences            | Supported, up to effective capability limit           |
+| Function tools            | Supported                                             |
+| Custom tools              | Supported through compatible function-style transport |
+| Web search                | Top-level `web_search_options` behavior               |
+| Tool policies             | `auto`, `any`, `tool`, `none`                         |
+| Parallel tools            | `DisableParallel` maps to `parallel_tool_calls=false` |
+| Cache control             | Top-level prompt cache key and retention              |
+| Per-message cache control | Unsupported and dropped with warning                  |
+| URL citations             | Supported where returned in annotations               |
+| Output modalities         | Text only in the normalized surface                   |
 
-- Message/input normalization
-  - user input messages
-  - assistant output messages
-  - function/custom tool calls
-  - function/custom tool outputs
-  - top-level system prompt
-  - `gpt-5*` / `o*` system-prompt role normalization to `developer`
+#### OpenAI Chat Completions limitations
 
-- Modalities
-  - text input
-  - image input
-  - file input
-  - text output
+- Structured reasoning input/output messages are not supported.
+- Reasoning messages are not sent as Chat Completions history.
+- Thinking streaming is not available.
+- Web search is not equivalent to a normal named tool call.
+- Forcing web search through `toolPolicy.mode=tool` is not portable.
+- Image/file tool output content is not preserved as structured tool output on return turns.
 
-- Streaming
-  - text streaming
+### Google Generate Content adapter
 
-- Reasoning config
-  - reasoning effort config only
-
- - Reasoning summary, context, and mode
-  - unsupported by OpenAI Chat Completions
-  - dropped with warning when supplied
-
-- Output controls
-  - text output format
-  - JSON Schema output format
-  - verbosity
-
-- Stop sequences
-  - supported up to 4
-  - normalization/truncation handled by capability layer
-
-- Tools
-  - function tools
-  - custom tools
-  - tool policy: `auto`, `any`, `tool`, `none`
-  - `DisableParallel` mapped to `parallel_tool_calls=false`
-  - web search support via top-level `web_search_options`
-
-- Cache control
-  - top-level prompt cache key
-  - top-level prompt cache retention (`in-memory`, `24h`)
-  - per-message/per-item cache controls dropped with warning
-
-- Citations
-  - URL citations normalized from annotations
-
-- Usage
-  - input tokens
-  - cached input tokens
-  - output tokens
-  - reasoning tokens where exposed by the API
-
-### Pending OpenAI Chat Completions Reference
-
-- Reasoning history
-  - structured reasoning input/output messages are not supported by Chat Completions
-  - reasoning messages are dropped/sanitized out
-
-- Streaming thinking
-  - unsupported by Chat Completions API
-
-- File/tool-output richness
-  - tool outputs are effectively text-only in the normalized Chat round-trip path
-  - image/file tool output items are not preserved as structured tool outputs when sent back into Chat Completions
-
-- Tool definitions
-  - custom tool definitions are currently emitted as function tools in the adapter
-
-- Web search semantics
-  - Chat Completions web search is not a normal tool call
-  - forcing web search via `toolPolicy.mode=tool` is not a true cross-provider equivalent
-
-- Safe passthrough candidates
-  - `service_tier`
-  - safety/user identifiers
-  - message `name`
-  - model-specific penalties/logprobs/seed/logit-bias where normalization is later desired
-
-## Google Generate Content API Reference
-
-Capability source:
-
-- `internal/googlegeneratecontentsdk/capability.go`
-
-Adapter references:
+Source files:
 
 - `internal/googlegeneratecontentsdk/api_google_genai.go`
 - `internal/googlegeneratecontentsdk/input_processing.go`
 - `internal/googlegeneratecontentsdk/thinking.go`
+- `internal/googlegeneratecontentsdk/capability.go`
 
-### Done Google Generate Content Reference
+| Capability         | Support                                                 |
+| ------------------ | ------------------------------------------------------- |
+| Text input/output  | Supported                                               |
+| Image input        | Supported                                               |
+| File input         | Supported                                               |
+| Text streaming     | Supported                                               |
+| Thinking streaming | Supported when thought text is emitted                  |
+| Reasoning type     | Hybrid token budget and level-based reasoning           |
+| Reasoning history  | Valid Google thought signatures only                    |
+| Summary style      | Supported through `ThinkingConfig.IncludeThoughts`      |
+| Reasoning context  | Unsupported and dropped with warning                    |
+| Reasoning mode     | Unsupported and dropped with warning                    |
+| JSON Schema output | Supported through raw JSON Schema payload               |
+| Output verbosity   | Not mapped by adapter                                   |
+| Stop sequences     | Supported, subject to effective model limit             |
+| Function tools     | Supported                                               |
+| Custom tools       | Supported through function declarations                 |
+| Web search         | Google Search grounding                                 |
+| Tool policies      | `auto`, `any`, `tool`, `none` for callable tools        |
+| Parallel tools     | `DisableParallel` is not normalized/enforced            |
+| Cache control      | Unsupported and dropped with warning                    |
+| URL citations      | Partial, grounding maps to synthetic web-search outputs |
+| Output modalities  | Text only in the normalized surface                     |
 
-- Message/input normalization
-  - user input messages
-  - assistant output messages
-  - reasoning messages
-  - function/custom tool calls
-  - function/custom tool outputs
-  - top-level system prompt via `SystemInstruction`
+#### Google reasoning summary mapping
 
-- Modalities
-  - text input
-  - image input
-  - file input
-  - text output
+Google maps summary visibility to `ThinkingConfig.IncludeThoughts`.
 
-- Streaming
-  - text streaming
-  - thinking streaming
+| `ReasoningSummaryStyle` | `IncludeThoughts` |
+| ----------------------- | ----------------- |
+| Unspecified             | `true`            |
+| `omitted`               | `false`           |
+| `auto`                  | `true`            |
+| `concise`               | `true`            |
+| `detailed`              | `true`            |
 
-- Reasoning/thinking
-  - token-budget reasoning config
-  - level-based reasoning config
-  - Google-native signed thought history pass-back
-  - reasoning output normalization, including thought signature preservation
-  - summary-style translation through `ThinkingConfig.IncludeThoughts`
-    - `omitted` becomes `IncludeThoughts=false`
-    - unspecified, `auto`, `concise`, and `detailed` become `IncludeThoughts=true`
-  - `ReasoningParam.Context` and `ReasoningParam.Mode`
-    - unsupported
-    - dropped with warning
+Reasoning still executes when `IncludeThoughts=false`; Google simply does not return thought text.
 
-- Output controls
-  - text output format
-  - JSON Schema output format via raw schema payload
+#### Google reasoning history
 
-- Stop sequences
-  - supported and normalized
+- Only valid Google thought signatures are replayed.
+- Signature-only thought parts are retained.
+- Anthropic signed/redacted thinking is dropped.
+- OpenAI encrypted reasoning content is dropped.
+- Plaintext unsigned reasoning is dropped.
 
-- Tools
-  - function tools
-  - custom tools
-  - Google Search grounding
-  - tool policy: `auto`, `any`, `tool`, `none` for callable tools
-  - web search grounding normalized into synthetic web-search tool call/output entries
+#### Google pending items
 
-- Cache control
-  - unsupported
-  - normalized request cache controls are dropped with warning
+- `ToolPolicy.DisableParallel` capability enforcement
+- Mapping `JSONSchemaParam.Name`, `Description`, and `Strict`
+- Rich image/file function-tool output history
+- Full grounding option normalization
+- Attaching grounding citations directly to `ContentItemText.Citations`
+- Multi-candidate response handling
+- Image, audio, and video output
 
-- Usage
-  - input tokens
-  - cached input tokens
-  - output tokens
-  - reasoning tokens
+## Preset provider catalog reference
 
-### Pending Google Generate Content Reference
+The catalog is implemented in `modelpreset`.
 
-- Tool parallelism
-  - `ToolPolicy.DisableParallel` is not currently normalized/enforced for Google Generate Content
-  - this should eventually be represented explicitly in capabilities or warning behavior
+Provider and model presets are static reviewed defaults. They are not runtime discovery or remote capability probing.
 
-- JSON Schema subfield normalization
-  - current adapter forwards the raw schema object
-  - `JSONSchemaParam.Name`
-  - `JSONSchemaParam.Description`
-  - `JSONSchemaParam.Strict`
-    are not currently mapped
+### Complete provider matrix
 
-- Tool output history richness
-  - function/custom tool output history is effectively text-only
-  - image/file tool output items are not preserved in Gemini function-response history
+| Provider preset     | Adapter family                     | Catalog model families                         | Notable capability posture                                                                     |
+| ------------------- | ---------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Anthropic           | Anthropic Messages                 | Claude Fable, Opus, Sonnet, Haiku              | Anthropic-native reasoning, cache controls, tools, and summary translation                     |
+| DeepSeek            | OpenAI Responses-compatible        | DeepSeek V4                                    | Text-focused profile with constrained tools and level-based reasoning                          |
+| Google Gemini       | Google Generate Content            | Gemini 2.5 and Gemini 3.x                      | Native thought signatures, reasoning budgets/levels, grounding, files, and summary translation |
+| Hugging Face Router | OpenAI Chat Completions-compatible | Routed open models                             | Backend-qualified model IDs and model-specific overrides                                       |
+| LocalAI             | OpenAI Responses-compatible        | Local model presets                            | Local deployment behavior is model/server dependent                                            |
+| LM Studio           | OpenAI Responses-compatible        | Local model presets                            | Local deployment behavior is model/server dependent                                            |
+| llama.cpp           | OpenAI Chat Completions-compatible | Llama and Qwen local presets                   | Local deployment behavior is model/server dependent                                            |
+| Meta                | OpenAI Responses-compatible        | Muse Spark 1.1, 1.2, 1.3, Contributor variants | Summary style enabled; context/mode disabled                                                   |
+| MiniMax             | OpenAI Responses-compatible        | MiniMax M2 and M3                              | Model-specific reasoning with text/tool restrictions                                           |
+| Mistral             | OpenAI Chat Completions-compatible | Mistral and Devstral                           | Mistral-specific parameter dialect                                                             |
+| Moonshot            | Anthropic Messages-compatible      | Kimi models                                    | Model-specific Anthropic-compatible reasoning/tool behavior                                    |
+| Ollama              | Anthropic Messages-compatible      | Ollama-tagged local models                     | Local Anthropic-compatible behavior with constrained tool policy                               |
+| OpenAI Chat         | OpenAI Chat Completions            | GPT-4.1 and GPT-4o                             | Chat Completions transport and model-specific no-reasoning overrides                           |
+| OpenAI Responses    | OpenAI Responses                   | GPT-5 and GPT-6 families                       | Summary, context, and mode enabled                                                             |
+| OpenRouter          | OpenAI Responses-compatible        | Routed hosted models                           | Model-specific modalities, output formats, tools, and reasoning levels                         |
+| QwenCloud           | OpenAI Responses-compatible        | Qwen, Qwen Coder, Character models             | DashScope compatible-mode behavior with provider/model restrictions                            |
+| SGLang              | OpenAI Responses-compatible        | Local model presets                            | Self-hosted behavior with model-specific overrides                                             |
+| vLLM                | OpenAI Responses-compatible        | Local model presets                            | Self-hosted behavior with model-specific overrides                                             |
+| xAI                 | OpenAI Responses-compatible        | Grok models                                    | Model-specific reasoning, encrypted reasoning, cache, tool, and output support                 |
+| Xiaomi              | OpenAI Responses-compatible        | MiMo models                                    | Text-focused provider defaults with model-specific image support                               |
+| Z.AI                | OpenAI Chat Completions-compatible | GLM models                                     | Pay-as-you-go Chat Completions endpoint                                                        |
+| Z.AI Coding Plan    | OpenAI Responses-compatible        | GLM Coding Plan models                         | Separate endpoint/credential route with model-specific overrides                               |
 
-- Web search grounding options
-  - grounding is supported
-  - provider-specific per-tool knobs are only partially normalized today
+### Provider reasoning-control matrix
 
-- Citations
-  - grounding is not yet attached back onto `ContentItemText.Citations`
-  - current normalized form is synthetic web-search call/output items
+| Provider            | Reasoning configuration                        | Summary style                              | Context/mode |
+| ------------------- | ---------------------------------------------- | ------------------------------------------ | ------------ |
+| Anthropic           | Hybrid-budget and level-based, model-dependent | Anthropic display translation              | Unsupported  |
+| DeepSeek            | Level-based                                    | Unsupported                                | Unsupported  |
+| Google Gemini       | Hybrid-budget and level-based                  | `IncludeThoughts` translation              | Unsupported  |
+| Hugging Face Router | Model-dependent                                | Model-dependent                            | Unsupported  |
+| LocalAI             | Model-dependent                                | Model-dependent                            | Unsupported  |
+| LM Studio           | Model-dependent                                | Model-dependent                            | Unsupported  |
+| llama.cpp           | Model-dependent                                | Model-dependent                            | Unsupported  |
+| Meta                | Level-based                                    | OpenAI Responses summary mapping           | Unsupported  |
+| MiniMax             | Model-dependent level-based                    | Unsupported                                | Unsupported  |
+| Mistral             | Model-dependent level-based                    | Unsupported                                | Unsupported  |
+| Moonshot            | Model-dependent hybrid/level-based             | Unsupported                                | Unsupported  |
+| Ollama              | Model-dependent                                | Unsupported                                | Unsupported  |
+| OpenAI Chat         | Model-dependent level-based                    | Unsupported                                | Unsupported  |
+| OpenAI Responses    | Level-based                                    | Native, with `omitted` mapped to `concise` | Supported    |
+| OpenRouter          | Model-dependent level-based                    | Model-dependent                            | Unsupported  |
+| QwenCloud           | Level-based                                    | Unsupported                                | Unsupported  |
+| SGLang              | Model-dependent                                | Model-dependent                            | Unsupported  |
+| vLLM                | Model-dependent                                | Model-dependent                            | Unsupported  |
+| xAI                 | Model-dependent level-based                    | Model-dependent                            | Unsupported  |
+| Xiaomi              | Level-based                                    | Unsupported                                | Unsupported  |
+| Z.AI                | Provider/model dependent                       | Unsupported                                | Unsupported  |
+| Z.AI Coding Plan    | Model-dependent                                | Model-dependent                            | Unsupported  |
 
-- Candidate handling
-  - first candidate only is normalized today
+### Meta Muse Spark capability profile
 
-- Output modalities
-  - image output is not normalized
-  - audio/video output is not normalized
+The Meta preset uses the OpenAI Responses-compatible adapter.
 
-## Preset Provider Catalog Reference
+Muse Spark 1.1, 1.2, 1.3, and Contributor variants are included in the catalog.
 
-This section covers provider presets that reuse one of the normalized wire adapters and then apply provider/model capability overrides through `modelpreset`.
+The Meta provider capability profile declares:
 
-Capability sources:
+- Text, image, and file input
+- Text output
+- Level-based reasoning
+  - `minimal`
+  - `low`
+  - `medium`
+  - `high`
+  - `xhigh`
+- Summary-style reasoning
+- Encrypted reasoning input support
+- JSON Schema output
+- Function and web-search tool types
+- `auto` tool policy
+- Top-level prompt cache key and retention support
+- No normalized output verbosity
+- No stop sequences
+- No reasoning context
+- No reasoning mode
 
-- `modelpreset`
-- `capabilityoverride`
-- the selected SDK adapter base capability file
+Meta examples currently cover:
 
-Adapter mapping:
+- Muse Spark 1.3 Contributor basic completion
+- Muse Spark 1.3 Contributor reasoning summary style
+- Muse Spark 1.3 Contributor cache controls
+- Muse Spark 1.3 Contributor image/file input
+- Muse Spark 1.3 Contributor JSON Schema output
+- Muse Spark 1.3 Contributor function tools with `auto` policy
+- Muse Spark 1.3 Contributor streamed text/reasoning output
 
-| Preset provider     | Provider constant                     | Wire adapter                       | Capability notes                                                                                              |
-| ------------------- | ------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Anthropic           | `modelpreset.ProviderAnthropic`       | Anthropic Messages                 | Provider preset extends Anthropic base caps with catalog defaults and model-specific reasoning/cache behavior |
-| OpenAI Responses    | `modelpreset.ProviderOpenAIResponses` | OpenAI Responses                   | Provider preset plus per-model reasoning-level restrictions                                                   |
-| OpenAI Chat         | `modelpreset.ProviderOpenAIChat`      | OpenAI Chat Completions            | Provider preset plus model-level no-reasoning overrides for selected non-reasoning models                     |
-| Google Gemini       | `modelpreset.ProviderGoogleGemini`    | Google Generate Content            | Provider preset plus per-model reasoning and token-budget restrictions                                        |
-| Mistral             | `modelpreset.ProviderMistral`         | OpenAI Chat Completions-compatible | Provider override narrows modalities/tools/cache and selects Mistral parameter dialect                        |
-| Hugging Face Router | `modelpreset.ProviderHuggingFace`     | OpenAI Chat Completions-compatible | Routed backend suffixes are distinct model identities; model overrides restrict reasoning where known         |
-| llama.cpp           | `modelpreset.ProviderLlamaCPP`        | OpenAI Chat Completions-compatible | Local OpenAI-compatible preset with model defaults                                                            |
-| xAI                 | `modelpreset.ProviderXAI`             | OpenAI Responses-compatible        | Provider/model overrides describe xAI reasoning, encrypted reasoning, cache, tool, and output behavior        |
-| OpenRouter          | `modelpreset.ProviderOpenRouter`      | OpenAI Responses-compatible        | Model overrides are central; routed models vary in modalities, output formats, tools, and reasoning levels    |
-| LocalAI             | `modelpreset.ProviderLocalAI`         | OpenAI Responses-compatible        | Local preset with broad provider caps and per-model modality/reasoning overrides                              |
-| LM Studio           | `modelpreset.ProviderLMStudio`        | OpenAI Responses-compatible        | Local preset with per-model modality/reasoning overrides                                                      |
-| Ollama              | `modelpreset.ProviderOllama`          | Anthropic-compatible               | Local preset with constrained tool policy and Anthropic-style request adapter                                 |
-| SGLang              | `modelpreset.ProviderSGLang`          | OpenAI Responses-compatible        | Self-hosted preset with per-model modality/reasoning overrides                                                |
-| vLLM                | `modelpreset.ProviderVLLM`            | OpenAI Responses-compatible        | Self-hosted preset with per-model modality/reasoning overrides                                                |
+Meta does not yet have a dedicated live web-search integration example.
 
-### Done Presets Reference
+### Catalog validation and test coverage
 
-- Provider preset registration
-  - `ProviderPreset.Name`
-  - `ProviderPreset.DisplayName`
-  - `ProviderPreset.SDKType`
-  - `ProviderPreset.Origin`
-  - `ProviderPreset.ChatCompletionPathPrefix`
-  - `ProviderPreset.APIKeyHeaderKey`
-  - `ProviderPreset.DefaultHeaders`
-  - `ProviderPreset.CapabilitiesOverride`
-  - `ProviderPreset.ModelPresets`
+The catalog test suite verifies:
 
-- Model preset registration
-  - `ModelPreset.ID`
-  - `ModelPreset.Name`
-  - `ModelPreset.DisplayName`
-  - `ModelPreset.ModelParam`
-  - `ModelPreset.CapabilitiesOverride`
+- Provider catalog identity and connection fields
+- Provider names returned by `ProviderNames`
+- Provider/model lookup APIs
+- Model preset IDs
+- Model preset names and `ModelParam.Name` consistency
+- Required sampling defaults
+- Reasoning defaults
+- Cache defaults
+- Output defaults
+- Stop-sequence defaults
+- Capability override structural validity
+- Preset cloning behavior
+- ProviderSet integration
+- Effective capability derivation
+- Request normalization for model defaults
 
-- Capability resolver support
-  - provider preset overrides
-  - model preset overrides
-  - cloned presets returned by catalog APIs
-  - derived per-completion capabilities through `ProviderSetAPI.NewPresetCapabilityResolver`
+Important tests include:
 
-- Reasoning-control preset defaults
-  - Anthropic and Google Gemini support summary style through adapter translation
-  - only the official OpenAI Responses preset enables reasoning context and mode
-  - Responses-compatible gateway, router, and local-runtime presets disable context and mode by default
+- `TestDefaultCatalogValidatesEveryProvider`
+- `TestCatalogContainsAllRegisteredProviders`
+- `TestCatalogModelMembershipIsExhaustive`
+- `TestCatalogPublicLookupMethodsCoverEveryProviderAndModel`
+- `TestCatalogPresetsIntegrateWithProviderSet`
 
-- Distinct routed model identities
-  - Hugging Face routed backend suffixes such as `:fireworks-ai`, `:deepinfra`, `:novita`, `:featherless-ai`, and `:cerebras`
-  - OpenRouter routed model names with suffixes such as `:free`
-  - display names that include backend/router-specific distinctions where the backend is part of the effective model identity
+`TestCatalogModelMembershipIsExhaustive` is intentionally a static manifest. Adding, removing, or renaming a provider/model preset requires an explicit test update.
 
-- Hosted API presets
-  - Mistral provider preset
-    - text and image input
-    - text output
-    - reasoning config for supported models
-    - function tools
-    - tool policies `auto`, `any`, `tool`, `none`
-    - cache disabled
-    - Mistral parameter dialect override
-  - xAI provider preset
-    - text and image input
-    - text output
-    - reasoning levels
-    - encrypted reasoning support where declared
-    - function and web-search tools
-    - top-level ephemeral cache support where declared
+A passing catalog test confirms internal metadata consistency. It does not replace live verification against provider endpoints.
 
-- Hosted router presets
-  - OpenRouter provider preset
-    - OpenAI Responses-compatible adapter
-    - model-level modality overrides
-    - model-level reasoning-level overrides
-    - model-level output-format overrides
-    - model-level tool and parallel-tool-call overrides
-    - stop sequences disabled at provider preset level
-  - Hugging Face Router provider preset
-    - OpenAI Chat-compatible adapter
-    - routed backend model names
-    - routed backend-specific preset IDs and display names
-    - model-level reasoning overrides for known reasoning models
+## Capability warnings
 
-- Local and self-hosted runtime presets
-  - LocalAI
-    - OpenAI Responses-compatible adapter
-    - text/image/file provider capabilities
-    - per-model modality and reasoning overrides
-    - stop sequences disabled
-  - LM Studio
-    - OpenAI Responses-compatible adapter
-    - text/image provider capabilities
-    - per-model modality and reasoning overrides
-    - stop sequences disabled
-  - llama.cpp
-    - OpenAI Chat-compatible adapter
-    - local origin defaults
-    - model defaults for local serving
-  - Ollama
-    - Anthropic-compatible adapter
-    - text/image provider capabilities
-    - constrained tool policy
-    - model-level reasoning overrides
-  - SGLang
-    - OpenAI Responses-compatible adapter
-    - text/image provider capabilities
-    - per-model modality and reasoning overrides
-    - stop sequences disabled
-  - vLLM
-    - OpenAI Responses-compatible adapter
-    - text/image provider capabilities
-    - per-model modality and reasoning overrides
-    - stop sequences disabled
+The normalizer can return warnings for safe request reductions.
 
-- Shared clean catalog constants
-  - provider-agnostic display names for the same base model identity
-  - provider-agnostic preset IDs where the model identity is the same
-  - backend-specific preset IDs and display names where routed backend identity matters
+Important reasoning-related warning codes include:
 
-### Pending Presets Reference
+| Warning code                            | Meaning                                                                   |
+| --------------------------------------- | ------------------------------------------------------------------------- |
+| `reasoning_dropped_unsupported`         | Reasoning type/configuration is unsupported                               |
+| `reasoning_dropped_invalid_level`       | Requested reasoning level is unavailable for effective model capabilities |
+| `reasoning_summaryStyle_dropped`        | Summary style is unsupported and was removed                              |
+| `reasoning_context_dropped_unsupported` | Reasoning context is unsupported and was removed                          |
+| `reasoning_mode_dropped_unsupported`    | Reasoning mode is unsupported and was removed                             |
+| `temperature_dropped_reasoning_enabled` | Temperature conflicts with reasoning for the effective model              |
+| `stopSequences_dropped_unsupported`     | Stop sequences are unsupported                                            |
+| `stopSequences_dropped_reasoning`       | Stop sequences conflict with reasoning                                    |
+| `verbosity_dropped_unsupported`         | Output verbosity is unsupported                                           |
+| `cacheControl_dropped_unsupported`      | Cache control scope is unsupported                                        |
+| `cacheControl_ttl_dropped_unsupported`  | Cache retention/TTL is unsupported                                        |
+| `cacheControl_key_dropped_unsupported`  | Cache key is unsupported                                                  |
+| `toolChoice_dropped_unsupported`        | Tool type is unsupported                                                  |
+| `toolOutput_collapsed_to_string`        | Rich tool output was converted to a string-only transport                 |
 
-- Runtime discovery
-  - presets are static catalog data
-  - no automatic discovery of local server model lists
-  - no automatic probing of hosted router model capabilities
+## Known capability caveats
 
-- Router/local capability drift
-  - hosted routers can change model support without this package changing
-  - local runtimes can vary by version, build flags, and loaded model
-  - callers may still need user overrides for deployments with known differences
+- `ToolCapabilities.SupportsParallelToolCalls` exists, but normalization does not yet enforce unsupported `ToolPolicy.DisableParallel` requests consistently.
+- Google provider presets may expose output verbosity metadata, but the Google adapter currently does not map normalized output verbosity into `GenerateContentConfig`.
+- A model capability override can differ from the underlying adapter default.
+- A provider may expose a compatible endpoint but reject newer upstream API fields.
+- Routers and local servers can change capability behavior independently of this repository.
+- Provider/model capability overrides should be updated when integration verification discovers a behavior change.
 
-- Audio/video end-to-end support
-  - capability structs can represent audio/video modalities
-  - some gateway model presets may include audio/video modality metadata
-  - normalized audio/video request and response conversion is still pending cross-provider work
+## Pending cross-provider work
 
-- Full local runtime parity
-  - local runtimes often implement only subsets of OpenAI-compatible or Anthropic-compatible APIs
-  - behavior around tools, JSON Schema, reasoning, and streaming can vary significantly
-
-- Provider-specific advanced parameters
-  - safe allowlisted passthrough for `ModelParam.AdditionalParametersRawJSON` is still pending
-  - router-specific controls are intentionally not normalized yet
-
-## Cross-provider Pending Backlog Reference
-
-These are the main remaining normalized-surface items that affect more than one provider. Pending:
-
+- Audio input/output normalization
+- Video input/output normalization
+- Image output normalization
 - Richer citation abstraction
-  - beyond URL citations
-  - grounding/page/block/offset variants where a stable cross-provider model makes sense
-
-- Output metadata promotion
-  - small stable normalized response metadata such as response ID, model, finish/stop reason where safe
-
-- Additional top-level controls
-  - `TopP`
-  - penalties
-  - logprobs
-  - seed/logit bias
-  - only when a clean normalized model is chosen
-
-- Safe allowlisted passthrough
-  - implement `ModelParam.AdditionalParametersRawJSON` as provider-specific allowlisted merge
-
-- Broader multimodal normalization
-  - audio
-  - video
-  - image generation / image output
-
-- Explicit stateful-feature policy
-  - continue keeping provider-native stateful conversation/storage/file ecosystems out of scope unless a deliberate normalized design is introduced
+- Consistent grounding citations on text content
+- Multi-candidate response handling
+- Provider-native response metadata promotion
+- Safe allowlisted `AdditionalParametersRawJSON` passthrough
+- Explicit stateful conversation policy
+- Previous-response IDs
+- Background jobs
+- Stored responses
+- Prompt-resource support
+- Uploaded-file lifecycle support
+- Uniform enforcement for `ToolPolicy.DisableParallel`
+- More complete provider-specific web-search behavior normalization

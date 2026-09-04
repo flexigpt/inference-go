@@ -138,6 +138,8 @@ Use the integration examples as the current source of truth for end-to-end flows
 | Anthropic tools, thinking, and streaming                 | [`example_anthropic_tools_streaming_test.go`](./internal/integration/example_anthropic_tools_streaming_test.go)                   |
 | OpenAI Responses basic completion                        | [`example_openai_responses_basic_test.go`](./internal/integration/example_openai_responses_basic_test.go)                         |
 | OpenAI Responses tools, files, images, and streaming     | [`example_openai_responses_tools_attachments_test.go`](./internal/integration/example_openai_responses_tools_attachments_test.go) |
+| Meta Muse Spark basic completion                         | [`example_meta_muse_spark_test.go`](./internal/integration/example_meta_muse_spark_test.go)                                       |
+| Meta Muse Spark multi-parameter request                  | [`example_meta_muse_spark_test.go`](./internal/integration/example_meta_muse_spark_test.go)                                       |
 | OpenAI Chat Completions basic completion                 | [`example_openai_chat_basic_test.go`](./internal/integration/example_openai_chat_basic_test.go)                                   |
 | OpenAI Chat tools, JSON Schema, and streaming            | [`example_openai_chat_tools_websearch_stream_test.go`](./internal/integration/example_openai_chat_tools_websearch_stream_test.go) |
 | Google Generate Content basic completion                 | [`example_google_genai_basic_test.go`](./internal/integration/example_google_genai_basic_test.go)                                 |

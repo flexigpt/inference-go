@@ -16,18 +16,38 @@ dotenv:
   - .env
 
 tasks:
+  test:catalog:
+    cmds:
+      - go test -count=1 -v ./modelpreset
+      - go test -count=1 -v . -run '^TestCatalogPresetsIntegrateWithProviderSet$'
+
   test:anthropic:
     cmds:
+      - go test -count=1 -v ./internal/anthropicsdk
       - go test -count=1 -v ./internal/integration -run '^(Example_anthropic_basicConversation|Example_anthropic_toolsAndThinkingStreaming|Example_anthropic_functionToolRoundTrip)$'
 
   test:openaichat:
     cmds:
+      - go test -count=1 -v ./internal/openaichatsdk
+      - go test -count=1 -v ./internal/sdkutil
       - go test -count=1 -v ./internal/integration -run '^(Example_openAIChat_basicConversation|Example_openAIChat_toolsAndJSONSchema)$'
 
   test:openairesponses:
     cmds:
+      - go test -count=1 -v ./internal/openairesponsessdk
+      - go test -count=1 -v ./internal/sdkutil
       - go test -count=1 -v ./internal/integration -run '^(Example_openAIResponses_basicConversation|Example_openAIResponses_toolsAndAttachments)$'
 
   test:google:
     cmds:
+      - go test -count=1 -v ./internal/googlegeneratecontentsdk
+      - go test -count=1 -v ./internal/sdkutil
       - go test -count=1 -v ./internal/integration -run '^(Example_googleGenerateContent_basicConversation|Example_googleGenerateContent_functionToolRoundTrip|Example_googleGenerateContent_webSearchAndThinkingStreaming|TestGoogleGenerateContent_FunctionToolRoundTripLoop)$'
+
+  test:meta:
+    deps:
+      - test:catalog
+    cmds:
+      - go test -count=1 -v ./internal/openairesponsessdk
+      - go test -count=1 -v ./internal/sdkutil -run '^TestNormalizeRequestForSDKReasoningContextAndMode$'
+      - go test -count=1 -v ./internal/integration -run '^(TestMetaMultiParameterNormalization|Example_meta_basicConversation|Example_meta_multiParameterStreaming)$'

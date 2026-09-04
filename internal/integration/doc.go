@@ -12,4 +12,5 @@
 //	ANTHROPIC_API_KEY=<your key>
 //	OPENAI_API_KEY=<your key>
 //	GEMINI_API_KEY=<your key>   (or GOOGLE_API_KEY=<your key>)
+//	META_API_KEY=<your key>
 package integration
