@@ -32,6 +32,11 @@ const (
 
 var DefaultBaseHeaders = map[string]string{DefaultContentTypeHeaderKey: DefaultContentTypeHeader}
 
+type (
+	ProviderName    string
+	ProviderSDKType string
+)
+
 const (
 	ProviderSDKTypeAnthropic             ProviderSDKType = "providerSDKTypeAnthropicMessages"
 	ProviderSDKTypeOpenAIChatCompletions ProviderSDKType = "providerSDKTypeOpenAIChatCompletions"

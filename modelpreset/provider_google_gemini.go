@@ -13,6 +13,7 @@ const (
 )
 
 const (
+	ModelNameGemini38Flash     spec.ModelName = "gemini-3.8-flash"
 	ModelNameGemini37Flash     spec.ModelName = "gemini-3.7-flash"
 	ModelNameGemini36Flash     spec.ModelName = "gemini-3.6-flash"
 	ModelNameGemini35Flash     spec.ModelName = "gemini-3.5-flash"
@@ -31,6 +32,7 @@ const (
 )
 
 const (
+	DisplayNameGemini38Flash     = "Gemini 3.8 Flash"
 	DisplayNameGemini37Flash     = "Gemini 3.7 Flash"
 	DisplayNameGemini36Flash     = "Gemini 3.6 Flash"
 	DisplayNameGemini35Flash     = "Gemini 3.5 Flash"
@@ -47,6 +49,7 @@ const (
 )
 
 const (
+	PresetGemini38Flash     ModelPresetID = "gemini38Flash"
 	PresetGemini37Flash     ModelPresetID = "gemini37Flash"
 	PresetGemini36Flash     ModelPresetID = "gemini36Flash"
 	PresetGemini35Flash     ModelPresetID = "gemini35Flash"
@@ -61,6 +64,36 @@ const (
 	PresetGemma426B    ModelPresetID = "gemma426b"
 	PresetGemma4E4B    ModelPresetID = "gemma4e4b"
 )
+
+var modelGoogleGemini38Flash = ModelPreset{
+	ID:          PresetGemini38Flash,
+	Name:        ModelNameGemini38Flash,
+	DisplayName: DisplayNameGemini38Flash,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGemini38Flash,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 65536,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+	},
+}
 
 var modelGoogleGemini37Flash = ModelPreset{
 	ID:          PresetGemini37Flash,
@@ -408,6 +441,7 @@ var providerGoogleGemini = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetGemini38Flash:     modelGoogleGemini38Flash,
 		PresetGemini37Flash:     modelGoogleGemini37Flash,
 		PresetGemini36Flash:     modelGoogleGemini36Flash,
 		PresetGemini35Flash:     modelGoogleGemini35Flash,

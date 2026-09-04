@@ -18,13 +18,14 @@ const DataContractVersion = "v1.0.0"
 // downstream consumers rely on structurally. Any change to these files will
 // change the contract hash. It does NOT contain api contracts.
 var DataContractFiles = []string{
-	"spec/data_cache.go",
-	"spec/data_citation.go",
-	"spec/data_content.go",
-	"spec/data_error.go",
-	"spec/data_io_union.go",
-	"spec/data_model.go",
-	"spec/data_tool.go",
+	"spec/io_cache_control.go",
+	"spec/io_citation.go",
+	"spec/io_tool.go",
+	"spec/io_union.go",
+	"spec/output_other.go",
+	"spec/param_model.go",
+	"spec/param_output_control.go",
+	"spec/param_reasoning.go",
 }
 
 // DataContractHash is a SHA-256 of the contents of DataContractFiles.
@@ -32,7 +33,7 @@ var DataContractFiles = []string{
 // that they are running against the contract version they were built for.
 //
 // Format: "sha256:<hexstring>".
-const DataContractHash = "sha256:40d4d92460554cc5959464baa982f4cb6178fe77639d6c6bc01c6e682a9bd1ee"
+const DataContractHash = "sha256:f17df3076ea72cff97a4f0f73344f297f11f33b6e29173cacec0a37292487365"
 
 // DataContractInfo is the public shape returned to callers who want to
 // validate they are compatible with this version of the contract.
