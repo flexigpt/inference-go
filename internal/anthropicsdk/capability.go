@@ -27,7 +27,9 @@ var anthropicsdkCapability = spec.ModelCapabilities{
 			ZeroAllowed:     false,
 			MinusOneAllowed: false,
 		},
-		SupportsSummaryStyle: false,
+		SupportsSummaryStyle:     true,
+		SupportsReasoningContext: false,
+		SupportsReasoningMode:    false,
 
 		SupportsEncryptedReasoningInput:  false,
 		TemperatureDisallowedWhenEnabled: true,

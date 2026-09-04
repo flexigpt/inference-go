@@ -13,9 +13,11 @@ const (
 )
 
 const (
-	ModelNameMuseSpark11            spec.ModelName = "muse-spark-1.1"
+	ModelNameMuseSpark13            spec.ModelName = "muse-spark-1.3"
+	ModelNameMuseSpark13Contributor spec.ModelName = "muse-spark-1.3-contributor"
 	ModelNameMuseSpark12            spec.ModelName = "muse-spark-1.2"
 	ModelNameMuseSpark12Contributor spec.ModelName = "muse-spark-1.2-contributor"
+	ModelNameMuseSpark11            spec.ModelName = "muse-spark-1.1"
 
 	ModelNameLlama4BehemothLocal spec.ModelName = "llama4-behemoth"
 	ModelNameLlama4MaverickLocal spec.ModelName = "llama4-maverick"
@@ -23,9 +25,11 @@ const (
 )
 
 const (
-	DisplayNameMuseSpark11            = "Muse Spark 1.1"
+	DisplayNameMuseSpark13            = "Muse Spark 1.3"
+	DisplayNameMuseSpark13Contributor = "Muse Spark 1.3 Contributor"
 	DisplayNameMuseSpark12            = "Muse Spark 1.2"
 	DisplayNameMuseSpark12Contributor = "Muse Spark 1.2 Contributor"
+	DisplayNameMuseSpark11            = "Muse Spark 1.1"
 
 	DisplayNameLlama4Behemoth = "Llama 4 Behemoth"
 	DisplayNameLlama4Maverick = "Llama 4 Maverick"
@@ -33,21 +37,39 @@ const (
 )
 
 const (
-	PresetMuseSpark11            ModelPresetID = "museSpark11"
+	PresetMuseSpark13            ModelPresetID = "museSpark13"
+	PresetMuseSpark13Contributor ModelPresetID = "museSpark13Contributor"
 	PresetMuseSpark12            ModelPresetID = "museSpark12"
 	PresetMuseSpark12Contributor ModelPresetID = "museSpark12Contributor"
+	PresetMuseSpark11            ModelPresetID = "museSpark11"
 
 	PresetLlama4Behemoth ModelPresetID = "llama4Behemoth"
 	PresetLlama4Maverick ModelPresetID = "llama4Maverick"
 	PresetLlama4Scout    ModelPresetID = "llama4Scout"
 )
 
-var modelMetaMuseSpark11 = ModelPreset{
-	ID:          PresetMuseSpark11,
-	Name:        ModelNameMuseSpark11,
-	DisplayName: DisplayNameMuseSpark11,
+var modelMetaMuseSpark13 = ModelPreset{
+	ID:          PresetMuseSpark13,
+	Name:        ModelNameMuseSpark13,
+	DisplayName: DisplayNameMuseSpark13,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameMuseSpark11,
+		Name:            ModelNameMuseSpark13,
+		Stream:          true,
+		MaxPromptLength: 1048576,
+		MaxOutputLength: 131072,
+		Temperature:     nil,
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
+
+var modelMetaMuseSpark13Contributor = ModelPreset{
+	ID:          PresetMuseSpark13Contributor,
+	Name:        ModelNameMuseSpark13Contributor,
+	DisplayName: DisplayNameMuseSpark13Contributor,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameMuseSpark13Contributor,
 		Stream:          true,
 		MaxPromptLength: 1048576,
 		MaxOutputLength: 131072,
@@ -90,6 +112,22 @@ var modelMetaMuseSpark12Contributor = ModelPreset{
 	},
 }
 
+var modelMetaMuseSpark11 = ModelPreset{
+	ID:          PresetMuseSpark11,
+	Name:        ModelNameMuseSpark11,
+	DisplayName: DisplayNameMuseSpark11,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameMuseSpark11,
+		Stream:          true,
+		MaxPromptLength: 1048576,
+		MaxOutputLength: 131072,
+		Temperature:     nil,
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+}
+
 var providerMeta = ProviderPreset{
 	Name:                     ProviderMeta,
 	DisplayName:              DisplayNameProviderMeta,
@@ -120,6 +158,8 @@ var providerMeta = ProviderPreset{
 				spec.ReasoningLevelXHigh,
 			},
 			SupportsSummaryStyle:             new(true),
+			SupportsReasoningContext:         new(false),
+			SupportsReasoningMode:            new(false),
 			SupportsEncryptedReasoningInput:  new(true),
 			TemperatureDisallowedWhenEnabled: new(false),
 		},
@@ -165,8 +205,10 @@ var providerMeta = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetMuseSpark11:            modelMetaMuseSpark11,
+		PresetMuseSpark13:            modelMetaMuseSpark13,
+		PresetMuseSpark13Contributor: modelMetaMuseSpark13Contributor,
 		PresetMuseSpark12:            modelMetaMuseSpark12,
 		PresetMuseSpark12Contributor: modelMetaMuseSpark12Contributor,
+		PresetMuseSpark11:            modelMetaMuseSpark11,
 	},
 }

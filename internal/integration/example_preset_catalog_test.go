@@ -26,7 +26,7 @@ func Example_presetProviderSetup() {
 
 	model, err := modelpreset.Model(
 		modelpreset.ProviderOpenAIResponses,
-		modelpreset.PresetGPT5Mini,
+		modelpreset.PresetGPT56Luna,
 	)
 	if err != nil {
 		fmt.Println("model lookup error:", err)
@@ -73,5 +73,5 @@ func Example_presetProviderSetup() {
 	)
 
 	// Output:
-	// provider=openairesponses model=gpt-5-mini reasoning=true
+	// provider=openairesponses model=gpt-5.6-luna reasoning=true
 }

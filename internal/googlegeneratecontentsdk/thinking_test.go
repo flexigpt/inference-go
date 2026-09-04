@@ -105,3 +105,123 @@ func TestApplyGoogleGenerateContentThinkingPolicy_LevelNoneDisablesThinking(t *t
 		t.Fatalf("ThinkingBudget = %#v, want 0", cfg.ThinkingConfig.ThinkingBudget)
 	}
 }
+
+func TestApplyGoogleGenerateContentThinkingPolicySummaryStyle(t *testing.T) {
+	omitted := spec.ReasoningSummaryStyleOmitted
+	auto := spec.ReasoningSummaryStyleAuto
+	concise := spec.ReasoningSummaryStyleConcise
+	detailed := spec.ReasoningSummaryStyleDetailed
+
+	tests := []struct {
+		name         string
+		reasoning    spec.ReasoningParam
+		wantIncluded bool
+	}{
+		{
+			name: "level reasoning default includes thoughts",
+			reasoning: spec.ReasoningParam{
+				Type:  spec.ReasoningTypeSingleWithLevels,
+				Level: spec.ReasoningLevelMedium,
+			},
+			wantIncluded: true,
+		},
+		{
+			name: "level reasoning omitted hides thoughts",
+			reasoning: spec.ReasoningParam{
+				Type:         spec.ReasoningTypeSingleWithLevels,
+				Level:        spec.ReasoningLevelMedium,
+				SummaryStyle: &omitted,
+			},
+			wantIncluded: false,
+		},
+		{
+			name: "level reasoning auto includes thoughts",
+			reasoning: spec.ReasoningParam{
+				Type:         spec.ReasoningTypeSingleWithLevels,
+				Level:        spec.ReasoningLevelMedium,
+				SummaryStyle: &auto,
+			},
+			wantIncluded: true,
+		},
+		{
+			name: "level reasoning concise includes thoughts",
+			reasoning: spec.ReasoningParam{
+				Type:         spec.ReasoningTypeSingleWithLevels,
+				Level:        spec.ReasoningLevelMedium,
+				SummaryStyle: &concise,
+			},
+			wantIncluded: true,
+		},
+		{
+			name: "level reasoning detailed includes thoughts",
+			reasoning: spec.ReasoningParam{
+				Type:         spec.ReasoningTypeSingleWithLevels,
+				Level:        spec.ReasoningLevelMedium,
+				SummaryStyle: &detailed,
+			},
+			wantIncluded: true,
+		},
+		{
+			name: "token budget default includes thoughts",
+			reasoning: spec.ReasoningParam{
+				Type:   spec.ReasoningTypeHybridWithTokens,
+				Tokens: 1024,
+			},
+			wantIncluded: true,
+		},
+		{
+			name: "token budget omitted hides thoughts",
+			reasoning: spec.ReasoningParam{
+				Type:         spec.ReasoningTypeHybridWithTokens,
+				Tokens:       1024,
+				SummaryStyle: &omitted,
+			},
+			wantIncluded: false,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			config := &genai.GenerateContentConfig{}
+			modelParam := &spec.ModelParam{
+				Name:      "gemini-test",
+				Reasoning: &tc.reasoning,
+			}
+
+			err := applyGoogleGenerateContentThinkingPolicy(
+				config,
+				modelParam,
+				googleGenerateContentSDKCapability.ReasoningCapabilities,
+			)
+			if err != nil {
+				t.Fatalf("applyGoogleGenerateContentThinkingPolicy: %v", err)
+			}
+			if config.ThinkingConfig == nil {
+				t.Fatal("expected ThinkingConfig")
+			}
+			if config.ThinkingConfig.IncludeThoughts != tc.wantIncluded {
+				t.Fatalf(
+					"IncludeThoughts got %v want %v",
+					config.ThinkingConfig.IncludeThoughts,
+					tc.wantIncluded,
+				)
+			}
+		})
+	}
+}
+
+func TestGoogleGenerateContentReasoningCapabilities(t *testing.T) {
+	caps := googleGenerateContentSDKCapability.ReasoningCapabilities
+	if caps == nil {
+		t.Fatal("expected Google reasoning capabilities")
+	}
+	if !caps.SupportsSummaryStyle {
+		t.Fatal("expected Google summary-style support")
+	}
+	if caps.SupportsReasoningContext {
+		t.Fatal("Google must not support reasoning context")
+	}
+	if caps.SupportsReasoningMode {
+		t.Fatal("Google must not support reasoning mode")
+	}
+}

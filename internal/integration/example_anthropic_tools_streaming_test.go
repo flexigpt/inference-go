@@ -67,6 +67,7 @@ func Example_anthropic_toolsAndThinkingStreaming() {
 	modelParam.Stream = true
 	modelParam.MaxOutputLength = min(modelParam.MaxOutputLength, 1024)
 	modelParam.SystemPrompt = "Use tools when helpful. Keep the final answer short."
+	// A nil SummaryStyle maps to Anthropic adaptive display="summarized".
 	modelParam.Reasoning = &spec.ReasoningParam{
 		Type:  spec.ReasoningTypeSingleWithLevels,
 		Level: spec.ReasoningLevelMedium,

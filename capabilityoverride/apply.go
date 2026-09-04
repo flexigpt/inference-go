@@ -104,6 +104,12 @@ func applyReasoningCapabilitiesOverride(
 	if ov.SupportsSummaryStyle != nil {
 		dst.ReasoningCapabilities.SupportsSummaryStyle = *ov.SupportsSummaryStyle
 	}
+	if ov.SupportsReasoningContext != nil {
+		dst.ReasoningCapabilities.SupportsReasoningContext = *ov.SupportsReasoningContext
+	}
+	if ov.SupportsReasoningMode != nil {
+		dst.ReasoningCapabilities.SupportsReasoningMode = *ov.SupportsReasoningMode
+	}
 	if ov.SupportsEncryptedReasoningInput != nil {
 		dst.ReasoningCapabilities.SupportsEncryptedReasoningInput = *ov.SupportsEncryptedReasoningInput
 	}
@@ -283,6 +289,8 @@ func hasReasoningCapabilitiesOverride(ov *ReasoningCapabilitiesOverride) bool {
 			ov.SupportedReasoningLevels != nil ||
 			hasReasoningTokenBudgetCapabilitiesOverride(ov.HybridTokenBudgetCapabilities) ||
 			ov.SupportsSummaryStyle != nil ||
+			ov.SupportsReasoningContext != nil ||
+			ov.SupportsReasoningMode != nil ||
 			ov.SupportsEncryptedReasoningInput != nil ||
 			ov.TemperatureDisallowedWhenEnabled != nil)
 }

@@ -51,6 +51,12 @@ func Example_googleGenerateContent_basicConversation() {
 	modelParam.MaxPromptLength = min(modelParam.MaxPromptLength, 4096)
 	modelParam.MaxOutputLength = min(modelParam.MaxOutputLength, 2048)
 	modelParam.SystemPrompt = "You are a concise, helpful assistant."
+	summaryStyle := spec.ReasoningSummaryStyleOmitted
+	modelParam.Reasoning = &spec.ReasoningParam{
+		Type:         spec.ReasoningTypeSingleWithLevels,
+		Level:        spec.ReasoningLevelLow,
+		SummaryStyle: &summaryStyle,
+	}
 
 	opts, err := presetFetchOptions(ctx, ps, pp, mp)
 	if err != nil {

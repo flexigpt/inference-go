@@ -25,7 +25,7 @@ func Example_openAIResponses_basicConversation() {
 		ctx,
 		ps,
 		modelpreset.ProviderOpenAIResponses,
-		modelpreset.PresetGPT5Mini,
+		modelpreset.PresetGPT56Luna,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding OpenAI Responses preset provider:", err)
@@ -48,9 +48,15 @@ func Example_openAIResponses_basicConversation() {
 	modelParam.MaxPromptLength = min(modelParam.MaxPromptLength, 4096)
 	modelParam.MaxOutputLength = min(modelParam.MaxOutputLength, 4096)
 	modelParam.SystemPrompt = "You are a concise assistant."
+	summaryStyle := spec.ReasoningSummaryStyleOmitted
+	contextMode := spec.ReasoningContextAllTurns
+	reasoningMode := spec.ReasoningModeStandard
 	modelParam.Reasoning = &spec.ReasoningParam{
-		Type:  spec.ReasoningTypeSingleWithLevels,
-		Level: spec.ReasoningLevelLow,
+		Type:         spec.ReasoningTypeSingleWithLevels,
+		Level:        spec.ReasoningLevelLow,
+		SummaryStyle: &summaryStyle,
+		Context:      &contextMode,
+		Mode:         &reasoningMode,
 	}
 
 	opts, err := presetFetchOptions(ctx, ps, pp, mp)

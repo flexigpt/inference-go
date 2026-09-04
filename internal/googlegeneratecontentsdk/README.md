@@ -49,6 +49,17 @@ Google thought signatures are provider-issued continuation data. Do not alter or
 
 Only valid Google thought signatures are replayed through this adapter.
 
+### Reasoning summary style
+
+Google controls visibility of reasoning through `ThinkingConfig.IncludeThoughts`.
+
+- `ReasoningSummaryStyleOmitted` maps to `IncludeThoughts=false`.
+- An unspecified summary style and `auto`, `concise`, or `detailed` map to `IncludeThoughts=true`.
+
+Reasoning still executes when `IncludeThoughts=false`; the provider simply does not return thought text.
+
+`ReasoningParam.Context` and `ReasoningParam.Mode` are not supported by Google Generate Content and are removed during normalization with warnings.
+
 ### Web search is grounding
 
 Google Search is server-side grounding.

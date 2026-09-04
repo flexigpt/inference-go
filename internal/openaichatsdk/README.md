@@ -63,6 +63,16 @@ The adapter keeps encrypted reasoning and removes incompatible visible reasoning
 
 Do not expect Anthropic signed thinking or Google thought signatures to continue through this adapter.
 
+### Reasoning summary, context, and mode
+
+OpenAI Chat Completions does not support the normalized reasoning summary, context, or mode controls.
+
+- `ReasoningParam.SummaryStyle` is dropped with a warning.
+- `ReasoningParam.Context` is dropped with a warning.
+- `ReasoningParam.Mode` is dropped with a warning.
+
+Use the OpenAI Responses adapter and an OpenAI Responses capability profile when these controls are required.
+
 ### Stop sequences
 
 The base Responses API does not support normalized stop sequences.

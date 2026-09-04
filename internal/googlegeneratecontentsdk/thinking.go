@@ -52,6 +52,8 @@ func applyGoogleGenerateContentThinkingPolicy(
 		return nil
 	}
 	rp := mp.Reasoning
+	includeThoughts := rp.SummaryStyle == nil ||
+		*rp.SummaryStyle != spec.ReasoningSummaryStyleOmitted
 
 	switch rp.Type {
 	case spec.ReasoningTypeHybridWithTokens:
@@ -64,7 +66,7 @@ func applyGoogleGenerateContentThinkingPolicy(
 			return nil
 		}
 		config.ThinkingConfig = &genai.ThinkingConfig{
-			IncludeThoughts: true,
+			IncludeThoughts: includeThoughts,
 			ThinkingBudget:  &budget,
 		}
 
@@ -78,7 +80,7 @@ func applyGoogleGenerateContentThinkingPolicy(
 			return nil
 		}
 		config.ThinkingConfig = &genai.ThinkingConfig{
-			IncludeThoughts: true,
+			IncludeThoughts: includeThoughts,
 			ThinkingLevel:   level,
 		}
 	default:

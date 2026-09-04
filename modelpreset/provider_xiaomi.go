@@ -113,6 +113,8 @@ var providerXiaomi = ProviderPreset{
 				spec.ReasoningLevelHigh,
 			},
 			SupportsSummaryStyle:             new(false),
+			SupportsReasoningContext:         new(false),
+			SupportsReasoningMode:            new(false),
 			SupportsEncryptedReasoningInput:  new(false),
 			TemperatureDisallowedWhenEnabled: new(true),
 		},

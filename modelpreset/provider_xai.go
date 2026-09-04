@@ -223,6 +223,8 @@ var providerXAI = ProviderPreset{
 				spec.ReasoningLevelXHigh,
 			},
 			SupportsSummaryStyle:             new(false),
+			SupportsReasoningContext:         new(false),
+			SupportsReasoningMode:            new(false),
 			SupportsEncryptedReasoningInput:  new(true),
 			TemperatureDisallowedWhenEnabled: new(false),
 		},

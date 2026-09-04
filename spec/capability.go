@@ -58,6 +58,8 @@ type ReasoningCapabilities struct {
 	SupportedReasoningLevels         []ReasoningLevel                  `json:"supportedReasoningLevels"`
 	HybridTokenBudgetCapabilities    *ReasoningTokenBudgetCapabilities `json:"hybridTokenBudgetCapabilities,omitempty"`
 	SupportsSummaryStyle             bool                              `json:"supportsSummaryStyle"`
+	SupportsReasoningContext         bool                              `json:"supportsReasoningContext"`
+	SupportsReasoningMode            bool                              `json:"supportsReasoningMode"`
 	SupportsEncryptedReasoningInput  bool                              `json:"supportsEncryptedReasoningInput"`
 	TemperatureDisallowedWhenEnabled bool                              `json:"temperatureDisallowedWhenEnabled"`
 }

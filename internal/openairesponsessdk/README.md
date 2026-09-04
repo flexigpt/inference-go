@@ -63,6 +63,25 @@ The adapter keeps encrypted reasoning and removes incompatible visible reasoning
 
 Do not expect Anthropic signed thinking or Google thought signatures to continue through this adapter.
 
+### Reasoning summary, context, and mode
+
+The official OpenAI Responses preset supports all normalized reasoning controls:
+
+- Summary styles:
+  - `omitted` maps to OpenAI `summary="concise"`.
+  - `auto`, `concise`, and `detailed` retain their OpenAI mappings.
+  - An unspecified summary style uses OpenAI `summary="auto"`.
+- Context:
+  - `auto`
+  - `current_turn`
+  - `all_turns`
+- Mode:
+  - `standard`
+  - `pro`
+
+Context and mode are OpenAI Responses-specific controls.
+Responses-compatible provider presets disable them by default unless their endpoint/model support has been explicitly verified through a capability override.
+
 ### Stop sequences
 
 The base Responses API does not support normalized stop sequences.

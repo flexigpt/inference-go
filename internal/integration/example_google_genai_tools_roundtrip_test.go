@@ -76,6 +76,7 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 	firstParam := mp.ModelParam
 	firstParam.Stream = true
 	firstParam.MaxOutputLength = min(firstParam.MaxOutputLength, 4096)
+	// A nil SummaryStyle maps to IncludeThoughts=true for Google.
 	firstParam.Reasoning = &spec.ReasoningParam{
 		Type:   spec.ReasoningTypeHybridWithTokens,
 		Tokens: 2048,
@@ -152,6 +153,7 @@ func Example_googleGenerateContent_functionToolRoundTrip() {
 	secondParam := mp.ModelParam
 	secondParam.Stream = true
 	secondParam.MaxOutputLength = min(secondParam.MaxOutputLength, 4096)
+	// Keep the default IncludeThoughts=true behavior across the continuation.
 	secondParam.Reasoning = &spec.ReasoningParam{
 		Type:   spec.ReasoningTypeHybridWithTokens,
 		Tokens: 2048,

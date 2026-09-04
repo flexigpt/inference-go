@@ -103,6 +103,8 @@ func TestApplyModelCapabilitiesOverrideTable(t *testing.T) {
 						MinusOneAllowed: new(false),
 					},
 					SupportsSummaryStyle:             new(true),
+					SupportsReasoningContext:         new(true),
+					SupportsReasoningMode:            new(true),
 					SupportsEncryptedReasoningInput:  new(false),
 					TemperatureDisallowedWhenEnabled: new(true),
 				},
@@ -127,6 +129,12 @@ func TestApplyModelCapabilitiesOverrideTable(t *testing.T) {
 				})
 				if !rc.SupportsSummaryStyle {
 					t.Fatal("expected supportsSummaryStyle=true")
+				}
+				if !rc.SupportsReasoningContext {
+					t.Fatal("expected supportsReasoningContext=true")
+				}
+				if !rc.SupportsReasoningMode {
+					t.Fatal("expected supportsReasoningMode=true")
 				}
 				if rc.SupportsEncryptedReasoningInput {
 					t.Fatal("expected supportsEncryptedReasoningInput=false")

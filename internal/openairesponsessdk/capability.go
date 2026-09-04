@@ -18,7 +18,9 @@ var openairesponsessdkCapability = spec.ModelCapabilities{
 			spec.ReasoningLevelXHigh,
 			spec.ReasoningLevelMax,
 		},
-		SupportsSummaryStyle: true,
+		SupportsSummaryStyle:     true,
+		SupportsReasoningContext: true,
+		SupportsReasoningMode:    true,
 
 		SupportsEncryptedReasoningInput:  true,
 		TemperatureDisallowedWhenEnabled: false,

@@ -50,6 +50,22 @@ Some Anthropic models do not accept temperature while thinking is enabled.
 
 Use the model preset resolver and inspect warnings. The normalizer removes temperature when the effective model capability profile requires that behavior.
 
+### Reasoning summary style
+
+The Anthropic adaptive-thinking API exposes only two display options:
+
+- `omitted`
+- `summarized`
+
+`ReasoningSummaryStyleOmitted` maps to `display="omitted"`.
+
+An unspecified summary style and the normalized `auto`, `concise`, and `detailed` styles map to `display="summarized"`.
+
+This mapping applies to adaptive thinking, which is selected by `ReasoningTypeSingleWithLevels`.
+Fixed-budget thinking does not expose an equivalent summary-display control.
+
+`ReasoningParam.Context` and `ReasoningParam.Mode` are not supported by this adapter and are removed during normalization with warnings.
+
 ### Tool-result ordering
 
 Anthropic tool history is stricter than many OpenAI-compatible APIs.

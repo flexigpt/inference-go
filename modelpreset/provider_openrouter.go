@@ -1065,6 +1065,8 @@ var providerOpenRouter = ProviderPreset{
 				spec.ReasoningLevelMax,
 			},
 			SupportsSummaryStyle:             new(true),
+			SupportsReasoningContext:         new(false),
+			SupportsReasoningMode:            new(false),
 			SupportsEncryptedReasoningInput:  new(true),
 			TemperatureDisallowedWhenEnabled: new(false),
 		},

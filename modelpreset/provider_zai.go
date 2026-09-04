@@ -666,6 +666,8 @@ var providerZAICodingPlan = ProviderPreset{
 			SupportedReasoningTypes:          []spec.ReasoningType{},
 			SupportedReasoningLevels:         []spec.ReasoningLevel{},
 			SupportsSummaryStyle:             new(false),
+			SupportsReasoningContext:         new(false),
+			SupportsReasoningMode:            new(false),
 			SupportsEncryptedReasoningInput:  new(false),
 			TemperatureDisallowedWhenEnabled: new(false),
 		},

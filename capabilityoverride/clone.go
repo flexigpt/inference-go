@@ -126,6 +126,8 @@ func cloneReasoningCapabilitiesOverride(
 			in.HybridTokenBudgetCapabilities,
 		),
 		SupportsSummaryStyle:             sdkutil.CloneBoolPtr(in.SupportsSummaryStyle),
+		SupportsReasoningContext:         sdkutil.CloneBoolPtr(in.SupportsReasoningContext),
+		SupportsReasoningMode:            sdkutil.CloneBoolPtr(in.SupportsReasoningMode),
 		SupportsEncryptedReasoningInput:  sdkutil.CloneBoolPtr(in.SupportsEncryptedReasoningInput),
 		TemperatureDisallowedWhenEnabled: sdkutil.CloneBoolPtr(in.TemperatureDisallowedWhenEnabled),
 	}

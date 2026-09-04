@@ -485,6 +485,8 @@ var providerOpenAIResponses = ProviderPreset{
 				spec.ReasoningLevelMax,
 			},
 			SupportsSummaryStyle:             new(true),
+			SupportsReasoningContext:         new(true),
+			SupportsReasoningMode:            new(true),
 			SupportsEncryptedReasoningInput:  new(true),
 			TemperatureDisallowedWhenEnabled: new(false),
 		},

@@ -107,6 +107,8 @@ var providerOpenAIChat = ProviderPreset{
 				spec.ReasoningLevelMax,
 			},
 			SupportsSummaryStyle:             new(false),
+			SupportsReasoningContext:         new(false),
+			SupportsReasoningMode:            new(false),
 			SupportsEncryptedReasoningInput:  new(false),
 			TemperatureDisallowedWhenEnabled: new(false),
 		},

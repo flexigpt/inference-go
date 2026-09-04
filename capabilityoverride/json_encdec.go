@@ -51,6 +51,12 @@ func (o ReasoningCapabilitiesOverride) MarshalJSON() ([]byte, error) {
 	if o.SupportsSummaryStyle != nil {
 		m["supportsSummaryStyle"] = *o.SupportsSummaryStyle
 	}
+	if o.SupportsReasoningContext != nil {
+		m["supportsReasoningContext"] = *o.SupportsReasoningContext
+	}
+	if o.SupportsReasoningMode != nil {
+		m["supportsReasoningMode"] = *o.SupportsReasoningMode
+	}
 	if o.SupportsEncryptedReasoningInput != nil {
 		m["supportsEncryptedReasoningInput"] = *o.SupportsEncryptedReasoningInput
 	}

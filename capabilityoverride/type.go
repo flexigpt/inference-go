@@ -17,6 +17,8 @@ type ReasoningCapabilitiesOverride struct {
 	HybridTokenBudgetCapabilities *ReasoningTokenBudgetCapabilitiesOverride `json:"hybridTokenBudgetCapabilities,omitempty"`
 
 	SupportsSummaryStyle             *bool `json:"supportsSummaryStyle,omitempty"`
+	SupportsReasoningContext         *bool `json:"supportsReasoningContext,omitempty"`
+	SupportsReasoningMode            *bool `json:"supportsReasoningMode,omitempty"`
 	SupportsEncryptedReasoningInput  *bool `json:"supportsEncryptedReasoningInput,omitempty"`
 	TemperatureDisallowedWhenEnabled *bool `json:"temperatureDisallowedWhenEnabled,omitempty"`
 }

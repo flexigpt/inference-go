@@ -280,10 +280,17 @@ func applyAnthropicThinkingPolicy(
 			effectiveBudget = anthropicDefaultThinkingBudget
 		}
 		if effectiveAdaptive {
+			display := anthropic.ThinkingConfigAdaptiveDisplaySummarized
+			if mp.Reasoning != nil &&
+				mp.Reasoning.SummaryStyle != nil &&
+				*mp.Reasoning.SummaryStyle == spec.ReasoningSummaryStyleOmitted {
+				display = anthropic.ThinkingConfigAdaptiveDisplayOmitted
+			}
+
 			// Reasoning.type=singleWithLevels -> adaptive thinking.
 			params.Thinking = anthropic.ThinkingConfigParamUnion{
 				OfAdaptive: &anthropic.ThinkingConfigAdaptiveParam{
-					Display: anthropic.ThinkingConfigAdaptiveDisplaySummarized,
+					Display: display,
 				},
 			}
 		} else {

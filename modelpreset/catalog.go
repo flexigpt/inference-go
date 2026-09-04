@@ -436,18 +436,37 @@ func validateCatalogReasoning(reasoning *spec.ReasoningParam) error {
 		return fmt.Errorf("unknown type %q", reasoning.Type)
 	}
 
-	if reasoning.SummaryStyle == nil {
-		return nil
+	if reasoning.SummaryStyle != nil {
+		switch *reasoning.SummaryStyle {
+		case spec.ReasoningSummaryStyleOmitted,
+			spec.ReasoningSummaryStyleAuto,
+			spec.ReasoningSummaryStyleConcise,
+			spec.ReasoningSummaryStyleDetailed:
+		default:
+			return fmt.Errorf("unknown summaryStyle %q", *reasoning.SummaryStyle)
+		}
 	}
 
-	switch *reasoning.SummaryStyle {
-	case spec.ReasoningSummaryStyleAuto,
-		spec.ReasoningSummaryStyleConcise,
-		spec.ReasoningSummaryStyleDetailed:
-		return nil
-	default:
-		return fmt.Errorf("unknown summaryStyle %q", *reasoning.SummaryStyle)
+	if reasoning.Context != nil {
+		switch *reasoning.Context {
+		case spec.ReasoningContextAuto,
+			spec.ReasoningContextCurrentTurn,
+			spec.ReasoningContextAllTurns:
+		default:
+			return fmt.Errorf("unknown context %q", *reasoning.Context)
+		}
 	}
+
+	if reasoning.Mode != nil {
+		switch *reasoning.Mode {
+		case spec.ReasoningModeStandard,
+			spec.ReasoningModePro:
+		default:
+			return fmt.Errorf("unknown mode %q", *reasoning.Mode)
+		}
+	}
+
+	return nil
 }
 
 func validateCatalogCacheControl(cacheControl *spec.CacheControl) error {
@@ -603,6 +622,14 @@ func cloneReasoningParam(in *spec.ReasoningParam) *spec.ReasoningParam {
 	if in.SummaryStyle != nil {
 		v := *in.SummaryStyle
 		out.SummaryStyle = &v
+	}
+	if in.Context != nil {
+		v := *in.Context
+		out.Context = &v
+	}
+	if in.Mode != nil {
+		v := *in.Mode
+		out.Mode = &v
 	}
 	return &out
 }

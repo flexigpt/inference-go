@@ -44,6 +44,8 @@ func TestMarshalJSONPreservesEmptySliceOverridesTable(t *testing.T) {
 					SupportsReasoningConfig:  new(false),
 					SupportedReasoningTypes:  []spec.ReasoningType{},
 					SupportedReasoningLevels: []spec.ReasoningLevel{},
+					SupportsReasoningContext: new(false),
+					SupportsReasoningMode:    new(false),
 				},
 				StopSequenceCapabilities: &StopSequenceCapabilitiesOverride{
 					IsSupported:             new(false),
@@ -78,6 +80,8 @@ func TestMarshalJSONPreservesEmptySliceOverridesTable(t *testing.T) {
 				assertJSONBool(t, reasoning, "supportsReasoningConfig", false)
 				assertJSONArrayLen(t, reasoning, "supportedReasoningTypes", 0)
 				assertJSONArrayLen(t, reasoning, "supportedReasoningLevels", 0)
+				assertJSONBool(t, reasoning, "supportsReasoningContext", false)
+				assertJSONBool(t, reasoning, "supportsReasoningMode", false)
 
 				stop := valueAsMap(t, m["stopSequenceCapabilities"])
 				assertJSONBool(t, stop, "isSupported", false)
@@ -221,6 +225,14 @@ func TestUnmarshalJSONPreservesNilVsEmptySlices(t *testing.T) {
 		*got.ReasoningCapabilities.SupportsReasoningConfig {
 		t.Fatalf("expected supportsReasoningConfig=false pointer, got %#v",
 			got.ReasoningCapabilities.SupportsReasoningConfig)
+	}
+	if got.ReasoningCapabilities.SupportsReasoningContext != nil {
+		t.Fatalf("expected nil supportsReasoningContext, got %#v",
+			got.ReasoningCapabilities.SupportsReasoningContext)
+	}
+	if got.ReasoningCapabilities.SupportsReasoningMode != nil {
+		t.Fatalf("expected nil supportsReasoningMode, got %#v",
+			got.ReasoningCapabilities.SupportsReasoningMode)
 	}
 
 	if got.OutputCapabilities == nil {

@@ -122,6 +122,14 @@ func TestCloneModelCapabilitiesOverrideTable(t *testing.T) {
 					fullIn.ReasoningCapabilities.SupportsReasoningConfig {
 					t.Fatal("expected cloned reasoning bool pointer")
 				}
+				if got.ReasoningCapabilities.SupportsReasoningContext ==
+					fullIn.ReasoningCapabilities.SupportsReasoningContext {
+					t.Fatal("expected cloned reasoning context bool pointer")
+				}
+				if got.ReasoningCapabilities.SupportsReasoningMode ==
+					fullIn.ReasoningCapabilities.SupportsReasoningMode {
+					t.Fatal("expected cloned reasoning mode bool pointer")
+				}
 				if got.StopSequenceCapabilities == fullIn.StopSequenceCapabilities {
 					t.Fatal("expected different stop sequence capabilities pointer")
 				}
@@ -301,6 +309,8 @@ func mutateCapabilitiesOverrideForCloneTest(in *ModelCapabilitiesOverride) {
 	*in.ReasoningCapabilities.HybridTokenBudgetCapabilities.ZeroAllowed = false
 	*in.ReasoningCapabilities.HybridTokenBudgetCapabilities.MinusOneAllowed = false
 	*in.ReasoningCapabilities.SupportsSummaryStyle = false
+	*in.ReasoningCapabilities.SupportsReasoningContext = false
+	*in.ReasoningCapabilities.SupportsReasoningMode = false
 	*in.ReasoningCapabilities.SupportsEncryptedReasoningInput = false
 	*in.ReasoningCapabilities.TemperatureDisallowedWhenEnabled = false
 

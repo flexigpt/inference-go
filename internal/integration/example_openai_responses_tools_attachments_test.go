@@ -48,7 +48,7 @@ func Example_openAIResponses_toolsAndAttachments() {
 		ctx,
 		ps,
 		modelpreset.ProviderOpenAIResponses,
-		modelpreset.PresetGPT5Mini,
+		modelpreset.PresetGPT56Luna,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding OpenAI Responses preset provider:", err)

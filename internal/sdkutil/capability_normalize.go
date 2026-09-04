@@ -73,6 +73,30 @@ func NormalizeRequestForSDK(
 				nreq.ModelParam.Reasoning = &rp
 			}
 
+			// Reasoning context is currently supported only by OpenAI Responses.
+			if nreq.ModelParam.Reasoning.Context != nil &&
+				!caps.ReasoningCapabilities.SupportsReasoningContext {
+				warnings = append(warnings, spec.Warning{
+					Code:    "reasoning_context_dropped_unsupported",
+					Message: "reasoning.context is not supported and was dropped.",
+				})
+				rp := *nreq.ModelParam.Reasoning
+				rp.Context = nil
+				nreq.ModelParam.Reasoning = &rp
+			}
+
+			// Reasoning mode is currently supported only by OpenAI Responses.
+			if nreq.ModelParam.Reasoning.Mode != nil &&
+				!caps.ReasoningCapabilities.SupportsReasoningMode {
+				warnings = append(warnings, spec.Warning{
+					Code:    "reasoning_mode_dropped_unsupported",
+					Message: "reasoning.mode is not supported and was dropped.",
+				})
+				rp := *nreq.ModelParam.Reasoning
+				rp.Mode = nil
+				nreq.ModelParam.Reasoning = &rp
+			}
+
 			// Level validation (do not “nearest-map”; drop reasoning in bestEffort).
 			if nreq.ModelParam.Reasoning.Type == spec.ReasoningTypeSingleWithLevels {
 				if !supportsReasoningLevel(

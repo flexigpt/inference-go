@@ -196,6 +196,10 @@ var providerLocalAI = ProviderPreset{
 		ModalitiesOut: []spec.Modality{
 			spec.ModalityTextOut,
 		},
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportsReasoningContext: new(false),
+			SupportsReasoningMode:    new(false),
+		},
 		StopSequenceCapabilities: &capabilityoverride.StopSequenceCapabilitiesOverride{
 			IsSupported:             new(false),
 			DisallowedWithReasoning: new(false),

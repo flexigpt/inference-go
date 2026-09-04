@@ -120,9 +120,11 @@ func TestNewProviderModelMembership(t *testing.T) {
 		{
 			name: ProviderMeta,
 			modelIDs: []ModelPresetID{
-				PresetMuseSpark11,
+				PresetMuseSpark13,
+				PresetMuseSpark13Contributor,
 				PresetMuseSpark12,
 				PresetMuseSpark12Contributor,
+				PresetMuseSpark11,
 			},
 		},
 		{
@@ -433,6 +435,128 @@ func TestCatalogReturnsIndependentCopies(t *testing.T) {
 			freshModel,
 			modelBaseline,
 		)
+	}
+}
+
+func TestCloneModelPresetClonesReasoningControlPointers(t *testing.T) {
+	summaryStyle := spec.ReasoningSummaryStyleOmitted
+	context := spec.ReasoningContextAllTurns
+	mode := spec.ReasoningModePro
+
+	model := ModelPreset{
+		ID:          "test-model",
+		Name:        "test-model",
+		DisplayName: "Test Model",
+		ModelParam: spec.ModelParam{
+			Name: "test-model",
+			Reasoning: &spec.ReasoningParam{
+				Type:         spec.ReasoningTypeSingleWithLevels,
+				Level:        spec.ReasoningLevelHigh,
+				SummaryStyle: &summaryStyle,
+				Context:      &context,
+				Mode:         &mode,
+			},
+		},
+	}
+
+	cloned := CloneModelPreset(model)
+	if cloned.ModelParam.Reasoning == nil {
+		t.Fatal("expected cloned reasoning parameter")
+	}
+	if cloned.ModelParam.Reasoning.SummaryStyle == model.ModelParam.Reasoning.SummaryStyle {
+		t.Fatal("summaryStyle pointer was not cloned")
+	}
+	if cloned.ModelParam.Reasoning.Context == model.ModelParam.Reasoning.Context {
+		t.Fatal("context pointer was not cloned")
+	}
+	if cloned.ModelParam.Reasoning.Mode == model.ModelParam.Reasoning.Mode {
+		t.Fatal("mode pointer was not cloned")
+	}
+
+	*model.ModelParam.Reasoning.SummaryStyle = spec.ReasoningSummaryStyleDetailed
+	*model.ModelParam.Reasoning.Context = spec.ReasoningContextCurrentTurn
+	*model.ModelParam.Reasoning.Mode = spec.ReasoningModeStandard
+
+	if got := *cloned.ModelParam.Reasoning.SummaryStyle; got != spec.ReasoningSummaryStyleOmitted {
+		t.Fatalf("summaryStyle got %q want omitted", got)
+	}
+	if got := *cloned.ModelParam.Reasoning.Context; got != spec.ReasoningContextAllTurns {
+		t.Fatalf("context got %q want all_turns", got)
+	}
+	if got := *cloned.ModelParam.Reasoning.Mode; got != spec.ReasoningModePro {
+		t.Fatalf("mode got %q want pro", got)
+	}
+}
+
+func TestValidateCatalogReasoningControls(t *testing.T) {
+	tests := []struct {
+		name    string
+		mutate  func(*Catalog)
+		wantErr string
+	}{
+		{
+			name: "valid omitted summary context and mode",
+			mutate: func(catalog *Catalog) {
+				mutateCatalogValidationTestModel(catalog, func(model *ModelPreset) {
+					summaryStyle := spec.ReasoningSummaryStyleOmitted
+					context := spec.ReasoningContextAllTurns
+					mode := spec.ReasoningModePro
+					model.ModelParam.Reasoning = &spec.ReasoningParam{
+						Type:         spec.ReasoningTypeSingleWithLevels,
+						Level:        spec.ReasoningLevelLow,
+						SummaryStyle: &summaryStyle,
+						Context:      &context,
+						Mode:         &mode,
+					}
+				})
+			},
+		},
+		{
+			name: "invalid reasoning context",
+			mutate: func(catalog *Catalog) {
+				mutateCatalogValidationTestModel(catalog, func(model *ModelPreset) {
+					context := spec.ReasoningContext("invalid")
+					model.ModelParam.Reasoning = &spec.ReasoningParam{
+						Type:    spec.ReasoningTypeSingleWithLevels,
+						Level:   spec.ReasoningLevelLow,
+						Context: &context,
+					}
+				})
+			},
+			wantErr: "unknown context",
+		},
+		{
+			name: "invalid reasoning mode",
+			mutate: func(catalog *Catalog) {
+				mutateCatalogValidationTestModel(catalog, func(model *ModelPreset) {
+					mode := spec.ReasoningMode("invalid")
+					model.ModelParam.Reasoning = &spec.ReasoningParam{
+						Type:  spec.ReasoningTypeSingleWithLevels,
+						Level: spec.ReasoningLevelLow,
+						Mode:  &mode,
+					}
+				})
+			},
+			wantErr: "unknown mode",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			catalog := CloneCatalog(catalogValidationTestCatalog())
+			tc.mutate(&catalog)
+
+			err := ValidateCatalog(catalog)
+			if tc.wantErr == "" {
+				if err != nil {
+					t.Fatalf("ValidateCatalog: %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Fatalf("error got %v want substring %q", err, tc.wantErr)
+			}
+		})
 	}
 }
 

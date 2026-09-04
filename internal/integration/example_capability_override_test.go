@@ -21,7 +21,7 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 		ctx,
 		ps,
 		modelpreset.ProviderOpenAIResponses,
-		modelpreset.PresetGPT5Mini,
+		modelpreset.PresetGPT56Luna,
 	)
 	if err != nil {
 		t.Fatal(err)

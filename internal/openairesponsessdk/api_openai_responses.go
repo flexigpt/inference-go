@@ -239,6 +239,8 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 
 		if rp.SummaryStyle != nil {
 			switch *rp.SummaryStyle {
+			case spec.ReasoningSummaryStyleOmitted:
+				r.Summary = shared.ReasoningSummaryConcise
 			case spec.ReasoningSummaryStyleAuto:
 				r.Summary = shared.ReasoningSummaryAuto
 			case spec.ReasoningSummaryStyleConcise:
@@ -251,6 +253,37 @@ func (api *OpenAIResponsesAPI) FetchCompletion(
 		} else {
 			r.Summary = shared.ReasoningSummaryAuto
 		}
+
+		if rp.Context != nil {
+			switch *rp.Context {
+			case spec.ReasoningContextAuto:
+				r.Context = shared.ReasoningContextAuto
+			case spec.ReasoningContextCurrentTurn:
+				r.Context = shared.ReasoningContextCurrentTurn
+			case spec.ReasoningContextAllTurns:
+				r.Context = shared.ReasoningContextAllTurns
+			default:
+				return nil, fmt.Errorf(
+					"invalid reasoning context %q for singleWithLevels",
+					*rp.Context,
+				)
+			}
+		}
+
+		if rp.Mode != nil {
+			switch *rp.Mode {
+			case spec.ReasoningModeStandard:
+				r.Mode = shared.ReasoningModeStandard
+			case spec.ReasoningModePro:
+				r.Mode = shared.ReasoningModePro
+			default:
+				return nil, fmt.Errorf(
+					"invalid reasoning mode %q for singleWithLevels",
+					*rp.Mode,
+				)
+			}
+		}
+
 		params.Reasoning = r
 	}
 

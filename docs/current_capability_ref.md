@@ -96,6 +96,8 @@ Primary capability sources:
   - cache-control normalization
   - parameter dialect overrides where declared
   - warnings returned in `FetchCompletionResponse.Warnings`
+  - reasoning summary-style translation
+  - reasoning context and mode capability gating
 
 - Capability override layering
   - SDK/provider base capabilities
@@ -167,6 +169,12 @@ Adapter references:
   - redacted thinking history pass-back
   - thinking override logic for tool-result turn boundaries
   - reasoning output normalization
+  - summary-style translation for adaptive thinking
+    - `omitted` becomes Anthropic `display="omitted"`
+    - unspecified, `auto`, `concise`, and `detailed` become `display="summarized"`
+  - `ReasoningParam.Context` and `ReasoningParam.Mode`
+    - unsupported
+    - dropped with warning
 
 - Output controls
   - text output format
@@ -258,6 +266,17 @@ Adapter references:
   - reasoning output normalization
   - encrypted reasoning input history pass-back
   - reasoning history sanitization to encrypted-only form
+  - summary-style mapping
+    - `omitted` becomes OpenAI `summary="concise"`
+    - `auto`, `concise`, and `detailed` retain native mappings
+    - an unspecified style uses OpenAI `summary="auto"`
+  - reasoning context
+    - `auto`
+    - `current_turn`
+    - `all_turns`
+  - reasoning mode
+    - `standard`
+    - `pro`
 
 - Output controls
   - text output format
@@ -345,6 +364,10 @@ Adapter references:
 
 - Reasoning config
   - reasoning effort config only
+
+ - Reasoning summary, context, and mode
+  - unsupported by OpenAI Chat Completions
+  - dropped with warning when supplied
 
 - Output controls
   - text output format
@@ -439,6 +462,12 @@ Adapter references:
   - level-based reasoning config
   - Google-native signed thought history pass-back
   - reasoning output normalization, including thought signature preservation
+  - summary-style translation through `ThinkingConfig.IncludeThoughts`
+    - `omitted` becomes `IncludeThoughts=false`
+    - unspecified, `auto`, `concise`, and `detailed` become `IncludeThoughts=true`
+  - `ReasoningParam.Context` and `ReasoningParam.Mode`
+    - unsupported
+    - dropped with warning
 
 - Output controls
   - text output format
@@ -550,6 +579,11 @@ Adapter mapping:
   - model preset overrides
   - cloned presets returned by catalog APIs
   - derived per-completion capabilities through `ProviderSetAPI.NewPresetCapabilityResolver`
+
+- Reasoning-control preset defaults
+  - Anthropic and Google Gemini support summary style through adapter translation
+  - only the official OpenAI Responses preset enables reasoning context and mode
+  - Responses-compatible gateway, router, and local-runtime presets disable context and mode by default
 
 - Distinct routed model identities
   - Hugging Face routed backend suffixes such as `:fireworks-ai`, `:deepinfra`, `:novita`, `:featherless-ai`, and `:cerebras`
