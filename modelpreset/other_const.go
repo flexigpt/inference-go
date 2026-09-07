@@ -87,3 +87,16 @@ var noReasoningOverride = &capabilityoverride.ModelCapabilitiesOverride{
 		SupportedReasoningLevels: []spec.ReasoningLevel{},
 	},
 }
+
+func levelReasoningOverride(levels []spec.ReasoningLevel) *capabilityoverride.ModelCapabilitiesOverride {
+	return &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: levels,
+			SupportsSummaryStyle:     new(true),
+		},
+	}
+}

@@ -62,6 +62,14 @@ var modelMetaMuseSpark13 = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelMinimal,
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+		spec.ReasoningLevelMax,
+	}),
 }
 
 var modelMetaMuseSpark13Contributor = ModelPreset{
@@ -78,6 +86,13 @@ var modelMetaMuseSpark13Contributor = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelMinimal,
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+	}),
 }
 
 var modelMetaMuseSpark12 = ModelPreset{
@@ -94,6 +109,13 @@ var modelMetaMuseSpark12 = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelMinimal,
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+	}),
 }
 
 var modelMetaMuseSpark12Contributor = ModelPreset{
@@ -110,6 +132,13 @@ var modelMetaMuseSpark12Contributor = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelMinimal,
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+	}),
 }
 
 var modelMetaMuseSpark11 = ModelPreset{
@@ -126,6 +155,13 @@ var modelMetaMuseSpark11 = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelMinimal,
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+	}),
 }
 
 var providerMeta = ProviderPreset{
@@ -156,6 +192,7 @@ var providerMeta = ProviderPreset{
 				spec.ReasoningLevelMedium,
 				spec.ReasoningLevelHigh,
 				spec.ReasoningLevelXHigh,
+				spec.ReasoningLevelMax,
 			},
 			SupportsSummaryStyle:             new(true),
 			SupportsReasoningContext:         new(false),

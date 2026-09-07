@@ -115,7 +115,7 @@ var modelOpenAIResponsesGPT6Astra = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
 		spec.ReasoningLevelHigh,
@@ -138,7 +138,7 @@ var modelOpenAIResponsesGPT56Sol = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
@@ -162,7 +162,7 @@ var modelOpenAIResponsesGPT56Terra = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
@@ -186,7 +186,7 @@ var modelOpenAIResponsesGPT56Luna = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
@@ -210,7 +210,7 @@ var modelOpenAIResponsesGPT55 = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
@@ -233,7 +233,7 @@ var modelOpenAIResponsesGPT54 = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
@@ -256,7 +256,7 @@ var modelOpenAIResponsesGPT54Mini = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
@@ -279,7 +279,7 @@ var modelOpenAIResponsesGPT54Nano = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
@@ -302,7 +302,7 @@ var modelOpenAIResponsesGPT53Codex = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
 		spec.ReasoningLevelHigh,
@@ -324,7 +324,7 @@ var modelOpenAIResponsesGPT52 = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
@@ -347,7 +347,7 @@ var modelOpenAIResponsesGPT52Codex = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
 		spec.ReasoningLevelHigh,
@@ -369,7 +369,7 @@ var modelOpenAIResponsesGPT51 = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
@@ -391,7 +391,7 @@ var modelOpenAIResponsesGPT51Codex = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
 		spec.ReasoningLevelHigh,
@@ -412,7 +412,7 @@ var modelOpenAIResponsesGPT51CodexMax = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
 		spec.ReasoningLevelHigh,
@@ -433,25 +433,12 @@ var modelOpenAIResponsesGPT5Mini = ModelPreset{
 		SystemPrompt:    "",
 		Timeout:         1800,
 	},
-	CapabilitiesOverride: openAIResponsesReasoningOverride([]spec.ReasoningLevel{
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
 		spec.ReasoningLevelMinimal,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
 		spec.ReasoningLevelHigh,
 	}),
-}
-
-func openAIResponsesReasoningOverride(levels []spec.ReasoningLevel) *capabilityoverride.ModelCapabilitiesOverride {
-	return &capabilityoverride.ModelCapabilitiesOverride{
-		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
-			TemperatureDisallowedWhenEnabled: new(true),
-			SupportedReasoningTypes: []spec.ReasoningType{
-				spec.ReasoningTypeSingleWithLevels,
-			},
-			SupportedReasoningLevels: levels,
-			SupportsSummaryStyle:     new(true),
-		},
-	}
 }
 
 var providerOpenAIResponses = ProviderPreset{
