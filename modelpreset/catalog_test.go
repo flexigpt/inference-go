@@ -67,6 +67,7 @@ func TestCatalogContainsAllRegisteredProviders(t *testing.T) {
 				ProviderMeta,
 				ProviderMiniMax,
 				ProviderMistral,
+				ProviderModelRunner,
 				ProviderMoonshot,
 				ProviderOllama,
 				ProviderOpenAIChat,
