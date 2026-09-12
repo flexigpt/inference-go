@@ -56,3 +56,7 @@ tasks:
       - go test -count=1 -v ./internal/openairesponsessdk
       - go test -count=1 -v ./internal/sdkutil -run '^TestNormalizeRequestForSDKReasoningContextAndMode$'
       - go test -count=1 -v ./internal/integration -run '^(TestMetaMultiParameterNormalization|Example_meta_basicConversation|Example_meta_multiParameterStreaming)$'
+
+  test:tmp:
+    cmds:
+      - go test -count=1 -v ./internal/integration -run '^(Example_openAIResponses_basicConversation)$'

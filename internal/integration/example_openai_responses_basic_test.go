@@ -65,11 +65,13 @@ func Example_openAIResponses_basicConversation() {
 		return
 	}
 
+	firstTurnInputs := []spec.InputUnion{
+		newUserTextInput("Explain the difference between goroutines and OS threads in 2-3 sentences."),
+	}
+
 	resp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
 		ModelParam: modelParam,
-		Inputs: []spec.InputUnion{
-			newUserTextInput("Explain the difference between goroutines and OS threads in 2-3 sentences."),
-		},
+		Inputs:     firstTurnInputs,
 	}, opts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
@@ -79,7 +81,30 @@ func Example_openAIResponses_basicConversation() {
 		return
 	}
 
-	fmt.Fprintln(os.Stderr, "OpenAI Responses assistant:", responseText(resp))
+	fmt.Fprintln(os.Stderr, "OpenAI Responses first assistant:", responseText(resp))
+
+	followUpInputs := replayBasicConversationInputs(
+		firstTurnInputs,
+		resp,
+		newUserTextInput("What was the main point of your previous answer? Answer in one sentence."),
+	)
+	followUpResp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
+		ModelParam: modelParam,
+		Inputs:     followUpInputs,
+	}, opts)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "follow-up FetchCompletion error:", err)
+		if followUpResp != nil && followUpResp.Error != nil {
+			fmt.Fprintln(os.Stderr, "Provider error:", followUpResp.Error.Message)
+		}
+		return
+	}
+
+	fmt.Fprintln(
+		os.Stderr,
+		"OpenAI Responses follow-up:",
+		responseText(followUpResp),
+	)
 	fmt.Println("OK")
 	// Output: OK
 }

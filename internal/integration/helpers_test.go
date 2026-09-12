@@ -188,6 +188,44 @@ func firstToolOutputText(out *spec.ToolOutput) string {
 	return ""
 }
 
+// replayBasicConversationInputs replays a completed no-tool turn before a
+// follow-up user input. Tool-call examples need matching tool outputs and are
+// intentionally not handled here.
+func replayBasicConversationInputs(
+	firstTurnInputs []spec.InputUnion,
+	response *spec.FetchCompletionResponse,
+	followUpInput spec.InputUnion,
+) []spec.InputUnion {
+	inputs := append([]spec.InputUnion(nil), firstTurnInputs...)
+
+	if response != nil {
+		for _, output := range response.Outputs {
+			switch output.Kind {
+			case spec.OutputKindOutputMessage:
+				if output.OutputMessage == nil {
+					continue
+				}
+				inputs = append(inputs, spec.InputUnion{
+					Kind:          spec.InputKindOutputMessage,
+					OutputMessage: output.OutputMessage,
+				})
+
+			case spec.OutputKindReasoningMessage:
+				if output.ReasoningMessage == nil {
+					continue
+				}
+				inputs = append(inputs, spec.InputUnion{
+					Kind:             spec.InputKindReasoningMessage,
+					ReasoningMessage: output.ReasoningMessage,
+				})
+			default:
+			}
+		}
+	}
+
+	return append(inputs, followUpInput)
+}
+
 func responseText(resp *spec.FetchCompletionResponse) string {
 	if resp == nil {
 		return ""

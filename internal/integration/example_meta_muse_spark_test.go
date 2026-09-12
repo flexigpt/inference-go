@@ -71,11 +71,13 @@ func Example_meta_basicConversation() {
 		return
 	}
 
+	firstTurnInputs := []spec.InputUnion{
+		newUserTextInput("Explain the difference between a goroutine and an OS thread in two sentences."),
+	}
+
 	response, err := providerSet.FetchCompletion(ctx, provider.Name, &spec.FetchCompletionRequest{
 		ModelParam: modelParam,
-		Inputs: []spec.InputUnion{
-			newUserTextInput("Explain the difference between a goroutine and an OS thread in two sentences."),
-		},
+		Inputs:     firstTurnInputs,
 	}, options)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
@@ -85,7 +87,30 @@ func Example_meta_basicConversation() {
 		return
 	}
 
-	fmt.Fprintln(os.Stderr, "Meta Muse assistant:", responseText(response))
+	fmt.Fprintln(os.Stderr, "Meta Muse first assistant:", responseText(response))
+
+	followUpInputs := replayBasicConversationInputs(
+		firstTurnInputs,
+		response,
+		newUserTextInput("What was the main point of your previous answer? Answer in one sentence."),
+	)
+	followUpResponse, err := providerSet.FetchCompletion(ctx, provider.Name, &spec.FetchCompletionRequest{
+		ModelParam: modelParam,
+		Inputs:     followUpInputs,
+	}, options)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "follow-up FetchCompletion error:", err)
+		if followUpResponse != nil && followUpResponse.Error != nil {
+			fmt.Fprintln(os.Stderr, "Provider error:", followUpResponse.Error.Message)
+		}
+		return
+	}
+
+	fmt.Fprintln(
+		os.Stderr,
+		"Meta Muse follow-up:",
+		responseText(followUpResponse),
+	)
 	fmt.Println("OK")
 	// Output: OK
 }

@@ -55,11 +55,13 @@ func Example_openAIChat_basicConversation() {
 		return
 	}
 
+	firstTurnInputs := []spec.InputUnion{
+		newUserTextInput("Say hello from OpenAI Chat Completions in one short sentence."),
+	}
+
 	resp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
 		ModelParam: modelParam,
-		Inputs: []spec.InputUnion{
-			newUserTextInput("Say hello from OpenAI Chat Completions in one short sentence."),
-		},
+		Inputs:     firstTurnInputs,
 	}, opts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "FetchCompletion error:", err)
@@ -69,7 +71,30 @@ func Example_openAIChat_basicConversation() {
 		return
 	}
 
-	fmt.Fprintln(os.Stderr, "OpenAI Chat assistant:", responseText(resp))
+	fmt.Fprintln(os.Stderr, "OpenAI Chat first assistant:", responseText(resp))
+
+	followUpInputs := replayBasicConversationInputs(
+		firstTurnInputs,
+		resp,
+		newUserTextInput("Repeat the exact greeting you just gave, without adding new information."),
+	)
+	followUpResp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
+		ModelParam: modelParam,
+		Inputs:     followUpInputs,
+	}, opts)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "follow-up FetchCompletion error:", err)
+		if followUpResp != nil && followUpResp.Error != nil {
+			fmt.Fprintln(os.Stderr, "Provider error:", followUpResp.Error.Message)
+		}
+		return
+	}
+
+	fmt.Fprintln(
+		os.Stderr,
+		"OpenAI Chat follow-up:",
+		responseText(followUpResp),
+	)
 	fmt.Println("OK")
 	// Output: OK
 }

@@ -33,12 +33,13 @@ func reasoningContentToOpenAIItem(
 	}
 
 	item := &responses.ResponseReasoningItemParam{
-		ID:     r.ID,
-		Status: status,
+		ID: r.ID,
 	}
 
 	if enc, ok := firstNonEmptyEncrypted(r.EncryptedContent); ok {
 		item.EncryptedContent = param.NewOpt(enc)
+	} else {
+		item.Status = status
 	}
 
 	item.Summary = make([]responses.ResponseReasoningItemSummaryParam, 0)
