@@ -59,4 +59,4 @@ tasks:
 
   test:tmp:
     cmds:
-      - go test -count=1 -v ./internal/integration -run '^(Example_openAIResponses_basicConversation)$'
+      - go test -count=1 -v ./internal/integration -run '^(Example_openAITerraToMetaMuse_reasoningStitching)$'

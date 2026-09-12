@@ -95,6 +95,10 @@ type ReasoningContent struct {
 	Status       Status        `json:"status,omitzero"`
 	CacheControl *CacheControl `json:"cacheControl,omitempty"`
 
+	// ContinuationFingerprint binds provider-native reasoning to the configured
+	// endpoint that produced it. Adapters must not send it upstream.
+	ContinuationFingerprint string `json:"continuationFingerprint,omitempty"`
+
 	Signature        string   `json:"signature,omitzero"`
 	Summary          []string `json:"summary,omitempty"`
 	Thinking         []string `json:"thinking,omitempty"`

@@ -271,10 +271,18 @@ func (ps *ProviderSetAPI) FetchCompletion(
 
 	reqCopy := *fetchCompletionRequest
 
+	continuationFingerprint := sdkutil.BuildReasoningContinuationFingerprint(
+		p.GetProviderInfo(ctx),
+	)
+	reqCopy.Inputs = sdkutil.FilterReasoningInputsByContinuationFingerprint(
+		reqCopy.Inputs,
+		continuationFingerprint,
+	)
+
 	// If a max prompt length (in tokens) is configured, apply heuristic filtering.
 	if reqCopy.ModelParam.MaxPromptLength > 0 {
 		reqCopy.Inputs = sdkutil.FilterMessagesByTokenCount(
-			fetchCompletionRequest.Inputs,
+			reqCopy.Inputs,
 			reqCopy.ModelParam.MaxPromptLength,
 		)
 	}
@@ -284,6 +292,8 @@ func (ps *ProviderSetAPI) FetchCompletion(
 		&reqCopy,
 		opts,
 	)
+	sdkutil.StampReasoningContinuationFingerprint(resp, continuationFingerprint)
+
 	if err != nil {
 		// Return any partial response we got alongside a contextual error.
 		return resp, fmt.Errorf("fetch completion failed for provider %s: %w", provider, err)

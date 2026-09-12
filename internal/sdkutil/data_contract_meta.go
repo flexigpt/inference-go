@@ -1,4 +1,4 @@
-package inference
+package sdkutil
 
 import (
 	"crypto/sha256"
@@ -18,14 +18,14 @@ const DataContractVersion = "v1.0.0"
 // downstream consumers rely on structurally. Any change to these files will
 // change the contract hash. It does NOT contain api contracts.
 var DataContractFiles = []string{
-	"spec/io_cache_control.go",
-	"spec/io_citation.go",
-	"spec/io_tool.go",
-	"spec/io_union.go",
-	"spec/output_other.go",
-	"spec/param_model.go",
-	"spec/param_output_control.go",
-	"spec/param_reasoning.go",
+	"../../spec/io_cache_control.go",
+	"../../spec/io_citation.go",
+	"../../spec/io_tool.go",
+	"../../spec/io_union.go",
+	"../../spec/output_other.go",
+	"../../spec/param_model.go",
+	"../../spec/param_output_control.go",
+	"../../spec/param_reasoning.go",
 }
 
 // DataContractHash is a SHA-256 of the contents of DataContractFiles.
@@ -33,7 +33,7 @@ var DataContractFiles = []string{
 // that they are running against the contract version they were built for.
 //
 // Format: "sha256:<hexstring>".
-const DataContractHash = "sha256:f17df3076ea72cff97a4f0f73344f297f11f33b6e29173cacec0a37292487365"
+const DataContractHash = "sha256:82b88dbae52bd9596cbb79a09704c0110f6bd7c0ae6088c30f6241be7c116853"
 
 // DataContractInfo is the public shape returned to callers who want to
 // validate they are compatible with this version of the contract.
@@ -56,19 +56,19 @@ func GetDataContractInfo() DataContractInfo {
 // Tests in this module should call this to enforce that any schema change in
 // the contract files is accompanied by an explicit update of DataContractHash
 // (and, if breaking, DataContractVersion).
-func ValidateDataContract() error {
+func ValidateDataContract() (string, error) {
 	computed, err := ComputeDataContractHash()
 	if err != nil {
-		return err
+		return "", err
 	}
 	if computed != DataContractHash {
-		return fmt.Errorf(
+		return "", fmt.Errorf(
 			"data contract hash mismatch: compiled=%s, computed=%s. If this change is intentional, update DataContractHash in data_contract.go and bump DataContractVersion",
 			DataContractHash,
 			computed,
 		)
 	}
-	return nil
+	return computed, nil
 }
 
 // ComputeDataContractHash recomputes the SHA-256 hash of the contract files'
