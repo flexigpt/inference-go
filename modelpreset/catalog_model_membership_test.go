@@ -37,7 +37,9 @@ func TestCatalogModelMembershipIsExhaustive(t *testing.T) {
 		ProviderMeta:     "museSpark13 museSpark13Contributor museSpark12 museSpark12Contributor museSpark11",
 		ProviderMiniMax: "minimaxm2 minimaxm21 minimaxm21Highspeed minimaxm25 minimaxm25Highspeed " +
 			"minimaxm27 minimaxm27Highspeed minimaxM3",
-		ProviderMistral:  "mistralMedium35 mistralSmall4 mistralLarge3 devstral2",
+		ProviderMistral: "mistralMedium35 mistralSmall4 mistralLarge3 devstral2",
+		ProviderModelRunner: "gemini35Flash gemini37Flash gemini35FlashLite " +
+			"deepseekv4pro zaiglm52 qwen38Max",
 		ProviderMoonshot: "kimiK3 kimiK27Code kimiK27CodeHighspeed kimiK26",
 		ProviderOllama: "gemma426b gemma4e4b gptoss20b qwen3635b qwen3627b deepseekr18b " +
 			"qwen3vl30b ministral314b qwen3coder30b phi4reasoning14b",
