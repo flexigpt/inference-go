@@ -71,69 +71,6 @@ var modelOpenRouterDeepSeekV4Flash = ModelPreset{
 	},
 }
 
-var modelOpenRouterXiaomiMiMoV25 = ModelPreset{
-	ID:          PresetXiaomiMiMoV25,
-	Name:        ModelNameOpenRouterXiaomiMiMoV25,
-	DisplayName: DisplayNameXiaomiMiMoV25,
-	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenRouterXiaomiMiMoV25,
-		Stream:          true,
-		MaxPromptLength: 32000,
-		MaxOutputLength: 32000,
-		Temperature:     new(1.0),
-		Reasoning:       nil,
-		SystemPrompt:    "",
-		Timeout:         1800,
-	},
-	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
-		ModalitiesIn: []spec.Modality{
-			spec.ModalityTextIn,
-			spec.ModalityAudioIn,
-			spec.ModalityImageIn,
-			spec.ModalityVideoIn,
-		},
-		ModalitiesOut: []spec.Modality{
-			spec.ModalityTextOut,
-		},
-		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
-			TemperatureDisallowedWhenEnabled: new(false),
-			SupportedReasoningTypes: []spec.ReasoningType{
-				spec.ReasoningTypeSingleWithLevels,
-			},
-			SupportedReasoningLevels: []spec.ReasoningLevel{
-				spec.ReasoningLevelLow,
-				spec.ReasoningLevelMedium,
-				spec.ReasoningLevelHigh,
-			},
-			SupportsSummaryStyle: new(true),
-		},
-		OutputCapabilities: &capabilityoverride.OutputCapabilitiesOverride{
-			SupportedOutputFormats: []spec.OutputFormatKind{
-				spec.OutputFormatKindText,
-				spec.OutputFormatKindJSONSchema,
-			},
-			SupportsVerbosity: new(false),
-		},
-		ToolCapabilities: &capabilityoverride.ToolCapabilitiesOverride{
-			SupportedToolTypes: []spec.ToolType{
-				spec.ToolTypeFunction,
-			},
-			SupportedToolPolicyModes: []spec.ToolPolicyMode{
-				spec.ToolPolicyModeAuto,
-				spec.ToolPolicyModeAny,
-				spec.ToolPolicyModeTool,
-				spec.ToolPolicyModeNone,
-			},
-			SupportsParallelToolCalls: new(false),
-			MaxForcedTools:            new(1),
-			SupportedClientToolOutputFormats: []spec.ToolOutputFormatKind{
-				spec.ToolOutputFormatKindString,
-				spec.ToolOutputFormatKindContentItemList,
-			},
-		},
-	},
-}
-
 var modelOpenRouterTencentHy3Preview = ModelPreset{
 	ID:          PresetTencentHy3Preview,
 	Name:        ModelNameOpenRouterTencentHy3Preview,
@@ -552,15 +489,15 @@ var modelOpenRouterPoolsideLagunaM1Free = ModelPreset{
 	},
 }
 
-var modelOpenRouterXiaomiMiMoV25Pro = ModelPreset{
-	ID:          PresetXiaomiMiMoV25Pro,
-	Name:        ModelNameOpenRouterXiaomiMiMoV25Pro,
-	DisplayName: DisplayNameXiaomiMiMoV25Pro,
+var modelOpenRouterXiaomiMiMoV26Pro = ModelPreset{
+	ID:          PresetXiaomiMiMoV26Pro,
+	Name:        ModelNameOpenRouterXiaomiMiMoV26Pro,
+	DisplayName: DisplayNameXiaomiMiMoV26Pro,
 	ModelParam: spec.ModelParam{
-		Name:            ModelNameOpenRouterXiaomiMiMoV25Pro,
+		Name:            ModelNameOpenRouterXiaomiMiMoV26Pro,
 		Stream:          true,
-		MaxPromptLength: 1048576,
-		MaxOutputLength: 131072,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
 		Temperature:     new(1.0),
 		Reasoning:       nil,
 		SystemPrompt:    "",
@@ -569,6 +506,191 @@ var modelOpenRouterXiaomiMiMoV25Pro = ModelPreset{
 	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
 		ModalitiesIn: []spec.Modality{
 			spec.ModalityTextIn,
+			spec.ModalityImageIn,
+		},
+		ModalitiesOut: []spec.Modality{
+			spec.ModalityTextOut,
+		},
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(false),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+		OutputCapabilities: &capabilityoverride.OutputCapabilitiesOverride{
+			SupportedOutputFormats: []spec.OutputFormatKind{
+				spec.OutputFormatKindText,
+				spec.OutputFormatKindJSONSchema,
+			},
+			SupportsVerbosity: new(false),
+		},
+		ToolCapabilities: &capabilityoverride.ToolCapabilitiesOverride{
+			SupportedToolTypes: []spec.ToolType{
+				spec.ToolTypeFunction,
+			},
+			SupportedToolPolicyModes: []spec.ToolPolicyMode{
+				spec.ToolPolicyModeAuto,
+				spec.ToolPolicyModeAny,
+				spec.ToolPolicyModeTool,
+				spec.ToolPolicyModeNone,
+			},
+			SupportsParallelToolCalls: new(false),
+			MaxForcedTools:            new(1),
+			SupportedClientToolOutputFormats: []spec.ToolOutputFormatKind{
+				spec.ToolOutputFormatKindString,
+				spec.ToolOutputFormatKindContentItemList,
+			},
+		},
+	},
+}
+
+var modelOpenRouterXiaomiMiMoV26Flash = ModelPreset{
+	ID:          PresetXiaomiMiMoV26Flash,
+	Name:        ModelNameOpenRouterXiaomiMiMoV26Flash,
+	DisplayName: DisplayNameXiaomiMiMoV26Flash,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameOpenRouterXiaomiMiMoV26Flash,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       nil,
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ModalitiesIn: []spec.Modality{
+			spec.ModalityTextIn,
+			spec.ModalityImageIn,
+		},
+		ModalitiesOut: []spec.Modality{
+			spec.ModalityTextOut,
+		},
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(false),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+		OutputCapabilities: &capabilityoverride.OutputCapabilitiesOverride{
+			SupportedOutputFormats: []spec.OutputFormatKind{
+				spec.OutputFormatKindText,
+				spec.OutputFormatKindJSONSchema,
+			},
+			SupportsVerbosity: new(false),
+		},
+		ToolCapabilities: &capabilityoverride.ToolCapabilitiesOverride{
+			SupportedToolTypes: []spec.ToolType{
+				spec.ToolTypeFunction,
+			},
+			SupportedToolPolicyModes: []spec.ToolPolicyMode{
+				spec.ToolPolicyModeAuto,
+				spec.ToolPolicyModeAny,
+				spec.ToolPolicyModeTool,
+				spec.ToolPolicyModeNone,
+			},
+			SupportsParallelToolCalls: new(false),
+			MaxForcedTools:            new(1),
+			SupportedClientToolOutputFormats: []spec.ToolOutputFormatKind{
+				spec.ToolOutputFormatKindString,
+				spec.ToolOutputFormatKindContentItemList,
+			},
+		},
+	},
+}
+
+var modelOpenRouterXiaomiMiMoV25Pro = ModelPreset{
+	ID:          PresetXiaomiMiMoV25Pro,
+	Name:        ModelNameOpenRouterXiaomiMiMoV25Pro,
+	DisplayName: DisplayNameXiaomiMiMoV25Pro,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameOpenRouterXiaomiMiMoV25Pro,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       nil,
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ModalitiesIn: []spec.Modality{
+			spec.ModalityTextIn,
+		},
+		ModalitiesOut: []spec.Modality{
+			spec.ModalityTextOut,
+		},
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(false),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+		OutputCapabilities: &capabilityoverride.OutputCapabilitiesOverride{
+			SupportedOutputFormats: []spec.OutputFormatKind{
+				spec.OutputFormatKindText,
+				spec.OutputFormatKindJSONSchema,
+			},
+			SupportsVerbosity: new(false),
+		},
+		ToolCapabilities: &capabilityoverride.ToolCapabilitiesOverride{
+			SupportedToolTypes: []spec.ToolType{
+				spec.ToolTypeFunction,
+			},
+			SupportedToolPolicyModes: []spec.ToolPolicyMode{
+				spec.ToolPolicyModeAuto,
+				spec.ToolPolicyModeAny,
+				spec.ToolPolicyModeTool,
+				spec.ToolPolicyModeNone,
+			},
+			SupportsParallelToolCalls: new(false),
+			MaxForcedTools:            new(1),
+			SupportedClientToolOutputFormats: []spec.ToolOutputFormatKind{
+				spec.ToolOutputFormatKindString,
+				spec.ToolOutputFormatKindContentItemList,
+			},
+		},
+	},
+}
+
+var modelOpenRouterXiaomiMiMoV25 = ModelPreset{
+	ID:          PresetXiaomiMiMoV25,
+	Name:        ModelNameOpenRouterXiaomiMiMoV25,
+	DisplayName: DisplayNameXiaomiMiMoV25,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameOpenRouterXiaomiMiMoV25,
+		Stream:          true,
+		MaxPromptLength: 32000,
+		MaxOutputLength: 32000,
+		Temperature:     new(1.0),
+		Reasoning:       nil,
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ModalitiesIn: []spec.Modality{
+			spec.ModalityTextIn,
+			spec.ModalityAudioIn,
+			spec.ModalityImageIn,
+			spec.ModalityVideoIn,
 		},
 		ModalitiesOut: []spec.Modality{
 			spec.ModalityTextOut,
@@ -1104,7 +1226,6 @@ var providerOpenRouter = ProviderPreset{
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
 		PresetDeepSeekV4Flash:      modelOpenRouterDeepSeekV4Flash,
-		PresetXiaomiMiMoV25:        modelOpenRouterXiaomiMiMoV25,
 		PresetTencentHy3Preview:    modelOpenRouterTencentHy3Preview,
 		PresetMiniMaxM3:            modelOpenRouterMiniMaxM3,
 		PresetZAIGLM52:             modelOpenRouterZAIGLM52,
@@ -1112,7 +1233,10 @@ var providerOpenRouter = ProviderPreset{
 		PresetStep37Flash:          modelOpenRouterStep37Flash,
 		PresetNemotron3UltraFree:   modelOpenRouterNemotron3UltraFree,
 		PresetPoolsideLagunaM1Free: modelOpenRouterPoolsideLagunaM1Free,
+		PresetXiaomiMiMoV26Pro:     modelOpenRouterXiaomiMiMoV26Pro,
+		PresetXiaomiMiMoV26Flash:   modelOpenRouterXiaomiMiMoV26Flash,
 		PresetXiaomiMiMoV25Pro:     modelOpenRouterXiaomiMiMoV25Pro,
+		PresetXiaomiMiMoV25:        modelOpenRouterXiaomiMiMoV25,
 		PresetNemotron3SuperFree:   modelOpenRouterNemotron3SuperFree,
 		PresetMoonshotKimiK26:      modelOpenRouterMoonshotKimiK26,
 		PresetQwen37Max:            modelOpenRouterQwen37Max,

@@ -44,9 +44,9 @@ func TestCatalogModelMembershipIsExhaustive(t *testing.T) {
 		ProviderOpenAIChat: "gpt41 gpt41Mini gpt4o gpt4oMini",
 		ProviderOpenAIResponses: "gpt6Astra gpt56sol gpt56terra gpt56luna gpt55 gpt54 " +
 			"gpt54mini gpt54nano gpt53Codex gpt52 gpt52Codex gpt51 gpt51Codex gpt51CodexMax gpt5Mini",
-		ProviderOpenRouter: "deepseekv4flash xiaomiMiMoV25 tencentHy3Preview minimaxM3 zaiglm52 " +
-			"deepseekv4pro step37Flash nvidiaNemotron3UltraFree poolsideLagunaM1Free xiaomiMiMoV25Pro " +
-			"nvidiaNemotron3SuperFree kimiK26 qwen37Max zaiglm51 kimiK27Code qwen37Plus minimaxm27 minimaxm25free",
+		ProviderOpenRouter: "deepseekv4flash deepseekv4pro tencentHy3Preview step37Flash minimaxM3 minimaxm27 minimaxm25free " +
+			"nvidiaNemotron3SuperFree nvidiaNemotron3UltraFree poolsideLagunaM1Free xiaomiMiMoV26Pro xiaomiMiMoV26Flash xiaomiMiMoV25Pro xiaomiMiMoV25 " +
+			"kimiK27Code kimiK26 qwen37Max qwen37Plus zaiglm52 zaiglm51",
 		ProviderQwen: "qwen38Max qwen3824tA95B qwen3827B qwen37Max qwen37Max20260608 " +
 			"qwen37Max20260520 qwen3Max qwen3Max20260123 qwen37Plus qwen37Plus20260526 " +
 			"qwen37Flash qwen37Flash20260715 qwen36Plus qwen36Plus20260402 qwen36Flash " +
@@ -58,8 +58,8 @@ func TestCatalogModelMembershipIsExhaustive(t *testing.T) {
 			"ministral314b qwen3coder30ba3b glm47flash30ba3b phi4reasoning14b devstral224b",
 		ProviderVLLM: "gemma426ba4b gptoss20b qwen3635ba3b qwen3vl30ba3b deepseekr18b " +
 			"ministral314b qwen3coder30ba3b glm47flash30ba3b phi4reasoning14b devstral224b",
-		ProviderXAI:    "grok46 grok45 grok43 grokBuild01 grok42Reasoning grok42NonReasoning",
-		ProviderXiaomi: "mimov25 mimov25pro",
+		ProviderXAI:    "grok47 grok46 grok45 grok43 grokBuild01 grok42Reasoning grok42NonReasoning",
+		ProviderXiaomi: "mimov26pro mimov26flash mimov25pro mimov25",
 		ProviderZAI: "glm53 glm52 glm51 glm5 glm5Turbo glm47 glm47FlashX glm47Flash " +
 			"glm46 glm45 glm45X glm45Air glm45AirX glm45Flash glm5VTurbo glm46V glm46VFlash " +
 			"glm46VFlashX glm45V",

@@ -13,47 +13,113 @@ const (
 )
 
 const (
-	ModelNameMiMoV25Pro spec.ModelName = "mimo-v2.5-pro"
-	ModelNameMiMoV25    spec.ModelName = "mimo-v2.5"
+	ModelNameMiMoV26Pro   spec.ModelName = "mimo-v2.6-pro"
+	ModelNameMiMoV26Flash spec.ModelName = "mimo-v2.6-flash"
+	ModelNameMiMoV25Pro   spec.ModelName = "mimo-v2.5-pro"
+	ModelNameMiMoV25      spec.ModelName = "mimo-v2.5"
 
-	ModelNameOpenRouterXiaomiMiMoV25Pro spec.ModelName = "xiaomi/mimo-v2.5-pro"
-	ModelNameOpenRouterXiaomiMiMoV25    spec.ModelName = "xiaomi/mimo-v2.5"
+	ModelNameOpenRouterXiaomiMiMoV26Pro   spec.ModelName = "xiaomi/mimo-v2.6-pro"
+	ModelNameOpenRouterXiaomiMiMoV26Flash spec.ModelName = "xiaomi/mimo-v2.6-flash"
+	ModelNameOpenRouterXiaomiMiMoV25Pro   spec.ModelName = "xiaomi/mimo-v2.5-pro"
+	ModelNameOpenRouterXiaomiMiMoV25      spec.ModelName = "xiaomi/mimo-v2.5"
 
 	ModelNameMiMoV25ProDeepInfra      spec.ModelName = "XiaomiMiMo/MiMo-V2.5-Pro:deepinfra"
 	ModelNameMiMoV2FlashFeatherlessAI spec.ModelName = "XiaomiMiMo/MiMo-V2-Flash:featherless-ai"
 )
 
 const (
-	DisplayNameMiMoV2Flash      = "MiMo V2 Flash"
-	DisplayNameMiMoV25          = "MiMo V2.5"
-	DisplayNameMiMoV25Pro       = "MiMo V2.5 Pro"
-	DisplayNameXiaomiMiMoV25    = "Xiaomi MiMo V2.5"
-	DisplayNameXiaomiMiMoV25Pro = "Xiaomi MiMo V2.5 Pro"
+	DisplayNameMiMoV26Pro   = "MiMo V2.6 Pro"
+	DisplayNameMiMoV26Flash = "MiMo V2.6 Flash"
+	DisplayNameMiMoV25Pro   = "MiMo V2.5 Pro"
+	DisplayNameMiMoV25      = "MiMo V2.5"
+
+	DisplayNameXiaomiMiMoV26Pro   = "Xiaomi MiMo V2.6 Pro"
+	DisplayNameXiaomiMiMoV26Flash = "Xiaomi MiMo V2.5 Flash"
+	DisplayNameXiaomiMiMoV25      = "Xiaomi MiMo V2.5"
+	DisplayNameXiaomiMiMoV25Pro   = "Xiaomi MiMo V2.5 Pro"
+
+	DisplayNameMiMoV2Flash = "MiMo V2 Flash"
 
 	DisplayNameMiMoV2FlashFeatherlessAI = "MiMo V2 Flash (Featherless AI)"
 	DisplayNameMiMoV25ProDeepInfra      = "MiMo V2.5 Pro (DeepInfra)"
 )
 
 const (
-	PresetMiMoV2Flash      ModelPresetID = "mimov2flash"
-	PresetMiMoV25          ModelPresetID = "mimov25"
-	PresetMiMoV25Pro       ModelPresetID = "mimov25pro"
-	PresetXiaomiMiMoV25    ModelPresetID = "xiaomiMiMoV25"
-	PresetXiaomiMiMoV25Pro ModelPresetID = "xiaomiMiMoV25Pro"
+	PresetMiMoV26Pro   ModelPresetID = "mimov26pro"
+	PresetMiMoV26Flash ModelPresetID = "mimov26flash"
+	PresetMiMoV25Pro   ModelPresetID = "mimov25pro"
+	PresetMiMoV25      ModelPresetID = "mimov25"
+
+	PresetXiaomiMiMoV26Pro   ModelPresetID = "xiaomiMiMoV26Pro"
+	PresetXiaomiMiMoV26Flash ModelPresetID = "xiaomiMiMoV26Flash"
+	PresetXiaomiMiMoV25      ModelPresetID = "xiaomiMiMoV25"
+	PresetXiaomiMiMoV25Pro   ModelPresetID = "xiaomiMiMoV25Pro"
+
+	PresetMiMoV2Flash ModelPresetID = "mimov2flash"
 
 	PresetMiMoV25ProDeepInfra      ModelPresetID = "mimov25proDeepInfra"
 	PresetMiMoV2FlashFeatherlessAI ModelPresetID = "mimov2flashFeatherlessAI"
 )
 
-var modelXiaomiMiMoV25Pro = ModelPreset{
+var modelMiMoV26Pro = ModelPreset{
+	ID:          PresetMiMoV26Pro,
+	Name:        ModelNameMiMoV26Pro,
+	DisplayName: DisplayNameMiMoV26Pro,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameMiMoV26Pro,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     nil,
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ModalitiesIn: []spec.Modality{
+			spec.ModalityTextIn,
+			spec.ModalityImageIn,
+		},
+		ModalitiesOut: []spec.Modality{
+			spec.ModalityTextOut,
+		},
+	},
+}
+
+var modelMiMoV26Flash = ModelPreset{
+	ID:          PresetMiMoV26Flash,
+	Name:        ModelNameMiMoV26Flash,
+	DisplayName: DisplayNameMiMoV26Flash,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameMiMoV26Flash,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     nil,
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ModalitiesIn: []spec.Modality{
+			spec.ModalityTextIn,
+			spec.ModalityImageIn,
+		},
+		ModalitiesOut: []spec.Modality{
+			spec.ModalityTextOut,
+		},
+	},
+}
+
+var modelMiMoV25Pro = ModelPreset{
 	ID:          PresetMiMoV25Pro,
 	Name:        ModelNameMiMoV25Pro,
 	DisplayName: DisplayNameMiMoV25Pro,
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameMiMoV25Pro,
 		Stream:          true,
-		MaxPromptLength: 1048576,
-		MaxOutputLength: 131072,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
 		Temperature:     nil,
 		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
 		SystemPrompt:    "",
@@ -61,15 +127,15 @@ var modelXiaomiMiMoV25Pro = ModelPreset{
 	},
 }
 
-var modelXiaomiMiMoV25 = ModelPreset{
+var modelMiMoV25 = ModelPreset{
 	ID:          PresetMiMoV25,
 	Name:        ModelNameMiMoV25,
 	DisplayName: DisplayNameMiMoV25,
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameMiMoV25,
 		Stream:          true,
-		MaxPromptLength: 1048576,
-		MaxOutputLength: 131072,
+		MaxPromptLength: 32000,
+		MaxOutputLength: 32000,
 		Temperature:     nil,
 		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
 		SystemPrompt:    "",
@@ -153,7 +219,9 @@ var providerXiaomi = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
-		PresetMiMoV25Pro: modelXiaomiMiMoV25Pro,
-		PresetMiMoV25:    modelXiaomiMiMoV25,
+		PresetMiMoV26Pro:   modelMiMoV26Pro,
+		PresetMiMoV26Flash: modelMiMoV26Flash,
+		PresetMiMoV25Pro:   modelMiMoV25Pro,
+		PresetMiMoV25:      modelMiMoV25,
 	},
 }

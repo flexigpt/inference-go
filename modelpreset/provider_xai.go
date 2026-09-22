@@ -13,6 +13,7 @@ const (
 )
 
 const (
+	ModelNameGrok47             spec.ModelName = "grok-4.7"
 	ModelNameGrok46             spec.ModelName = "grok-4.6"
 	ModelNameGrok45             spec.ModelName = "grok-4.5"
 	ModelNameGrok43             spec.ModelName = "grok-4.3"
@@ -22,6 +23,7 @@ const (
 )
 
 const (
+	DisplayNameGrok47             = "Grok 4.7"
 	DisplayNameGrok46             = "Grok 4.6"
 	DisplayNameGrok45             = "Grok 4.5"
 	DisplayNameGrok43             = "Grok 4.3"
@@ -31,6 +33,7 @@ const (
 )
 
 const (
+	PresetGrok47             ModelPresetID = "grok47"
 	PresetGrok46             ModelPresetID = "grok46"
 	PresetGrok45             ModelPresetID = "grok45"
 	PresetGrok43             ModelPresetID = "grok43"
@@ -38,6 +41,37 @@ const (
 	PresetGrok42Reasoning    ModelPresetID = "grok42Reasoning"
 	PresetGrok42NonReasoning ModelPresetID = "grok42NonReasoning"
 )
+
+var modelXAIGrok47 = ModelPreset{
+	ID:          PresetGrok47,
+	Name:        ModelNameGrok47,
+	DisplayName: DisplayNameGrok47,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGrok47,
+		Stream:          true,
+		MaxPromptLength: 500000,
+		MaxOutputLength: 65536,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         3600,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+			},
+			SupportsSummaryStyle: new(true),
+		},
+	},
+}
 
 var modelXAIGrok46 = ModelPreset{
 	ID:          PresetGrok46,
@@ -269,6 +303,7 @@ var providerXAI = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetGrok47:             modelXAIGrok47,
 		PresetGrok46:             modelXAIGrok46,
 		PresetGrok45:             modelXAIGrok45,
 		PresetGrok43:             modelXAIGrok43,

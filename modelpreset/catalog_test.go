@@ -190,6 +190,8 @@ func TestNewProviderModelMembership(t *testing.T) {
 		{
 			name: ProviderXiaomi,
 			modelIDs: []ModelPresetID{
+				PresetMiMoV26Pro,
+				PresetMiMoV26Flash,
 				PresetMiMoV25,
 				PresetMiMoV25Pro,
 			},
