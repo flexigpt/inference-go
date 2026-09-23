@@ -14,6 +14,8 @@ const (
 
 const (
 	ModelNameGPT6Astra     spec.ModelName = "gpt-6-astra"
+	ModelNameGPT6Sol       spec.ModelName = "gpt-6-sol"
+	ModelNameGPT6Luna      spec.ModelName = "gpt-6-luna"
 	ModelNameGPT56Sol      spec.ModelName = "gpt-5.6-sol"
 	ModelNameGPT56Terra    spec.ModelName = "gpt-5.6-terra"
 	ModelNameGPT56Luna     spec.ModelName = "gpt-5.6-luna"
@@ -45,6 +47,8 @@ const (
 
 const (
 	DisplayNameGPT6Astra     = "GPT 6 Astra"
+	DisplayNameGPT6Sol       = "GPT 6 Sol"
+	DisplayNameGPT6Luna      = "GPT 6 Luna"
 	DisplayNameGPT56Sol      = "GPT 5.6 Sol"
 	DisplayNameGPT56Terra    = "GPT 5.6 Terra"
 	DisplayNameGPT56Luna     = "GPT 5.6 Luna"
@@ -74,13 +78,15 @@ const (
 
 const (
 	PresetGPT6Astra     ModelPresetID = "gpt6Astra"
-	PresetGPT56Sol      ModelPresetID = "gpt56sol"
-	PresetGPT56Terra    ModelPresetID = "gpt56terra"
-	PresetGPT56Luna     ModelPresetID = "gpt56luna"
+	PresetGPT6Sol       ModelPresetID = "gpt6Sol"
+	PresetGPT6Luna      ModelPresetID = "gpt6Luna"
+	PresetGPT56Sol      ModelPresetID = "gpt56Sol"
+	PresetGPT56Terra    ModelPresetID = "gpt56Terra"
+	PresetGPT56Luna     ModelPresetID = "gpt56Luna"
 	PresetGPT55         ModelPresetID = "gpt55"
 	PresetGPT54         ModelPresetID = "gpt54"
-	PresetGPT54Mini     ModelPresetID = "gpt54mini"
-	PresetGPT54Nano     ModelPresetID = "gpt54nano"
+	PresetGPT54Mini     ModelPresetID = "gpt54Mini"
+	PresetGPT54Nano     ModelPresetID = "gpt54Nano"
 	PresetGPT53Codex    ModelPresetID = "gpt53Codex"
 	PresetGPT52         ModelPresetID = "gpt52"
 	PresetGPT52Codex    ModelPresetID = "gpt52Codex"
@@ -116,6 +122,54 @@ var modelOpenAIResponsesGPT6Astra = ModelPreset{
 		Timeout:         1800,
 	},
 	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+		spec.ReasoningLevelMax,
+	}),
+}
+
+var modelOpenAIResponsesGPT6Sol = ModelPreset{
+	ID:          PresetGPT6Sol,
+	Name:        ModelNameGPT6Sol,
+	DisplayName: DisplayNameGPT6Sol,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGPT6Sol,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelNone,
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+		spec.ReasoningLevelMax,
+	}),
+}
+
+var modelOpenAIResponsesGPT6Luna = ModelPreset{
+	ID:          PresetGPT6Luna,
+	Name:        ModelNameGPT6Luna,
+	DisplayName: DisplayNameGPT6Luna,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGPT6Luna,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
 		spec.ReasoningLevelHigh,
@@ -511,6 +565,8 @@ var providerOpenAIResponses = ProviderPreset{
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
 		PresetGPT6Astra:     modelOpenAIResponsesGPT6Astra,
+		PresetGPT6Sol:       modelOpenAIResponsesGPT6Sol,
+		PresetGPT6Luna:      modelOpenAIResponsesGPT6Luna,
 		PresetGPT56Sol:      modelOpenAIResponsesGPT56Sol,
 		PresetGPT56Terra:    modelOpenAIResponsesGPT56Terra,
 		PresetGPT56Luna:     modelOpenAIResponsesGPT56Luna,

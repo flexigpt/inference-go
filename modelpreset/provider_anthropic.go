@@ -14,6 +14,7 @@ const (
 const (
 	ModelNameClaudeFable51  spec.ModelName = "claude-fable-5-1"
 	ModelNameClaudeFable5   spec.ModelName = "claude-fable-5"
+	ModelNameClaudeOpus55   spec.ModelName = "claude-opus-5-5"
 	ModelNameClaudeOpus5    spec.ModelName = "claude-opus-5"
 	ModelNameClaudeOpus48   spec.ModelName = "claude-opus-4-8"
 	ModelNameClaudeOpus47   spec.ModelName = "claude-opus-4-7"
@@ -30,6 +31,7 @@ const (
 const (
 	DisplayNameClaudeFable51  = "Claude Fable 5.1"
 	DisplayNameClaudeFable5   = "Claude Fable 5"
+	DisplayNameClaudeOpus55   = "Claude Opus 5.5"
 	DisplayNameClaudeOpus5    = "Claude Opus 5"
 	DisplayNameClaudeOpus48   = "Claude Opus 4.8"
 	DisplayNameClaudeOpus47   = "Claude Opus 4.7"
@@ -46,6 +48,7 @@ const (
 const (
 	PresetClaudeFable51  ModelPresetID = "fable51"
 	PresetClaudeFable5   ModelPresetID = "fable5"
+	PresetClaudeOpus55   ModelPresetID = "opus55"
 	PresetClaudeOpus5    ModelPresetID = "opus5"
 	PresetClaudeOpus48   ModelPresetID = "opus48"
 	PresetClaudeOpus47   ModelPresetID = "opus47"
@@ -127,6 +130,37 @@ var modelAnthropicOpus5 = ModelPreset{
 	DisplayName: DisplayNameClaudeOpus5,
 	ModelParam: spec.ModelParam{
 		Name:            ModelNameClaudeOpus5,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+		CacheControl:    cacheEphemeral5m(),
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+				spec.ReasoningLevelMax,
+			},
+		},
+	},
+}
+
+var modelAnthropicOpus55 = ModelPreset{
+	ID:          PresetClaudeOpus55,
+	Name:        ModelNameClaudeOpus55,
+	DisplayName: DisplayNameClaudeOpus55,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameClaudeOpus55,
 		Stream:          true,
 		MaxPromptLength: 1000000,
 		MaxOutputLength: 128000,
@@ -492,6 +526,7 @@ var providerAnthropic = ProviderPreset{
 	ModelPresets: map[ModelPresetID]ModelPreset{
 		PresetClaudeFable5:   modelAnthropicFable5,
 		PresetClaudeFable51:  modelAnthropicFable51,
+		PresetClaudeOpus55:   modelAnthropicOpus55,
 		PresetClaudeOpus5:    modelAnthropicOpus5,
 		PresetClaudeOpus48:   modelAnthropicOpus48,
 		PresetClaudeOpus47:   modelAnthropicOpus47,
