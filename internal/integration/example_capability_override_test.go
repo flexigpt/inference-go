@@ -153,27 +153,43 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 
 		req := &spec.FetchCompletionRequest{
 			ModelParam: spec.ModelParam{Name: mp.Name},
-			Inputs: []spec.InputUnion{{
-				Kind: spec.InputKindFunctionToolOutput,
-				FunctionToolOutput: &spec.ToolOutput{
-					Type:   spec.ToolTypeFunction,
-					CallID: "call_1",
-					Name:   "tool",
-					Contents: []spec.ToolOutputItemUnion{
-						{
-							Kind:     spec.ContentItemKindText,
-							TextItem: &spec.ContentItemText{Text: "hello"},
-						},
-						{
-							Kind: spec.ContentItemKindFile,
-							FileItem: &spec.ContentItemFile{
-								FileURL:  "https://example.com/a.pdf",
-								FileMIME: "application/pdf",
+			Inputs: []spec.InputUnion{
+				newUserTextInput("Run the tool and return its result."),
+				{
+					Kind: spec.InputKindFunctionToolCall,
+					FunctionToolCall: &spec.ToolCall{
+						Type:      spec.ToolTypeFunction,
+						Role:      spec.RoleAssistant,
+						ID:        "call_1",
+						CallID:    "call_1",
+						Name:      "tool",
+						Arguments: "{}",
+					},
+				},
+				{
+					Kind: spec.InputKindFunctionToolOutput,
+					FunctionToolOutput: &spec.ToolOutput{
+						Type:   spec.ToolTypeFunction,
+						Role:   spec.RoleTool,
+						ID:     "call_1",
+						CallID: "call_1",
+						Name:   "tool",
+						Contents: []spec.ToolOutputItemUnion{
+							{
+								Kind:     spec.ContentItemKindText,
+								TextItem: &spec.ContentItemText{Text: "hello"},
+							},
+							{
+								Kind: spec.ContentItemKindFile,
+								FileItem: &spec.ContentItemFile{
+									FileURL:  "https://example.com/a.pdf",
+									FileMIME: "application/pdf",
+								},
 							},
 						},
 					},
 				},
-			}},
+			},
 		}
 
 		capped, _, warns, err := sdkutil.NormalizeRequestForSDK(
@@ -190,7 +206,11 @@ func TestCapabilityOverride_GetProviderCapsThenOverride(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		out := capped.Inputs[0].FunctionToolOutput
+		if got, want := len(capped.Inputs), 3; got != want {
+			t.Fatalf("normalized input count = %d, want %d", got, want)
+		}
+
+		out := capped.Inputs[2].FunctionToolOutput
 		if out == nil || len(out.Contents) != 1 || out.Contents[0].Kind != spec.ContentItemKindText {
 			t.Fatalf("expected collapsed single text tool output; got %#v", out)
 		}
