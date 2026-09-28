@@ -10,28 +10,24 @@ import (
 func TestNormalizeRequestForSDK_CollapsesRichClientToolOutputsWhenStringOnly(t *testing.T) {
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{Name: "test-model"},
-		Inputs: []spec.InputUnion{
-			{
-				Kind: spec.InputKindFunctionToolOutput,
-				FunctionToolOutput: &spec.ToolOutput{
-					Type:   spec.ToolTypeFunction,
-					CallID: "call_1",
-					Name:   "demo_tool",
-					Contents: []spec.ToolOutputItemUnion{
-						{
-							Kind:     spec.ContentItemKindText,
-							TextItem: &spec.ContentItemText{Text: "hello"},
-						},
-						{
-							Kind: spec.ContentItemKindImage,
-							ImageItem: &spec.ContentItemImage{
-								ImageURL: "https://example.com/a.png",
-							},
-						},
+		Inputs: toolOutputNormalizationTestHistory(&spec.ToolOutput{
+			Type:   spec.ToolTypeFunction,
+			Role:   spec.RoleUser,
+			CallID: "call_1",
+			Name:   "demo_tool",
+			Contents: []spec.ToolOutputItemUnion{
+				{
+					Kind:     spec.ContentItemKindText,
+					TextItem: &spec.ContentItemText{Text: "hello"},
+				},
+				{
+					Kind: spec.ContentItemKindImage,
+					ImageItem: &spec.ContentItemImage{
+						ImageURL: "https://example.com/a.png",
 					},
 				},
 			},
-		},
+		}),
 	}
 
 	caps := spec.ModelCapabilities{
@@ -54,7 +50,11 @@ func TestNormalizeRequestForSDK_CollapsesRichClientToolOutputsWhenStringOnly(t *
 		t.Fatalf("NormalizeRequestForSDK error: %v", err)
 	}
 
-	out := got.Inputs[0].FunctionToolOutput
+	if gotCount, want := len(got.Inputs), 3; gotCount != want {
+		t.Fatalf("len(got.Inputs) = %d, want %d", gotCount, want)
+	}
+
+	out := got.Inputs[2].FunctionToolOutput
 	if out == nil {
 		t.Fatalf("FunctionToolOutput = nil")
 	}
@@ -78,25 +78,24 @@ func TestNormalizeRequestForSDK_CollapsesRichClientToolOutputsWhenStringOnly(t *
 	if !found {
 		t.Fatalf("expected toolOutput_collapsed_to_string warning, got %#v", warns)
 	}
+	if toolOutputNormalizationTestHasWarning(warns, conversationStartTrimmedWarningCode) {
+		t.Fatalf("valid tool history unexpectedly trimmed: %#v", warns)
+	}
 }
 
 func TestNormalizeRequestForSDK_LeavesSingleTextToolOutputUntouchedWhenStringOnly(t *testing.T) {
 	req := &spec.FetchCompletionRequest{
 		ModelParam: spec.ModelParam{Name: "test-model"},
-		Inputs: []spec.InputUnion{
-			{
-				Kind: spec.InputKindFunctionToolOutput,
-				FunctionToolOutput: &spec.ToolOutput{
-					Type:   spec.ToolTypeFunction,
-					CallID: "call_1",
-					Name:   "demo_tool",
-					Contents: []spec.ToolOutputItemUnion{{
-						Kind:     spec.ContentItemKindText,
-						TextItem: &spec.ContentItemText{Text: "plain text"},
-					}},
-				},
-			},
-		},
+		Inputs: toolOutputNormalizationTestHistory(&spec.ToolOutput{
+			Type:   spec.ToolTypeFunction,
+			Role:   spec.RoleUser,
+			CallID: "call_1",
+			Name:   "demo_tool",
+			Contents: []spec.ToolOutputItemUnion{{
+				Kind:     spec.ContentItemKindText,
+				TextItem: &spec.ContentItemText{Text: "plain text"},
+			}},
+		}),
 	}
 
 	caps := spec.ModelCapabilities{
@@ -108,11 +107,72 @@ func TestNormalizeRequestForSDK_LeavesSingleTextToolOutputUntouchedWhenStringOnl
 		},
 	}
 
-	got, _, _, err := NormalizeRequestForSDK(t.Context(), req, nil, spec.ProviderSDKTypeOpenAIResponses, caps)
+	got, _, warns, err := NormalizeRequestForSDK(
+		t.Context(),
+		req,
+		nil,
+		spec.ProviderSDKTypeOpenAIResponses,
+		caps,
+	)
 	if err != nil {
 		t.Fatalf("NormalizeRequestForSDK error: %v", err)
 	}
-	if got.Inputs[0].FunctionToolOutput.Contents[0].TextItem.Text != "plain text" {
+	if gotCount, want := len(got.Inputs), 3; gotCount != want {
+		t.Fatalf("len(got.Inputs) = %d, want %d", gotCount, want)
+	}
+
+	out := got.Inputs[2].FunctionToolOutput
+	if out == nil || len(out.Contents) != 1 || out.Contents[0].TextItem == nil {
+		t.Fatalf("FunctionToolOutput = %#v, want one text item", out)
+	}
+	if out.Contents[0].TextItem.Text != "plain text" {
 		t.Fatalf("single text output was unexpectedly rewritten")
 	}
+	if toolOutputNormalizationTestHasWarning(warns, conversationStartTrimmedWarningCode) {
+		t.Fatalf("valid tool history unexpectedly trimmed: %#v", warns)
+	}
+}
+
+func toolOutputNormalizationTestHistory(
+	output *spec.ToolOutput,
+) []spec.InputUnion {
+	return []spec.InputUnion{
+		{
+			Kind: spec.InputKindInputMessage,
+			InputMessage: &spec.InputOutputContent{
+				Role: spec.RoleUser,
+				Contents: []spec.InputOutputContentItemUnion{{
+					Kind:     spec.ContentItemKindText,
+					TextItem: &spec.ContentItemText{Text: "run the tool"},
+				}},
+			},
+		},
+		{
+			Kind: spec.InputKindFunctionToolCall,
+			FunctionToolCall: &spec.ToolCall{
+				Type:      spec.ToolTypeFunction,
+				Role:      spec.RoleAssistant,
+				ID:        output.CallID,
+				CallID:    output.CallID,
+				Name:      output.Name,
+				Arguments: "{}",
+			},
+		},
+		{
+			Kind:               spec.InputKindFunctionToolOutput,
+			FunctionToolOutput: output,
+		},
+	}
+}
+
+func toolOutputNormalizationTestHasWarning(
+	warnings []spec.Warning,
+	code string,
+) bool {
+	for _, warning := range warnings {
+		if warning.Code == code {
+			return true
+		}
+	}
+	return false
 }

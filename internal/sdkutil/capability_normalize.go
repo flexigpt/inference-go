@@ -46,6 +46,25 @@ func NormalizeRequestForSDK(
 		return nil, nil, nil, err
 	}
 
+	// All SDK adapters use this normalizer before converting generic inputs to
+	// provider messages. Ensure the replayed history starts with an ordinary
+	// user turn and that its tool outputs cannot be orphaned.
+	var leadingInputsDropped, firstUserToolOutputsDropped int
+	nreq.Inputs, leadingInputsDropped, firstUserToolOutputsDropped, err = sanitizeConversationStart(nreq.Inputs)
+	if err != nil {
+		return nil, caps, warnings, err
+	}
+	if leadingInputsDropped > 0 || firstUserToolOutputsDropped > 0 {
+		warnings = append(warnings, spec.Warning{
+			Code: conversationStartTrimmedWarningCode,
+			Message: fmt.Sprintf(
+				"Dropped %d input item(s) before the first user message and %d tool output(s) from the first user message.",
+				leadingInputsDropped,
+				firstUserToolOutputsDropped,
+			),
+		})
+	}
+
 	// Modalities validation (inferred from inputs).
 	used := getInputModalitiesForValidation(nreq.Inputs)
 	if err := requireModalities(used, caps.ModalitiesIn); err != nil {
