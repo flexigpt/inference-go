@@ -69,6 +69,7 @@ var catalogProviders = map[spec.ProviderName]ProviderPreset{
 	ProviderMeta:            providerMeta,
 	ProviderMiniMax:         providerMiniMax,
 	ProviderMistral:         providerMistral,
+	ProviderModelRunner:     providerModelRunner,
 	ProviderMoonshot:        providerMoonshot,
 	ProviderOllama:          providerOllama,
 	ProviderOpenAIChat:      providerOpenAIChat,
