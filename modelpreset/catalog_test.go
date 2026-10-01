@@ -391,7 +391,7 @@ func TestCatalogReturnsIndependentCopies(t *testing.T) {
 	provider.DefaultHeaders["x-mutated"] = "true"
 	provider.CapabilitiesOverride.ModalitiesIn[0] = spec.ModalityAudioIn
 
-	embeddedModel := provider.ModelPresets[PresetClaudeSonnet5]
+	embeddedModel := provider.ModelPresets[PresetClaudeSonnet55]
 	if embeddedModel.ModelParam.Temperature == nil ||
 		embeddedModel.ModelParam.Reasoning == nil ||
 		embeddedModel.ModelParam.CacheControl == nil {
@@ -400,7 +400,7 @@ func TestCatalogReturnsIndependentCopies(t *testing.T) {
 	*embeddedModel.ModelParam.Temperature = 0.42
 	embeddedModel.ModelParam.Reasoning.Level = spec.ReasoningLevelNone
 	embeddedModel.ModelParam.CacheControl.TTL = spec.CacheControlTTL1h
-	provider.ModelPresets[PresetClaudeSonnet5] = embeddedModel
+	provider.ModelPresets[PresetClaudeSonnet55] = embeddedModel
 
 	freshProvider, err := Provider(ProviderAnthropic)
 	if err != nil {
@@ -414,11 +414,11 @@ func TestCatalogReturnsIndependentCopies(t *testing.T) {
 		)
 	}
 
-	modelBaseline, err := Model(ProviderAnthropic, PresetClaudeSonnet5)
+	modelBaseline, err := Model(ProviderAnthropic, PresetClaudeSonnet55)
 	if err != nil {
 		t.Fatalf("Model baseline: %v", err)
 	}
-	model, err := Model(ProviderAnthropic, PresetClaudeSonnet5)
+	model, err := Model(ProviderAnthropic, PresetClaudeSonnet55)
 	if err != nil {
 		t.Fatalf("Model mutable copy: %v", err)
 	}
@@ -427,7 +427,7 @@ func TestCatalogReturnsIndependentCopies(t *testing.T) {
 	model.ModelParam.Reasoning.Level = spec.ReasoningLevelLow
 	model.ModelParam.CacheControl.TTL = spec.CacheControlTTL1h
 
-	freshModel, err := Model(ProviderAnthropic, PresetClaudeSonnet5)
+	freshModel, err := Model(ProviderAnthropic, PresetClaudeSonnet55)
 	if err != nil {
 		t.Fatalf("Model fresh copy: %v", err)
 	}

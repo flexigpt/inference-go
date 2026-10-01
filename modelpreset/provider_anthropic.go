@@ -12,54 +12,66 @@ const (
 )
 
 const (
-	ModelNameClaudeFable51  spec.ModelName = "claude-fable-5-1"
-	ModelNameClaudeFable5   spec.ModelName = "claude-fable-5"
-	ModelNameClaudeOpus55   spec.ModelName = "claude-opus-5-5"
-	ModelNameClaudeOpus5    spec.ModelName = "claude-opus-5"
-	ModelNameClaudeOpus48   spec.ModelName = "claude-opus-4-8"
-	ModelNameClaudeOpus47   spec.ModelName = "claude-opus-4-7"
-	ModelNameClaudeOpus46   spec.ModelName = "claude-opus-4-6"
-	ModelNameClaudeOpus45   spec.ModelName = "claude-opus-4-5-20251101"
-	ModelNameClaudeOpus41   spec.ModelName = "claude-opus-4-1-20250805"
+	ModelNameClaudeFable51 spec.ModelName = "claude-fable-5-1"
+	ModelNameClaudeFable5  spec.ModelName = "claude-fable-5"
+
+	ModelNameClaudeOpus55 spec.ModelName = "claude-opus-5-5"
+	ModelNameClaudeOpus5  spec.ModelName = "claude-opus-5"
+	ModelNameClaudeOpus48 spec.ModelName = "claude-opus-4-8"
+	ModelNameClaudeOpus47 spec.ModelName = "claude-opus-4-7"
+	ModelNameClaudeOpus46 spec.ModelName = "claude-opus-4-6"
+	ModelNameClaudeOpus45 spec.ModelName = "claude-opus-4-5-20251101"
+	ModelNameClaudeOpus41 spec.ModelName = "claude-opus-4-1-20250805"
+
+	ModelNameClaudeSonnet55 spec.ModelName = "claude-sonnet-5-5"
 	ModelNameClaudeSonnet5  spec.ModelName = "claude-sonnet-5"
 	ModelNameClaudeSonnet46 spec.ModelName = "claude-sonnet-4-6"
 	ModelNameClaudeSonnet45 spec.ModelName = "claude-sonnet-4-5-20250929"
 	ModelNameClaudeSonnet4  spec.ModelName = "claude-sonnet-4-20250514"
-	ModelNameClaudeHaiku45  spec.ModelName = "claude-haiku-4-5-20251001"
+
+	ModelNameClaudeHaiku45 spec.ModelName = "claude-haiku-4-5-20251001"
 )
 
 const (
-	DisplayNameClaudeFable51  = "Claude Fable 5.1"
-	DisplayNameClaudeFable5   = "Claude Fable 5"
-	DisplayNameClaudeOpus55   = "Claude Opus 5.5"
-	DisplayNameClaudeOpus5    = "Claude Opus 5"
-	DisplayNameClaudeOpus48   = "Claude Opus 4.8"
-	DisplayNameClaudeOpus47   = "Claude Opus 4.7"
-	DisplayNameClaudeOpus46   = "Claude Opus 4.6"
-	DisplayNameClaudeOpus45   = "Claude Opus 4.5"
-	DisplayNameClaudeOpus41   = "Claude Opus 4.1"
+	DisplayNameClaudeFable51 = "Claude Fable 5.1"
+	DisplayNameClaudeFable5  = "Claude Fable 5"
+
+	DisplayNameClaudeOpus55 = "Claude Opus 5.5"
+	DisplayNameClaudeOpus5  = "Claude Opus 5"
+	DisplayNameClaudeOpus48 = "Claude Opus 4.8"
+	DisplayNameClaudeOpus47 = "Claude Opus 4.7"
+	DisplayNameClaudeOpus46 = "Claude Opus 4.6"
+	DisplayNameClaudeOpus45 = "Claude Opus 4.5"
+	DisplayNameClaudeOpus41 = "Claude Opus 4.1"
+
+	DisplayNameClaudeSonnet55 = "Claude Sonnet 5.5"
 	DisplayNameClaudeSonnet5  = "Claude Sonnet 5"
 	DisplayNameClaudeSonnet46 = "Claude Sonnet 4.6"
 	DisplayNameClaudeSonnet45 = "Claude Sonnet 4.5"
 	DisplayNameClaudeSonnet4  = "Claude Sonnet 4"
-	DisplayNameClaudeHaiku45  = "Claude Haiku 4.5"
+
+	DisplayNameClaudeHaiku45 = "Claude Haiku 4.5"
 )
 
 const (
-	PresetClaudeFable51  ModelPresetID = "fable51"
-	PresetClaudeFable5   ModelPresetID = "fable5"
-	PresetClaudeOpus55   ModelPresetID = "opus55"
-	PresetClaudeOpus5    ModelPresetID = "opus5"
-	PresetClaudeOpus48   ModelPresetID = "opus48"
-	PresetClaudeOpus47   ModelPresetID = "opus47"
-	PresetClaudeOpus46   ModelPresetID = "opus46"
-	PresetClaudeOpus45   ModelPresetID = "opus45"
-	PresetClaudeOpus41   ModelPresetID = "opus41"
+	PresetClaudeFable51 ModelPresetID = "fable51"
+	PresetClaudeFable5  ModelPresetID = "fable5"
+
+	PresetClaudeOpus55 ModelPresetID = "opus55"
+	PresetClaudeOpus5  ModelPresetID = "opus5"
+	PresetClaudeOpus48 ModelPresetID = "opus48"
+	PresetClaudeOpus47 ModelPresetID = "opus47"
+	PresetClaudeOpus46 ModelPresetID = "opus46"
+	PresetClaudeOpus45 ModelPresetID = "opus45"
+	PresetClaudeOpus41 ModelPresetID = "opus41"
+
+	PresetClaudeSonnet55 ModelPresetID = "sonnet55"
 	PresetClaudeSonnet5  ModelPresetID = "sonnet5"
 	PresetClaudeSonnet46 ModelPresetID = "sonnet46"
 	PresetClaudeSonnet45 ModelPresetID = "sonnet45"
 	PresetClaudeSonnet4  ModelPresetID = "sonnet4"
-	PresetClaudeHaiku45  ModelPresetID = "haiku45"
+
+	PresetClaudeHaiku45 ModelPresetID = "haiku45"
 )
 
 var modelAnthropicFable51 = ModelPreset{
@@ -326,6 +338,37 @@ var modelAnthropicOpus41 = ModelPreset{
 	},
 }
 
+var modelAnthropicSonnet55 = ModelPreset{
+	ID:          PresetClaudeSonnet55,
+	Name:        ModelNameClaudeSonnet55,
+	DisplayName: DisplayNameClaudeSonnet55,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameClaudeSonnet55,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(0.1),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+		CacheControl:    cacheEphemeral5m(),
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+				spec.ReasoningLevelMax,
+			},
+		},
+	},
+}
+
 var modelAnthropicSonnet5 = ModelPreset{
 	ID:          PresetClaudeSonnet5,
 	Name:        ModelNameClaudeSonnet5,
@@ -350,6 +393,7 @@ var modelAnthropicSonnet5 = ModelPreset{
 				spec.ReasoningLevelLow,
 				spec.ReasoningLevelMedium,
 				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
 				spec.ReasoningLevelMax,
 			},
 		},
@@ -533,6 +577,7 @@ var providerAnthropic = ProviderPreset{
 		PresetClaudeOpus46:   modelAnthropicOpus46,
 		PresetClaudeOpus45:   modelAnthropicOpus45,
 		PresetClaudeOpus41:   modelAnthropicOpus41,
+		PresetClaudeSonnet55: modelAnthropicSonnet55,
 		PresetClaudeSonnet5:  modelAnthropicSonnet5,
 		PresetClaudeSonnet46: modelAnthropicSonnet46,
 		PresetClaudeSonnet45: modelAnthropicSonnet45,

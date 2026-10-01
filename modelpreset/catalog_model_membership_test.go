@@ -16,7 +16,7 @@ import (
 func TestCatalogModelMembershipIsExhaustive(t *testing.T) {
 	expected := map[spec.ProviderName]string{
 		ProviderAnthropic: "fable5 fable51 opus55 opus5 opus48 opus47 opus46 opus45 opus41 " +
-			"sonnet5 sonnet46 sonnet45 sonnet4 haiku45",
+			"sonnet55 sonnet5 sonnet46 sonnet45 sonnet4 haiku45",
 		ProviderDeepSeek: "deepseekv4flash deepseekv4pro",
 		ProviderGoogleGemini: "gemini38Flash gemini37Flash gemini36Flash gemini35Flash " +
 			"gemini35FlashLite gemini3Flash gemini31Pro gemini31FlashLite gemini25Flash gemini25FlashLite",
@@ -42,7 +42,7 @@ func TestCatalogModelMembershipIsExhaustive(t *testing.T) {
 		ProviderOllama: "gemma426b gemma4e4b gptoss20b qwen3635b qwen3627b deepseekr18b " +
 			"qwen3vl30b ministral314b qwen3coder30b phi4reasoning14b",
 		ProviderOpenAIChat: "gpt41 gpt41Mini gpt4o gpt4oMini",
-		ProviderOpenAIResponses: "gpt6Astra gpt6Sol gpt6Luna gpt56Sol gpt56Terra gpt56Luna gpt55 gpt54 " +
+		ProviderOpenAIResponses: "gpt61Sol gpt6Astra gpt6Sol gpt6Luna gpt56Sol gpt56Terra gpt56Luna gpt55 gpt54 " +
 			"gpt54Mini gpt54Nano gpt53Codex gpt52 gpt52Codex gpt51 gpt51Codex gpt51CodexMax gpt5Mini",
 		ProviderOpenRouter: "deepseekv4flash deepseekv4pro tencentHy3Preview step37Flash minimaxM3 minimaxm27 minimaxm25free " +
 			"nvidiaNemotron3SuperFree nvidiaNemotron3UltraFree poolsideLagunaM1Free xiaomiMiMoV26Pro xiaomiMiMoV26Flash xiaomiMiMoV25Pro xiaomiMiMoV25 " +

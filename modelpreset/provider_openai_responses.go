@@ -13,6 +13,7 @@ const (
 )
 
 const (
+	ModelNameGPT61Sol      spec.ModelName = "gpt-6.1-sol"
 	ModelNameGPT6Astra     spec.ModelName = "gpt-6-astra"
 	ModelNameGPT6Sol       spec.ModelName = "gpt-6-sol"
 	ModelNameGPT6Luna      spec.ModelName = "gpt-6-luna"
@@ -46,6 +47,7 @@ const (
 )
 
 const (
+	DisplayNameGPT61Sol      = "GPT 6.1 Sol"
 	DisplayNameGPT6Astra     = "GPT 6 Astra"
 	DisplayNameGPT6Sol       = "GPT 6 Sol"
 	DisplayNameGPT6Luna      = "GPT 6 Luna"
@@ -77,6 +79,7 @@ const (
 )
 
 const (
+	PresetGPT61Sol      ModelPresetID = "gpt61Sol"
 	PresetGPT6Astra     ModelPresetID = "gpt6Astra"
 	PresetGPT6Sol       ModelPresetID = "gpt6Sol"
 	PresetGPT6Luna      ModelPresetID = "gpt6Luna"
@@ -106,6 +109,29 @@ const (
 	PresetGPTOSS120BFireworksAI ModelPresetID = "gptoss120bFireworksAI"
 	PresetGPTOSS20BFireworksAI  ModelPresetID = "gptoss20bFireworksAI"
 )
+
+var modelOpenAIResponsesGPT61Sol = ModelPreset{
+	ID:          PresetGPT61Sol,
+	Name:        ModelNameGPT61Sol,
+	DisplayName: DisplayNameGPT61Sol,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGPT61Sol,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+		spec.ReasoningLevelMax,
+	}),
+}
 
 var modelOpenAIResponsesGPT6Astra = ModelPreset{
 	ID:          PresetGPT6Astra,
@@ -564,6 +590,7 @@ var providerOpenAIResponses = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetGPT61Sol:      modelOpenAIResponsesGPT61Sol,
 		PresetGPT6Astra:     modelOpenAIResponsesGPT6Astra,
 		PresetGPT6Sol:       modelOpenAIResponsesGPT6Sol,
 		PresetGPT6Luna:      modelOpenAIResponsesGPT6Luna,
