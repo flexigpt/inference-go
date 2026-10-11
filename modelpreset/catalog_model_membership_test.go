@@ -16,7 +16,7 @@ import (
 func TestCatalogModelMembershipIsExhaustive(t *testing.T) {
 	expected := map[spec.ProviderName]string{
 		ProviderAnthropic: "fable5 fable51 opus55 opus5 opus48 opus47 opus46 opus45 opus41 " +
-			"sonnet55 sonnet5 sonnet46 sonnet45 sonnet4 haiku45",
+			"sonnet55 sonnet5 sonnet46 sonnet45 sonnet4 haiku55 haiku45",
 		ProviderDeepSeek: "deepseekv4flash deepseekv4pro",
 		ProviderGoogleGemini: "gemini38Flash gemini37Flash gemini36Flash gemini35Flash " +
 			"gemini35FlashLite gemini3Flash gemini31Pro gemini31FlashLite gemini25Flash gemini25FlashLite",

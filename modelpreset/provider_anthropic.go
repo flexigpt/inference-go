@@ -29,6 +29,7 @@ const (
 	ModelNameClaudeSonnet45 spec.ModelName = "claude-sonnet-4-5-20250929"
 	ModelNameClaudeSonnet4  spec.ModelName = "claude-sonnet-4-20250514"
 
+	ModelNameClaudeHaiku55 spec.ModelName = "claude-haiku-5-5"
 	ModelNameClaudeHaiku45 spec.ModelName = "claude-haiku-4-5-20251001"
 )
 
@@ -50,6 +51,7 @@ const (
 	DisplayNameClaudeSonnet45 = "Claude Sonnet 4.5"
 	DisplayNameClaudeSonnet4  = "Claude Sonnet 4"
 
+	DisplayNameClaudeHaiku55 = "Claude Haiku 5.5"
 	DisplayNameClaudeHaiku45 = "Claude Haiku 4.5"
 )
 
@@ -71,6 +73,7 @@ const (
 	PresetClaudeSonnet45 ModelPresetID = "sonnet45"
 	PresetClaudeSonnet4  ModelPresetID = "sonnet4"
 
+	PresetClaudeHaiku55 ModelPresetID = "haiku55"
 	PresetClaudeHaiku45 ModelPresetID = "haiku45"
 )
 
@@ -471,6 +474,37 @@ var modelAnthropicSonnet4 = ModelPreset{
 	},
 }
 
+var modelAnthropicHaiku55 = ModelPreset{
+	ID:          PresetClaudeHaiku55,
+	Name:        ModelNameClaudeHaiku55,
+	DisplayName: DisplayNameClaudeHaiku55,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameClaudeHaiku55,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(0.1),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+		CacheControl:    cacheEphemeral5m(),
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+				spec.ReasoningLevelMax,
+			},
+		},
+	},
+}
+
 var modelAnthropicHaiku45 = ModelPreset{
 	ID:          PresetClaudeHaiku45,
 	Name:        ModelNameClaudeHaiku45,
@@ -582,6 +616,7 @@ var providerAnthropic = ProviderPreset{
 		PresetClaudeSonnet46: modelAnthropicSonnet46,
 		PresetClaudeSonnet45: modelAnthropicSonnet45,
 		PresetClaudeSonnet4:  modelAnthropicSonnet4,
+		PresetClaudeHaiku55:  modelAnthropicHaiku55,
 		PresetClaudeHaiku45:  modelAnthropicHaiku45,
 	},
 }

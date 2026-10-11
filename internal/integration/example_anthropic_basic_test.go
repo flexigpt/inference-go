@@ -25,7 +25,7 @@ func Example_anthropic_basicConversation() {
 		ctx,
 		ps,
 		modelpreset.ProviderAnthropic,
-		modelpreset.PresetClaudeSonnet46,
+		modelpreset.PresetClaudeHaiku55,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding Anthropic preset provider:", err)

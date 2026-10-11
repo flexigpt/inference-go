@@ -45,7 +45,7 @@ func Example_anthropic_toolsAndThinkingStreaming() {
 		ctx,
 		ps,
 		modelpreset.ProviderAnthropic,
-		modelpreset.PresetClaudeSonnet46,
+		modelpreset.PresetClaudeHaiku55,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding Anthropic preset provider:", err)
@@ -188,7 +188,7 @@ func Example_anthropic_functionToolRoundTrip() {
 		ctx,
 		ps,
 		modelpreset.ProviderAnthropic,
-		modelpreset.PresetClaudeSonnet46,
+		modelpreset.PresetClaudeHaiku55,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding Anthropic preset provider:", err)
@@ -218,7 +218,6 @@ func Example_anthropic_functionToolRoundTrip() {
 
 	firstParam := mp.ModelParam
 	firstParam.MaxOutputLength = min(firstParam.MaxOutputLength, 512)
-	firstParam.Reasoning = nil
 	firstParam.SystemPrompt = strings.Join([]string{
 		"You are validating a client tool round trip.",
 		"When the tool is forced, emit only the tool call in the first response.",
