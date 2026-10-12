@@ -17,6 +17,7 @@ It gives applications one request and response model while preserving meaningful
 - [Working examples](#working-examples)
 - [Capability-aware behavior](#capability-aware-behavior)
 - [Detailed guides](#detailed-guides)
+- [Agent skills](#agent-skills)
 - [Development](#development)
 - [License](#license)
 
@@ -181,6 +182,17 @@ Applications own conversation history. Preserve tool-call IDs and provider-nativ
 | OpenAI Responses behavior         | [`internal/openairesponsessdk/README.md`](./internal/openairesponsessdk/README.md)             |
 | OpenAI Chat Completions behavior  | [`internal/openaichatsdk/README.md`](./internal/openaichatsdk/README.md)                       |
 | Google Generate Content behavior  | [`internal/googlegeneratecontentsdk/README.md`](./internal/googlegeneratecontentsdk/README.md) |
+
+## Agent skills
+
+Task-focused, source-linked runbooks for agents and contributors:
+
+| Task                                                | Skill                                                                                  |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Add a built-in provider/model catalog entry         | [`add-model-preset`](./.agents/skills/add-model-preset/SKILL.md)                       |
+| Use application-defined compatible providers/models | [`custom-providers-and-models`](./.agents/skills/custom-providers-and-models/SKILL.md) |
+| Add or extend an adapter/SDK                        | [`add-sdk-support`](./.agents/skills/add-sdk-support/SKILL.md)                         |
+| Run normalized inference end to end                 | [`inference-go-usage`](./.agents/skills/inference-go-usage/SKILL.md)                   |
 
 ## Development
 
