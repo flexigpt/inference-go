@@ -187,12 +187,13 @@ Applications own conversation history. Preserve tool-call IDs and provider-nativ
 
 Task-focused, source-linked runbooks for agents and contributors:
 
-| Task                                                | Skill                                                                                  |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Add a built-in provider/model catalog entry         | [`add-model-preset`](./.agents/skills/add-model-preset/SKILL.md)                       |
-| Use application-defined compatible providers/models | [`custom-providers-and-models`](./.agents/skills/custom-providers-and-models/SKILL.md) |
-| Add or extend an adapter/SDK                        | [`add-sdk-support`](./.agents/skills/add-sdk-support/SKILL.md)                         |
-| Run normalized inference end to end                 | [`inference-go-usage`](./.agents/skills/inference-go-usage/SKILL.md)                   |
+| Task                                                 | Skill                                                                                  |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Navigate architecture, locate changes, or debug flow | [`architecture-reference`](./.agents/skills/architecture-reference/SKILL.md)           |
+| Add a built-in provider/model catalog entry          | [`add-model-preset`](./.agents/skills/add-model-preset/SKILL.md)                       |
+| Use application-defined compatible providers/models  | [`custom-providers-and-models`](./.agents/skills/custom-providers-and-models/SKILL.md) |
+| Add or extend an adapter/SDK                         | [`add-sdk-support`](./.agents/skills/add-sdk-support/SKILL.md)                         |
+| Run normalized inference end to end                  | [`inference-go-usage`](./.agents/skills/inference-go-usage/SKILL.md)                   |
 
 ## Development
 
