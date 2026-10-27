@@ -14,6 +14,7 @@ const (
 
 const (
 	ModelNameGPT61Sol      spec.ModelName = "gpt-6.1-sol"
+	ModelNameGPT61Terra    spec.ModelName = "gpt-6.1-terra"
 	ModelNameGPT6Astra     spec.ModelName = "gpt-6-astra"
 	ModelNameGPT6Sol       spec.ModelName = "gpt-6-sol"
 	ModelNameGPT6Luna      spec.ModelName = "gpt-6-luna"
@@ -48,6 +49,7 @@ const (
 
 const (
 	DisplayNameGPT61Sol      = "GPT 6.1 Sol"
+	DisplayNameGPT61Terra    = "GPT 6.1 Terra"
 	DisplayNameGPT6Astra     = "GPT 6 Astra"
 	DisplayNameGPT6Sol       = "GPT 6 Sol"
 	DisplayNameGPT6Luna      = "GPT 6 Luna"
@@ -80,6 +82,7 @@ const (
 
 const (
 	PresetGPT61Sol      ModelPresetID = "gpt61Sol"
+	PresetGPT61Terra    ModelPresetID = "gpt61Terra"
 	PresetGPT6Astra     ModelPresetID = "gpt6Astra"
 	PresetGPT6Sol       ModelPresetID = "gpt6Sol"
 	PresetGPT6Luna      ModelPresetID = "gpt6Luna"
@@ -125,6 +128,30 @@ var modelOpenAIResponsesGPT61Sol = ModelPreset{
 		Timeout:         1800,
 	},
 	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+		spec.ReasoningLevelMax,
+	}),
+}
+
+var modelOpenAIResponsesGPT61Terra = ModelPreset{
+	ID:          PresetGPT61Terra,
+	Name:        ModelNameGPT61Terra,
+	DisplayName: DisplayNameGPT61Terra,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGPT61Terra,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelXHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelNone,
 		spec.ReasoningLevelLow,
 		spec.ReasoningLevelMedium,
 		spec.ReasoningLevelHigh,
@@ -591,6 +618,7 @@ var providerOpenAIResponses = ProviderPreset{
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
 		PresetGPT61Sol:      modelOpenAIResponsesGPT61Sol,
+		PresetGPT61Terra:    modelOpenAIResponsesGPT61Terra,
 		PresetGPT6Astra:     modelOpenAIResponsesGPT6Astra,
 		PresetGPT6Sol:       modelOpenAIResponsesGPT6Sol,
 		PresetGPT6Luna:      modelOpenAIResponsesGPT6Luna,
