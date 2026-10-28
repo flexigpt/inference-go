@@ -18,7 +18,7 @@ func TestCatalogModelMembershipIsExhaustive(t *testing.T) {
 		ProviderAnthropic: "fable5 fable51 opus55 opus5 opus48 opus47 opus46 opus45 opus41 " +
 			"sonnet55 sonnet5 sonnet46 sonnet45 sonnet4 haiku55 haiku45",
 		ProviderDeepSeek: "deepseekv4flash deepseekv4pro",
-		ProviderGoogleGemini: "gemini38Flash gemini37Flash gemini36Flash gemini35Flash " +
+		ProviderGoogleGemini: "gemini4Argon gemini38Flash gemini37Flash gemini36Flash gemini35Flash " +
 			"gemini35FlashLite gemini3Flash gemini31Pro gemini31FlashLite gemini25Flash gemini25FlashLite",
 		ProviderHuggingFace: "deepseekv4flashFireworksAI deepseekv4proFireworksAI " +
 			"glm47Cerebras glm51FireworksAI glm51fp8FireworksAI glm52FireworksAI glm52fp8ZAI glm5Novita " +

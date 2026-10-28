@@ -13,6 +13,7 @@ const (
 )
 
 const (
+	ModelNameGemini4Argon      spec.ModelName = "gemini-4-argon"
 	ModelNameGemini38Flash     spec.ModelName = "gemini-3.8-flash"
 	ModelNameGemini37Flash     spec.ModelName = "gemini-3.7-flash"
 	ModelNameGemini36Flash     spec.ModelName = "gemini-3.6-flash"
@@ -32,6 +33,7 @@ const (
 )
 
 const (
+	DisplayNameGemini4Argon      = "Gemini 4 Argon"
 	DisplayNameGemini38Flash     = "Gemini 3.8 Flash"
 	DisplayNameGemini37Flash     = "Gemini 3.7 Flash"
 	DisplayNameGemini36Flash     = "Gemini 3.6 Flash"
@@ -49,6 +51,7 @@ const (
 )
 
 const (
+	PresetGemini4Argon      ModelPresetID = "gemini4Argon"
 	PresetGemini38Flash     ModelPresetID = "gemini38Flash"
 	PresetGemini37Flash     ModelPresetID = "gemini37Flash"
 	PresetGemini36Flash     ModelPresetID = "gemini36Flash"
@@ -64,6 +67,34 @@ const (
 	PresetGemma426B    ModelPresetID = "gemma426b"
 	PresetGemma4E4B    ModelPresetID = "gemma4e4b"
 )
+
+var modelGoogleGemini4Argon = ModelPreset{
+	ID:          PresetGemini4Argon,
+	Name:        ModelNameGemini4Argon,
+	DisplayName: DisplayNameGemini4Argon,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGemini4Argon,
+		Stream:          true,
+		MaxPromptLength: 983040,
+		MaxOutputLength: 65536,
+		Reasoning:       reasoningSingle(spec.ReasoningLevelMedium),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+		},
+	},
+}
 
 var modelGoogleGemini38Flash = ModelPreset{
 	ID:          PresetGemini38Flash,
@@ -443,6 +474,7 @@ var providerGoogleGemini = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetGemini4Argon:      modelGoogleGemini4Argon,
 		PresetGemini38Flash:     modelGoogleGemini38Flash,
 		PresetGemini37Flash:     modelGoogleGemini37Flash,
 		PresetGemini36Flash:     modelGoogleGemini36Flash,
