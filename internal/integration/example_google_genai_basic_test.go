@@ -25,7 +25,7 @@ func Example_googleGenerateContent_basicConversation() {
 		ctx,
 		ps,
 		modelpreset.ProviderGoogleGemini,
-		modelpreset.PresetGemini35FlashLite,
+		modelpreset.PresetGemini4Hydrogen,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding Google Gemini preset provider:", err)

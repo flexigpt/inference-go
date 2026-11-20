@@ -40,7 +40,7 @@ func Example_googleGenerateContent_webSearchAndThinkingStreaming() {
 		ctx,
 		ps,
 		modelpreset.ProviderGoogleGemini,
-		modelpreset.PresetGemini38Flash,
+		modelpreset.PresetGemini4Hydrogen,
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error adding Google Gemini preset provider:", err)

@@ -13,7 +13,11 @@ const (
 )
 
 const (
-	ModelNameGemini4Argon      spec.ModelName = "gemini-4-argon"
+	ModelNameGemini4Neon     spec.ModelName = "gemini-4-neon"
+	ModelNameGemini4Carbon   spec.ModelName = "gemini-4-carbon"
+	ModelNameGemini4Hydrogen spec.ModelName = "gemini-4-hydrogen"
+	ModelNameGemini4Argon    spec.ModelName = "gemini-4-argon"
+
 	ModelNameGemini38Flash     spec.ModelName = "gemini-3.8-flash"
 	ModelNameGemini37Flash     spec.ModelName = "gemini-3.7-flash"
 	ModelNameGemini36Flash     spec.ModelName = "gemini-3.6-flash"
@@ -33,7 +37,11 @@ const (
 )
 
 const (
-	DisplayNameGemini4Argon      = "Gemini 4 Argon"
+	DisplayNameGemini4Neon     = "Gemini 4 Neon"
+	DisplayNameGemini4Carbon   = "Gemini 4 Carbon"
+	DisplayNameGemini4Hydrogen = "Gemini 4 Hydrogen"
+	DisplayNameGemini4Argon    = "Gemini 4 Argon"
+
 	DisplayNameGemini38Flash     = "Gemini 3.8 Flash"
 	DisplayNameGemini37Flash     = "Gemini 3.7 Flash"
 	DisplayNameGemini36Flash     = "Gemini 3.6 Flash"
@@ -51,7 +59,11 @@ const (
 )
 
 const (
-	PresetGemini4Argon      ModelPresetID = "gemini4Argon"
+	PresetGemini4Neon     ModelPresetID = "gemini4Neon"
+	PresetGemini4Carbon   ModelPresetID = "gemini4Carbon"
+	PresetGemini4Hydrogen ModelPresetID = "gemini4Hydrogen"
+	PresetGemini4Argon    ModelPresetID = "gemini4Argon"
+
 	PresetGemini38Flash     ModelPresetID = "gemini38Flash"
 	PresetGemini37Flash     ModelPresetID = "gemini37Flash"
 	PresetGemini36Flash     ModelPresetID = "gemini36Flash"
@@ -67,6 +79,92 @@ const (
 	PresetGemma426B    ModelPresetID = "gemma426b"
 	PresetGemma4E4B    ModelPresetID = "gemma4e4b"
 )
+
+var modelGoogleGemini4Neon = ModelPreset{
+	ID:          PresetGemini4Neon,
+	Name:        ModelNameGemini4Neon,
+	DisplayName: DisplayNameGemini4Neon,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGemini4Neon,
+		Stream:          true,
+		MaxPromptLength: 983040,
+		MaxOutputLength: 65536,
+		Reasoning:       reasoningSingle(spec.ReasoningLevelMedium),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+			},
+		},
+	},
+}
+
+var modelGoogleGemini4Carbon = ModelPreset{
+	ID:          PresetGemini4Carbon,
+	Name:        ModelNameGemini4Carbon,
+	DisplayName: DisplayNameGemini4Carbon,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGemini4Carbon,
+		Stream:          true,
+		MaxPromptLength: 983040,
+		MaxOutputLength: 65536,
+		Reasoning:       reasoningSingle(spec.ReasoningLevelMedium),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+			},
+		},
+	},
+}
+
+var modelGoogleGemini4Hydrogen = ModelPreset{
+	ID:          PresetGemini4Hydrogen,
+	Name:        ModelNameGemini4Hydrogen,
+	DisplayName: DisplayNameGemini4Hydrogen,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGemini4Hydrogen,
+		Stream:          true,
+		MaxPromptLength: 983040,
+		MaxOutputLength: 65536,
+		Reasoning:       reasoningSingle(spec.ReasoningLevelMedium),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
+		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
+			TemperatureDisallowedWhenEnabled: new(true),
+			SupportedReasoningTypes: []spec.ReasoningType{
+				spec.ReasoningTypeSingleWithLevels,
+			},
+			SupportedReasoningLevels: []spec.ReasoningLevel{
+				spec.ReasoningLevelLow,
+				spec.ReasoningLevelMedium,
+				spec.ReasoningLevelHigh,
+				spec.ReasoningLevelXHigh,
+			},
+		},
+	},
+}
 
 var modelGoogleGemini4Argon = ModelPreset{
 	ID:          PresetGemini4Argon,
@@ -474,6 +572,9 @@ var providerGoogleGemini = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetGemini4Neon:       modelGoogleGemini4Neon,
+		PresetGemini4Carbon:     modelGoogleGemini4Carbon,
+		PresetGemini4Hydrogen:   modelGoogleGemini4Hydrogen,
 		PresetGemini4Argon:      modelGoogleGemini4Argon,
 		PresetGemini38Flash:     modelGoogleGemini38Flash,
 		PresetGemini37Flash:     modelGoogleGemini37Flash,
