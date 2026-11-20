@@ -13,6 +13,8 @@ const (
 )
 
 const (
+	ModelNameGPT62Astra    spec.ModelName = "gpt-6.2-astra"
+	ModelNameGPT62Sol      spec.ModelName = "gpt-6.2-sol"
 	ModelNameGPT61Sol      spec.ModelName = "gpt-6.1-sol"
 	ModelNameGPT61Terra    spec.ModelName = "gpt-6.1-terra"
 	ModelNameGPT6Astra     spec.ModelName = "gpt-6-astra"
@@ -48,6 +50,8 @@ const (
 )
 
 const (
+	DisplayNameGPT62Astra    = "GPT 6.2 Astra"
+	DisplayNameGPT62Sol      = "GPT 6.2 Sol"
 	DisplayNameGPT61Sol      = "GPT 6.1 Sol"
 	DisplayNameGPT61Terra    = "GPT 6.1 Terra"
 	DisplayNameGPT6Astra     = "GPT 6 Astra"
@@ -81,6 +85,8 @@ const (
 )
 
 const (
+	PresetGPT62Astra    ModelPresetID = "gpt62Astra"
+	PresetGPT62Sol      ModelPresetID = "gpt62Sol"
 	PresetGPT61Sol      ModelPresetID = "gpt61Sol"
 	PresetGPT61Terra    ModelPresetID = "gpt61Terra"
 	PresetGPT6Astra     ModelPresetID = "gpt6Astra"
@@ -112,6 +118,52 @@ const (
 	PresetGPTOSS120BFireworksAI ModelPresetID = "gptoss120bFireworksAI"
 	PresetGPTOSS20BFireworksAI  ModelPresetID = "gptoss20bFireworksAI"
 )
+
+var modelOpenAIResponsesGPT62Astra = ModelPreset{
+	ID:          PresetGPT62Astra,
+	Name:        ModelNameGPT62Astra,
+	DisplayName: DisplayNameGPT62Astra,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGPT62Astra,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+		spec.ReasoningLevelMax,
+	}),
+}
+
+var modelOpenAIResponsesGPT62Sol = ModelPreset{
+	ID:          PresetGPT62Sol,
+	Name:        ModelNameGPT62Sol,
+	DisplayName: DisplayNameGPT62Sol,
+	ModelParam: spec.ModelParam{
+		Name:            ModelNameGPT62Sol,
+		Stream:          true,
+		MaxPromptLength: 1000000,
+		MaxOutputLength: 128000,
+		Temperature:     new(1.0),
+		Reasoning:       reasoningSingle(spec.ReasoningLevelHigh),
+		SystemPrompt:    "",
+		Timeout:         1800,
+	},
+	CapabilitiesOverride: levelReasoningOverride([]spec.ReasoningLevel{
+		spec.ReasoningLevelLow,
+		spec.ReasoningLevelMedium,
+		spec.ReasoningLevelHigh,
+		spec.ReasoningLevelXHigh,
+		spec.ReasoningLevelMax,
+	}),
+}
 
 var modelOpenAIResponsesGPT61Sol = ModelPreset{
 	ID:          PresetGPT61Sol,
@@ -617,6 +669,8 @@ var providerOpenAIResponses = ProviderPreset{
 		},
 	},
 	ModelPresets: map[ModelPresetID]ModelPreset{
+		PresetGPT62Astra:    modelOpenAIResponsesGPT62Astra,
+		PresetGPT62Sol:      modelOpenAIResponsesGPT62Sol,
 		PresetGPT61Sol:      modelOpenAIResponsesGPT61Sol,
 		PresetGPT61Terra:    modelOpenAIResponsesGPT61Terra,
 		PresetGPT6Astra:     modelOpenAIResponsesGPT6Astra,
