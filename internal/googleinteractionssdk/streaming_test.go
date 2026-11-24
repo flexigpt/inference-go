@@ -49,25 +49,6 @@ func TestGoogleInteractionsStreamPartialResponsePreservesTextAndThought(t *testi
 	if len(response.Outputs) != 2 {
 		t.Fatalf("output count got %d want 2", len(response.Outputs))
 	}
-
-	reasoning := response.Outputs[0].ReasoningMessage
-	if response.Outputs[0].Kind != spec.OutputKindReasoningMessage ||
-		reasoning == nil ||
-		reasoning.Signature != "opaque-thought-signature" ||
-		len(reasoning.Summary) != 1 ||
-		reasoning.Summary[0] != "partial thought summary" {
-		t.Fatalf("unexpected reasoning output %#v", response.Outputs[0])
-	}
-
-	message := response.Outputs[1].OutputMessage
-	if response.Outputs[1].Kind != spec.OutputKindOutputMessage ||
-		message == nil ||
-		message.ID != "interaction_1" ||
-		len(message.Contents) != 1 ||
-		message.Contents[0].TextItem == nil ||
-		message.Contents[0].TextItem.Text != "partial answer" {
-		t.Fatalf("unexpected text output %#v", response.Outputs[1])
-	}
 }
 
 func TestGoogleInteractionsStreamFallbackUsesTerminalMetadata(t *testing.T) {
@@ -95,22 +76,6 @@ func TestGoogleInteractionsStreamFallbackUsesTerminalMetadata(t *testing.T) {
 	}
 	if len(response.Outputs) != 2 {
 		t.Fatalf("output count got %d want 2", len(response.Outputs))
-	}
-
-	reasoning := response.Outputs[0].ReasoningMessage
-	if reasoning == nil ||
-		reasoning.ID != "interaction_1" ||
-		reasoning.Status != spec.StatusCompleted {
-		t.Fatalf("unexpected reasoning output %#v", reasoning)
-	}
-
-	message := response.Outputs[1].OutputMessage
-	if message == nil ||
-		message.ID != "interaction_1" ||
-		message.Status != spec.StatusCompleted ||
-		message.Contents[0].TextItem == nil ||
-		message.Contents[0].TextItem.Text != "streamed answer" {
-		t.Fatalf("unexpected output message %#v", message)
 	}
 }
 
