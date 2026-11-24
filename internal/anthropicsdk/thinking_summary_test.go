@@ -3,7 +3,7 @@ package anthropicsdk
 import (
 	"testing"
 
-	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/v2"
 
 	"github.com/flexigpt/inference-go/spec"
 )

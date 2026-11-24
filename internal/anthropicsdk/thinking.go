@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/v2"
 	"github.com/flexigpt/inference-go/internal/logutil"
 	"github.com/flexigpt/inference-go/internal/sdkutil"
 	"github.com/flexigpt/inference-go/spec"
@@ -297,13 +297,7 @@ func applyAnthropicThinkingPolicy(
 			// Existing behavior: fixed-budget enabled thinking.
 			params.Thinking = anthropic.ThinkingConfigParamOfEnabled(effectiveBudget)
 		}
-		// Do not set temperature when thinking is enabled (Anthropic requirement).
 		return
-	}
-
-	// Thinking disabled => temperature is allowed.
-	if mp.Temperature != nil {
-		params.Temperature = anthropic.Float(*mp.Temperature)
 	}
 }
 

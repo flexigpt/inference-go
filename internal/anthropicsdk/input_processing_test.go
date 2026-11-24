@@ -155,6 +155,76 @@ func TestToAnthropicMessagesInput_SuccessCases(t *testing.T) {
 	}
 }
 
+func TestToAnthropicMessagesInput_20261021ContentRules(t *testing.T) {
+	t.Parallel()
+
+	citation := spec.Citation{
+		Kind: spec.CitationKindURL,
+		URLCitation: &spec.URLCitation{
+			URL:            "https://example.test/source",
+			Title:          "Example source",
+			CitedText:      "source text",
+			EncryptedIndex: "index",
+		},
+	}
+	msgs, _, err := toAnthropicMessagesInput(
+		t.Context(),
+		"",
+		[]spec.InputUnion{
+			{
+				Kind: spec.InputKindInputMessage,
+				InputMessage: &spec.InputOutputContent{
+					Role: spec.RoleUser,
+					Contents: []spec.InputOutputContentItemUnion{{
+						Kind:     spec.ContentItemKindText,
+						TextItem: &spec.ContentItemText{Text: "user text", Citations: []spec.Citation{citation}},
+					}},
+				},
+			},
+			{
+				Kind: spec.InputKindOutputMessage,
+				OutputMessage: &spec.InputOutputContent{
+					Role: spec.RoleAssistant,
+					Contents: []spec.InputOutputContentItemUnion{
+						{
+							Kind: spec.ContentItemKindText,
+							TextItem: &spec.ContentItemText{
+								Text:      "assistant text",
+								Citations: []spec.Citation{citation},
+							},
+						},
+						{
+							Kind: spec.ContentItemKindFile,
+							FileItem: &spec.ContentItemFile{
+								FileData: "JVBERi0xLjQ=",
+								FileMIME: "application/pdf",
+							},
+						},
+					},
+				},
+			},
+		},
+	)
+	if err != nil {
+		t.Fatalf("toAnthropicMessagesInput returned error: %v", err)
+	}
+
+	decoded := decodeMessages(t, msgs)
+	if got, want := messageContentTypes(t, decoded), [][]string{{testText}, {testText}}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("content types got %#v want %#v", got, want)
+	}
+
+	userBlock := contentBlocks(t, decoded[0])[0]
+	if _, ok := userBlock["citations"]; ok {
+		t.Fatal("user text block contains citations")
+	}
+
+	assistantBlock := contentBlocks(t, decoded[1])[0]
+	if _, ok := assistantBlock["citations"]; !ok {
+		t.Fatal("assistant text block is missing citations")
+	}
+}
+
 func TestToAnthropicMessagesInput_ErrorCases(t *testing.T) {
 	t.Parallel()
 

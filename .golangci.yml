@@ -402,7 +402,7 @@ linters:
       alias:
         - pkg: github.com/openai/openai-go/v3/shared/constant
           alias: openaiSharedConstant
-        - pkg: github.com/anthropics/anthropic-sdk-go/shared/constant
+        - pkg: github.com/anthropics/anthropic-sdk-go/v2/shared/constant
           alias: anthropicSharedConstant
 
     nakedret:

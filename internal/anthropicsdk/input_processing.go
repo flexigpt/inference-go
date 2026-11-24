@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/anthropics/anthropic-sdk-go/v2"
 	"github.com/flexigpt/inference-go/internal/logutil"
 	"github.com/flexigpt/inference-go/internal/sdkutil"
 	"github.com/flexigpt/inference-go/spec"
@@ -130,7 +130,10 @@ func inputUnionToAnthropicPart(in spec.InputUnion) (*anthropicInputPart, error) 
 		if in.InputMessage == nil || in.InputMessage.Role != spec.RoleUser {
 			return nil, errEmptyInputPart
 		}
-		blocks := contentItemsToAnthropicContentBlocks(in.InputMessage.Contents)
+		blocks := contentItemsToAnthropicContentBlocks(
+			in.InputMessage.Contents,
+			in.InputMessage.Role,
+		)
 		blocks = applyAnthropicContentBlockCacheControl(blocks, in.InputMessage.CacheControl)
 		if len(blocks) == 0 {
 			return nil, errEmptyInputPart
@@ -144,7 +147,10 @@ func inputUnionToAnthropicPart(in spec.InputUnion) (*anthropicInputPart, error) 
 		if in.OutputMessage == nil || in.OutputMessage.Role != spec.RoleAssistant {
 			return nil, errEmptyInputPart
 		}
-		blocks := contentItemsToAnthropicContentBlocks(in.OutputMessage.Contents)
+		blocks := contentItemsToAnthropicContentBlocks(
+			in.OutputMessage.Contents,
+			in.OutputMessage.Role,
+		)
 		blocks = applyAnthropicContentBlockCacheControl(blocks, in.OutputMessage.CacheControl)
 		if len(blocks) == 0 {
 			return nil, errEmptyInputPart
@@ -343,6 +349,7 @@ func validateAnthropicToolTurnOrdering(turns []anthropicTurnDraft) error {
 // content blocks (text/image/document).
 func contentItemsToAnthropicContentBlocks(
 	items []spec.InputOutputContentItemUnion,
+	role spec.RoleEnum,
 ) []anthropic.ContentBlockParamUnion {
 	if len(items) == 0 {
 		return nil
@@ -352,7 +359,10 @@ func contentItemsToAnthropicContentBlocks(
 	for _, it := range items {
 		switch it.Kind {
 		case spec.ContentItemKindText:
-			tb := contentItemTextToAnthropicTextBlockParam(it.TextItem)
+			tb := contentItemTextToAnthropicTextBlockParam(
+				it.TextItem,
+				role != spec.RoleUser,
+			)
 			if tb != nil {
 				out = append(out, anthropic.ContentBlockParamUnion{OfText: tb})
 			}
@@ -364,6 +374,9 @@ func contentItemsToAnthropicContentBlocks(
 			}
 
 		case spec.ContentItemKindFile:
+			if role == spec.RoleAssistant {
+				continue
+			}
 			db := contentItemFileToAnthropicDocumentBlockParam(it.FileItem)
 			if db != nil {
 				out = append(out, anthropic.ContentBlockParamUnion{OfDocument: db})
@@ -528,7 +541,10 @@ func contentItemsToAnthropicToolResultBlocks(
 	for _, it := range items {
 		switch it.Kind {
 		case spec.ContentItemKindText:
-			tb := contentItemTextToAnthropicTextBlockParam(it.TextItem)
+			tb := contentItemTextToAnthropicTextBlockParam(
+				it.TextItem,
+				false,
+			)
 			if tb != nil {
 				out = append(out, anthropic.ToolResultBlockParamContentUnion{OfText: tb})
 			}
@@ -566,7 +582,7 @@ func webSearchToolOutputItemsToAnthropicWebSearchContent(
 	// If there's an error item, treat the whole tool call as an error.
 	for _, it := range items {
 		if it.Kind == spec.WebSearchToolOutputKindError && it.ErrorItem != nil {
-			errParam := anthropic.WebSearchToolRequestErrorParam{
+			errParam := anthropic.WebSearchToolRequestErrorObjectParam{
 				// Code is something like "invalid_tool_input", "unavailable", etc.
 				ErrorCode: anthropic.WebSearchToolRequestErrorErrorCode(it.ErrorItem.Code),
 				// Type is omitted; zero value marshals as "web_search_tool_result_error".
@@ -611,7 +627,10 @@ func webSearchToolOutputItemsToAnthropicWebSearchContent(
 	}
 }
 
-func contentItemTextToAnthropicTextBlockParam(textItem *spec.ContentItemText) *anthropic.TextBlockParam {
+func contentItemTextToAnthropicTextBlockParam(
+	textItem *spec.ContentItemText,
+	includeCitations bool,
+) *anthropic.TextBlockParam {
 	if textItem == nil {
 		return nil
 	}
@@ -623,7 +642,7 @@ func contentItemTextToAnthropicTextBlockParam(textItem *spec.ContentItemText) *a
 		Text: text,
 	}
 
-	if anns := citationsToAnthropicTextCitations(textItem.Citations); len(anns) > 0 {
+	if anns := citationsToAnthropicTextCitations(textItem.Citations); includeCitations && len(anns) > 0 {
 		tb.Citations = anns
 	}
 	return tb

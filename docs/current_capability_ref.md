@@ -191,7 +191,7 @@ Fixed-budget Anthropic thinking does not expose an equivalent summary-display co
 - Redacted thinking is replayed as Anthropic redacted-thinking content.
 - Unsigned plaintext reasoning is not replayed as Anthropic thinking.
 - Tool-result turn ordering is validated because Anthropic requires matching client tool results immediately after assistant tool-use turns.
-- Temperature can be removed with a warning when effective Anthropic reasoning capabilities disallow temperature while thinking is enabled.
+- Temperature is retained in normalized requests but is not sent to Anthropic API version `2026-10-21`.
 
 #### Anthropic pending items
 

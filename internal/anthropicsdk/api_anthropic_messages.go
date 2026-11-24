@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anthropics/anthropic-sdk-go"
-	"github.com/anthropics/anthropic-sdk-go/option"
-	anthropicSharedConstant "github.com/anthropics/anthropic-sdk-go/shared/constant"
+	"github.com/anthropics/anthropic-sdk-go/v2"
+	"github.com/anthropics/anthropic-sdk-go/v2/option"
+	anthropicSharedConstant "github.com/anthropics/anthropic-sdk-go/v2/shared/constant"
 
 	"github.com/flexigpt/inference-go/internal/logutil"
 	"github.com/flexigpt/inference-go/internal/sdkutil"
@@ -60,7 +60,6 @@ func (api *AnthropicMessagesAPI) InitLLM(ctx context.Context) error {
 
 	pi := *api.ProviderParam // snapshot under lock
 	opts := []option.RequestOption{
-		// Sets x-api-key.
 		option.WithAPIKey(pi.APIKey),
 	}
 
@@ -82,12 +81,7 @@ func (api *AnthropicMessagesAPI) InitLLM(ctx context.Context) error {
 		opts = append(opts, option.WithHeader(strings.TrimSpace(k), strings.TrimSpace(v)))
 	}
 
-	// If the caller provided a non-standard API key header, attach it.
 	if pi.APIKeyHeaderKey != "" &&
-		!strings.EqualFold(
-			pi.APIKeyHeaderKey,
-			spec.DefaultAnthropicAuthorizationHeaderKey,
-		) &&
 		!strings.EqualFold(
 			pi.APIKeyHeaderKey,
 			spec.DefaultAuthorizationHeaderKey,
@@ -217,7 +211,7 @@ func (api *AnthropicMessagesAPI) FetchCompletion(
 	}
 	applyAnthropicTopLevelCacheControl(&params, req.ModelParam.CacheControl)
 
-	// Apply thinking / temperature in a robust, policy-driven way.
+	// Apply thinking policy.
 	applyAnthropicThinkingPolicy(&params, &req.ModelParam, thinkingAnalysis)
 
 	timeout := spec.DefaultAPITimeout

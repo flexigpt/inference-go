@@ -44,11 +44,9 @@ Choose this adapter when your application benefits from:
 
 ## Important guidance
 
-### Thinking and temperature
+### Sampling parameters
 
-Some Anthropic models do not accept temperature while thinking is enabled.
-
-Use the model preset resolver and inspect warnings. The normalizer removes temperature when the effective model capability profile requires that behavior.
+`ModelParam.Temperature` is retained for compatibility but is not sent to Anthropic API version `2026-10-21`.
 
 ### Reasoning summary style
 
@@ -89,6 +87,11 @@ Do not expect ordinary reasoning text from another provider to work as Anthropic
 PDF input is the supported file path.
 
 Plain-text and other file formats are not currently portable through this adapter.
+
+### Message content
+
+The adapter sends citations only for assistant text.
+It does not send files in assistant messages.
 
 ### Cache control
 
