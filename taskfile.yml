@@ -49,6 +49,13 @@ tasks:
       - go test -count=1 -v ./internal/sdkutil
       - go test -count=1 -v ./internal/integration -run '^(Example_googleGenerateContent_basicConversation|Example_googleGenerateContent_functionToolRoundTrip|Example_googleGenerateContent_webSearchAndThinkingStreaming|TestGoogleGenerateContent_FunctionToolRoundTripLoop)$'
 
+  test:googleinteractions:
+    cmds:
+      - go test -count=1 -v ./internal/googleinteractionssdk
+      - go test -count=1 -v ./internal/sdkutil
+      - go test -count=1 -v ./modelpreset -run '^(TestGemini4UsesInteractionsProvider|TestLegacyGoogleGeminiProviderRetainsGenerateContentModels)$'
+      - go test -count=1 -v ./internal/integration -run '^(TestGoogleInteractions_FunctionToolRoundTripLoop|Example_googleInteractions_basicConversation|Example_googleInteractions_structuredOutput|Example_googleInteractions_multimodalImageAndDocumentInput|Example_googleInteractions_functionToolRoundTrip|Example_googleInteractions_webSearchGroundingAndThinkingStreaming|Example_googleInteractions_streamingCustomToolRichResultRoundTrip|Example_googleInteractions_webSearchGroundingRoundTrip|Example_googleInteractions_multimodalConversationRoundTrip)$'
+
   test:meta:
     deps:
       - test:catalog

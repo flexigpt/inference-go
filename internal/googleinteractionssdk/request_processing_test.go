@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/flexigpt/inference-go/internal/sdkutil"
 	"github.com/flexigpt/inference-go/spec"
 )
 
@@ -132,6 +133,10 @@ func TestBuildGoogleInteractionsCreateInteraction(t *testing.T) {
 		`"agent"`,
 		rawParams,
 		`"google_search"`,
+		`"continuation_token"`,
+		`"service_tier"`,
+		`"safety_settings"`,
+		`"video_config"`,
 	} {
 		if strings.Contains(payload, unwanted) {
 			t.Errorf("payload unexpectedly contains %q: %s", unwanted, payload)
@@ -320,6 +325,124 @@ func TestSanitizeGoogleInteractionsReasoningInputs(t *testing.T) {
 		len(reasoning.RedactedThinking) != 0 ||
 		len(reasoning.EncryptedContent) != 0 {
 		t.Fatalf("unexpected sanitized reasoning %#v", reasoning)
+	}
+}
+
+func TestGoogleInteractionsTemperatureIsAlwaysDroppedAtBuildTime(t *testing.T) {
+	temperature := 0.4
+	req := &spec.FetchCompletionRequest{
+		ModelParam: spec.ModelParam{
+			Name:        "gemini-4-hydrogen",
+			Temperature: &temperature,
+			Reasoning: &spec.ReasoningParam{
+				Type:  spec.ReasoningTypeSingleWithLevels,
+				Level: spec.ReasoningLevelLow,
+			},
+		},
+		Inputs: []spec.InputUnion{{
+			Kind: spec.InputKindInputMessage,
+			InputMessage: &spec.InputOutputContent{
+				Role: spec.RoleUser,
+				Contents: []spec.InputOutputContentItemUnion{{
+					Kind:     spec.ContentItemKindText,
+					TextItem: &spec.ContentItemText{Text: "hello"},
+				}},
+			},
+		}},
+	}
+
+	normalized, _, normalizationWarnings, err := sdkutil.NormalizeRequestForSDK(
+		t.Context(),
+		req,
+		nil,
+		spec.ProviderSDKTypeGoogleInteractions,
+		googleInteractionsSDKCapability(),
+	)
+	if err != nil {
+		t.Fatalf("NormalizeRequestForSDK: %v", err)
+	}
+	if normalized.ModelParam.Temperature == nil {
+		t.Fatal("temperature must reach the adapter for unconditional dropping")
+	}
+	if googleInteractionsHasWarning(
+		normalizationWarnings,
+		"temperature_dropped_reasoning_enabled",
+	) {
+		t.Fatalf(
+			"temperature must not be described as reasoning-only incompatible: %#v",
+			normalizationWarnings,
+		)
+	}
+
+	build, err := buildGoogleInteractionsCreateInteraction(normalized, false)
+	if err != nil {
+		t.Fatalf("buildGoogleInteractionsCreateInteraction: %v", err)
+	}
+	if !googleInteractionsHasWarning(
+		build.Warnings,
+		"temperature_dropped_unsupported",
+	) {
+		t.Fatalf("missing unconditional temperature warning: %#v", build.Warnings)
+	}
+
+	raw, err := json.Marshal(build.Interaction)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), `"temperature"`) {
+		t.Fatalf("temperature leaked into request payload: %s", raw)
+	}
+}
+
+func TestGoogleInteractionsFunctionResultUsesToolOutputIDAsCallIDFallback(
+	t *testing.T,
+) {
+	step, err := googleInteractionsFunctionResultStep(&spec.ToolOutput{
+		Type: spec.ToolTypeFunction,
+		ID:   "call_from_id",
+		Name: "echo",
+		Contents: []spec.ToolOutputItemUnion{{
+			Kind:     spec.ContentItemKindText,
+			TextItem: &spec.ContentItemText{Text: "result"},
+		}},
+	}, nil)
+	if err != nil {
+		t.Fatalf("googleInteractionsFunctionResultStep: %v", err)
+	}
+	if step == nil || step.FunctionResultStep == nil {
+		t.Fatalf("missing function result step: %#v", step)
+	}
+	if step.FunctionResultStep.CallID != "call_from_id" {
+		t.Fatalf(
+			"CallID got %q want call_from_id",
+			step.FunctionResultStep.CallID,
+		)
+	}
+}
+
+func TestGoogleInteractionsContextOnlyFileIsSafelyConvertedToText(t *testing.T) {
+	warnings := []spec.Warning{}
+	contents, err := googleInteractionsContents(
+		[]spec.InputOutputContentItemUnion{{
+			Kind: spec.ContentItemKindFile,
+			FileItem: &spec.ContentItemFile{
+				AdditionalContext: "The attachment is unavailable. Use this context.",
+			},
+		}},
+		&warnings,
+	)
+	if err != nil {
+		t.Fatalf("googleInteractionsContents: %v", err)
+	}
+	if len(contents) != 1 || contents[0].TextContent == nil {
+		t.Fatalf("context-only file contents: %#v", contents)
+	}
+	if contents[0].TextContent.Text !=
+		"The attachment is unavailable. Use this context." {
+		t.Fatalf("unexpected context text: %#v", contents[0].TextContent)
+	}
+	if !googleInteractionsHasWarning(warnings, "file_dropped_empty") {
+		t.Fatalf("expected empty-file warning: %#v", warnings)
 	}
 }
 

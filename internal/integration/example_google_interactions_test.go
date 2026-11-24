@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/flexigpt/inference-go"
@@ -125,13 +126,12 @@ func Example_googleInteractions_structuredOutput() {
 		},
 	}
 
+	initialUser := newUserTextInput(
+		"Summarize why semantic versioning matters to library users.",
+	)
 	resp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
 		ModelParam: param,
-		Inputs: []spec.InputUnion{
-			newUserTextInput(
-				"Summarize why semantic versioning matters to library users.",
-			),
-		},
+		Inputs:     []spec.InputUnion{initialUser},
 	}, opts)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "structured-output interaction error:", err)
@@ -147,8 +147,45 @@ func Example_googleInteractions_structuredOutput() {
 		fmt.Fprintln(os.Stderr, "structured output was not JSON:", err)
 		return
 	}
+	if strings.TrimSpace(value.Summary) == "" {
+		fmt.Fprintln(os.Stderr, "structured output summary was empty")
+		return
+	}
+
+	followUpInputs := replayBasicConversationInputs(
+		[]spec.InputUnion{initialUser},
+		resp,
+		newUserTextInput(
+			"Using the previous JSON response, return a new JSON summary in simpler language.",
+		),
+	)
+	followUp, err := ps.FetchCompletion(ctx, pp.Name, &spec.FetchCompletionRequest{
+		ModelParam: param,
+		Inputs:     followUpInputs,
+	}, opts)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "structured-output follow-up error:", err)
+		return
+	}
+
+	followUpText := responseText(followUp)
+	var followUpValue struct {
+		Summary   string `json:"summary"`
+		Important bool   `json:"important"`
+	}
+	if err := json.Unmarshal([]byte(followUpText), &followUpValue); err != nil {
+		fmt.Fprintln(os.Stderr, "structured follow-up was not JSON:", err)
+		return
+	}
+	if strings.TrimSpace(followUpValue.Summary) == "" {
+		fmt.Fprintln(os.Stderr, "structured follow-up summary was empty")
+		return
+	}
+
 	fmt.Fprintln(os.Stderr, "summary:", value.Summary)
 	fmt.Fprintln(os.Stderr, "important:", value.Important)
+	fmt.Fprintln(os.Stderr, "follow-up summary:", followUpValue.Summary)
+	fmt.Fprintln(os.Stderr, "follow-up important:", followUpValue.Important)
 
 	fmt.Println("OK")
 	// Output: OK

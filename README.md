@@ -35,7 +35,7 @@ Install with `go get github.com/flexigpt/inference-go`.
 - Text, image, and file input where supported by the selected model
 - Text and thinking streaming where the upstream API exposes it
 - Reasoning controls with model-specific validation
-- Structured output and JSON Schema where supported
+- Structured output and JSON Schema output where supported
 - Function, custom, and web-search tool abstractions
 - Cache-control normalization where supported
 - Usage normalization for input, output, cached, and reasoning tokens where exposed
@@ -147,6 +147,10 @@ Use the integration examples as the current source of truth for end-to-end flows
 | Google Generate Content basic completion                 | [`example_google_genai_basic_test.go`](./internal/integration/example_google_genai_basic_test.go)                                 |
 | Google function-tool round trip                          | [`example_google_genai_tools_roundtrip_test.go`](./internal/integration/example_google_genai_tools_roundtrip_test.go)             |
 | Google web search, thinking, and streaming               | [`example_google_genai_websearch_streaming_test.go`](./internal/integration/example_google_genai_websearch_streaming_test.go)     |
+| Google Interactions basic, structured, multimodal, tools | [`example_google_interactions_test.go`](./internal/integration/example_google_interactions_test.go)                               |
+| Google Interactions custom-tool rich-result round trip   | [`example_google_interactions_roundtrip_test.go`](./internal/integration/example_google_interactions_roundtrip_test.go)           |
+| Google Interactions grounding-history round trip         | [`example_google_interactions_roundtrip_test.go`](./internal/integration/example_google_interactions_roundtrip_test.go)           |
+| Google Interactions strict stateless tool loop           | [`google_interactions_stateless_loop_test.go`](./internal/integration/google_interactions_stateless_loop_test.go)                 |
 | Capability overrides                                     | [`example_capability_override_test.go`](./internal/integration/example_capability_override_test.go)                               |
 
 The live examples read credentials from environment variables. They remain useful implementation references even when credentials are unavailable.

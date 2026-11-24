@@ -112,7 +112,8 @@ failure, and returns accumulated partial output.
 
 ## Unsupported optional controls
 
-- Temperature is dropped with a warning.
+- Temperature is deprecated for this adapter and is always dropped with
+  `temperature_dropped_unsupported`, including when reasoning is enabled.
 - Output verbosity is dropped by shared capability normalization.
 - Cache control is dropped by shared capability normalization.
 - `AdditionalParametersRawJSON` is not forwarded.

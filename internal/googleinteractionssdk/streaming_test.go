@@ -1,6 +1,7 @@
 package googleinteractionssdk
 
 import (
+	"strings"
 	"testing"
 
 	"google.golang.org/genai/interactions/models/interactions"
@@ -48,6 +49,83 @@ func TestGoogleInteractionsStreamPartialResponsePreservesTextAndThought(t *testi
 	}
 	if len(response.Outputs) != 2 {
 		t.Fatalf("output count got %d want 2", len(response.Outputs))
+	}
+}
+
+func TestGoogleInteractionsStreamUnfinishedContinuationUsesStatelessError(
+	t *testing.T,
+) {
+	state := newGoogleInteractionsStreamState()
+	state.setRawStatus("requires_continuation")
+
+	err := state.unfinishedStreamError()
+	if err == nil {
+		t.Fatal("expected continuation error")
+	}
+	if !strings.Contains(err.Error(), "requires continuation") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestGoogleInteractionsStreamFallbackDoesNotDuplicateSplitTerminalText(
+	t *testing.T,
+) {
+	state := newGoogleInteractionsStreamState()
+	state.interactionID = "interaction_1"
+	state.status = spec.StatusCompleted
+	state.ensureStep(0, false).text.WriteString("hello world")
+
+	response := &spec.FetchCompletionResponse{
+		Outputs: []spec.OutputUnion{{
+			Kind: spec.OutputKindOutputMessage,
+			OutputMessage: &spec.InputOutputContent{
+				ID:     "interaction_1",
+				Role:   spec.RoleAssistant,
+				Status: spec.StatusCompleted,
+				Contents: []spec.InputOutputContentItemUnion{
+					{
+						Kind:     spec.ContentItemKindText,
+						TextItem: &spec.ContentItemText{Text: "hello"},
+					},
+					{
+						Kind:     spec.ContentItemKindText,
+						TextItem: &spec.ContentItemText{Text: " world"},
+					},
+				},
+			},
+		}},
+	}
+
+	appendGoogleInteractionsStreamFallback(response, state)
+	if len(response.Outputs) != 1 {
+		t.Fatalf("duplicate text fallback: %#v", response.Outputs)
+	}
+}
+
+func TestGoogleInteractionsStreamOutputsPreserveRawArgumentFragments(
+	t *testing.T,
+) {
+	state := newGoogleInteractionsStreamState()
+	state.interactionID = "interaction_1"
+	state.status = spec.StatusInProgress
+
+	entry := state.ensureStep(0, false)
+	entry.functionCall = &spec.ToolCall{
+		Type:      spec.ToolTypeFunction,
+		ChoiceID:  "echo-tool",
+		ID:        "call_1",
+		CallID:    "call_1",
+		Name:      "echo",
+		Arguments: "{}",
+	}
+	entry.functionArgs.WriteString(` { "text": "spaced value" } `)
+
+	outputs, _ := state.streamOutputs()
+	if len(outputs) != 1 || outputs[0].FunctionToolCall == nil {
+		t.Fatalf("unexpected outputs: %#v", outputs)
+	}
+	if got := outputs[0].FunctionToolCall.Arguments; got != ` { "text": "spaced value" } ` {
+		t.Fatalf("arguments got %q", got)
 	}
 }
 

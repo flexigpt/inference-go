@@ -48,7 +48,7 @@ var modelGoogleGemini4Neon = ModelPreset{
 	},
 	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
 		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
-			TemperatureDisallowedWhenEnabled: new(true),
+			TemperatureDisallowedWhenEnabled: new(false),
 			SupportedReasoningTypes: []spec.ReasoningType{
 				spec.ReasoningTypeSingleWithLevels,
 			},
@@ -77,7 +77,7 @@ var modelGoogleGemini4Carbon = ModelPreset{
 	},
 	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
 		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
-			TemperatureDisallowedWhenEnabled: new(true),
+			TemperatureDisallowedWhenEnabled: new(false),
 			SupportedReasoningTypes: []spec.ReasoningType{
 				spec.ReasoningTypeSingleWithLevels,
 			},
@@ -105,7 +105,7 @@ var modelGoogleGemini4Hydrogen = ModelPreset{
 	},
 	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
 		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
-			TemperatureDisallowedWhenEnabled: new(true),
+			TemperatureDisallowedWhenEnabled: new(false),
 			SupportedReasoningTypes: []spec.ReasoningType{
 				spec.ReasoningTypeSingleWithLevels,
 			},
@@ -134,7 +134,7 @@ var modelGoogleGemini4Argon = ModelPreset{
 	},
 	CapabilitiesOverride: &capabilityoverride.ModelCapabilitiesOverride{
 		ReasoningCapabilities: &capabilityoverride.ReasoningCapabilitiesOverride{
-			TemperatureDisallowedWhenEnabled: new(true),
+			TemperatureDisallowedWhenEnabled: new(false),
 			SupportedReasoningTypes: []spec.ReasoningType{
 				spec.ReasoningTypeSingleWithLevels,
 			},

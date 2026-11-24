@@ -86,15 +86,18 @@ func (api *GoogleInteractionsAPI) InitLLM(ctx context.Context) error {
 
 	pi := *api.ProviderParam
 	httpOptions := genai.HTTPOptions{}
-	baseURL := spec.DefaultGoogleInteractionsOrigin
 
-	if pi.Origin != "" || strings.TrimSpace(pi.ChatCompletionPathPrefix) != "" {
-		baseURL = strings.TrimSuffix(pi.Origin, "/")
-		if prefix := strings.Trim(strings.TrimSpace(pi.ChatCompletionPathPrefix), "/"); prefix != "" {
-			baseURL = strings.TrimRight(baseURL+"/"+prefix, "/")
-		}
-		httpOptions.BaseURL = strings.TrimRight(baseURL, "/") + "/"
+	baseURL := strings.TrimRight(strings.TrimSpace(pi.Origin), "/")
+	if baseURL == "" {
+		baseURL = spec.DefaultGoogleInteractionsOrigin
 	}
+	if prefix := strings.Trim(
+		strings.TrimSpace(pi.ChatCompletionPathPrefix),
+		"/",
+	); prefix != "" {
+		baseURL = strings.TrimRight(baseURL+"/"+prefix, "/")
+	}
+	httpOptions.BaseURL = strings.TrimRight(baseURL, "/") + "/"
 
 	if len(pi.DefaultHeaders) > 0 || strings.TrimSpace(pi.APIKeyHeaderKey) != "" {
 		httpOptions.Headers = make(http.Header)

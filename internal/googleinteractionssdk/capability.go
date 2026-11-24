@@ -24,11 +24,15 @@ func googleInteractionsSDKCapability() spec.ModelCapabilities {
 				spec.ReasoningLevelHigh,
 				spec.ReasoningLevelXHigh,
 			},
-			SupportsSummaryStyle:             true,
-			SupportsReasoningContext:         false,
-			SupportsReasoningMode:            false,
-			SupportsEncryptedReasoningInput:  false,
-			TemperatureDisallowedWhenEnabled: true,
+			SupportsSummaryStyle:            true,
+			SupportsReasoningContext:        false,
+			SupportsReasoningMode:           false,
+			SupportsEncryptedReasoningInput: false,
+			// Temperature is deprecated and is not sent by this adapter.
+			// This flag means "incompatible only when reasoning is enabled",
+			// which is not the Interactions behavior. Request construction
+			// emits the unconditional dropped-temperature warning instead.
+			TemperatureDisallowedWhenEnabled: false,
 		},
 		StopSequenceCapabilities: &spec.StopSequenceCapabilities{
 			IsSupported:             true,

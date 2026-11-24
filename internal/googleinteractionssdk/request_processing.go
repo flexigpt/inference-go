@@ -370,7 +370,13 @@ func googleInteractionsImageContent(
 		return interactions.Content{}, false, nil
 	}
 
-	mimeType := strings.TrimSpace(image.ImageMIME)
+	data := strings.TrimSpace(image.ImageData)
+	uri := strings.TrimSpace(image.ImageURL)
+	if data == "" && uri == "" {
+		return interactions.Content{}, false, nil
+	}
+
+	mimeType := strings.ToLower(strings.TrimSpace(image.ImageMIME))
 	if mimeType == "" {
 		mimeType = spec.DefaultImageDataMIME
 	}
@@ -392,11 +398,11 @@ func googleInteractionsImageContent(
 	default:
 	}
 
-	if data := strings.TrimSpace(image.ImageData); data != "" {
+	if data != "" {
 		content.Data = new(data)
 		return interactions.NewContent(content), true, nil
 	}
-	if uri := strings.TrimSpace(image.ImageURL); uri != "" {
+	if uri != "" {
 		content.URI = new(uri)
 		return interactions.NewContent(content), true, nil
 	}
@@ -411,7 +417,13 @@ func googleInteractionsDocumentContent(
 		return interactions.Content{}, false, nil
 	}
 
-	mimeType := strings.TrimSpace(file.FileMIME)
+	data := strings.TrimSpace(file.FileData)
+	uri := strings.TrimSpace(file.FileURL)
+	if data == "" && uri == "" {
+		return interactions.Content{}, false, nil
+	}
+
+	mimeType := strings.ToLower(strings.TrimSpace(file.FileMIME))
 	if !googleInteractionsDocumentMIMESupported(mimeType) {
 		return interactions.Content{}, false, fmt.Errorf(
 			"google interactions: unsupported document MIME type %q",
@@ -422,11 +434,11 @@ func googleInteractionsDocumentContent(
 	content := interactions.DocumentContent{
 		MimeType: interactions.DocumentContentMimeType(mimeType).ToPointer(),
 	}
-	if data := strings.TrimSpace(file.FileData); data != "" {
+	if data != "" {
 		content.Data = new(data)
 		return interactions.NewContent(content), true, nil
 	}
-	if uri := strings.TrimSpace(file.FileURL); uri != "" {
+	if uri != "" {
 		content.URI = new(uri)
 		return interactions.NewContent(content), true, nil
 	}
@@ -441,7 +453,8 @@ func googleInteractionsFunctionCallStep(
 	if callID == "" {
 		callID = strings.TrimSpace(call.ID)
 	}
-	if callID == "" || strings.TrimSpace(call.Name) == "" {
+	name := strings.TrimSpace(call.Name)
+	if callID == "" || name == "" {
 		return nil, errors.New(
 			"google interactions: function call requires callID and name",
 		)
@@ -460,7 +473,7 @@ func googleInteractionsFunctionCallStep(
 
 	step := interactions.NewStep(interactions.FunctionCallStep{
 		ID:        callID,
-		Name:      call.Name,
+		Name:      name,
 		Arguments: arguments,
 	})
 	return &step, nil
@@ -470,7 +483,17 @@ func googleInteractionsFunctionResultStep(
 	output *spec.ToolOutput,
 	warnings *[]spec.Warning,
 ) (*interactions.Step, error) {
-	if strings.TrimSpace(output.CallID) == "" {
+	if output == nil {
+		return nil, errors.New(
+			"google interactions: nil function result",
+		)
+	}
+
+	callID := strings.TrimSpace(output.CallID)
+	if callID == "" {
+		callID = strings.TrimSpace(output.ID)
+	}
+	if callID == "" {
 		return nil, errors.New(
 			"google interactions: function result requires callID",
 		)
@@ -499,8 +522,8 @@ func googleInteractionsFunctionResultStep(
 	}
 
 	step := interactions.NewStep(interactions.FunctionResultStep{
-		CallID:  output.CallID,
-		Name:    googleInteractionsOptionalString(output.Name),
+		CallID:  callID,
+		Name:    googleInteractionsOptionalString(strings.TrimSpace(output.Name)),
 		Result:  resultUnion,
 		IsError: new(output.IsError),
 	})
@@ -582,7 +605,14 @@ func googleInteractionsFunctionImageSubcontent(
 	if image == nil {
 		return interactions.FunctionResultSubcontent{}, false, nil
 	}
-	mimeType := strings.TrimSpace(image.ImageMIME)
+
+	data := strings.TrimSpace(image.ImageData)
+	uri := strings.TrimSpace(image.ImageURL)
+	if data == "" && uri == "" {
+		return interactions.FunctionResultSubcontent{}, false, nil
+	}
+
+	mimeType := strings.ToLower(strings.TrimSpace(image.ImageMIME))
 	if mimeType == "" {
 		mimeType = spec.DefaultImageDataMIME
 	}
@@ -592,6 +622,7 @@ func googleInteractionsFunctionImageSubcontent(
 			mimeType,
 		)
 	}
+
 	content := interactions.ImageContent{
 		MimeType: interactions.ImageContentMimeType(mimeType).ToPointer(),
 	}
@@ -602,11 +633,11 @@ func googleInteractionsFunctionImageSubcontent(
 		content.Resolution = interactions.MediaResolutionHigh.ToPointer()
 	default:
 	}
-	if data := strings.TrimSpace(image.ImageData); data != "" {
+	if data != "" {
 		content.Data = new(data)
 		return interactions.NewFunctionResultSubcontent(content), true, nil
 	}
-	if uri := strings.TrimSpace(image.ImageURL); uri != "" {
+	if uri != "" {
 		content.URI = new(uri)
 		return interactions.NewFunctionResultSubcontent(content), true, nil
 	}
@@ -654,7 +685,16 @@ func googleInteractionsWebSearchResultStep(
 	output *spec.ToolOutput,
 	warnings *[]spec.Warning,
 ) (*interactions.Step, error) {
-	if output == nil || strings.TrimSpace(output.CallID) == "" {
+	if output == nil {
+		//nolint:nilnil // No output found.
+		return nil, nil
+	}
+
+	callID := strings.TrimSpace(output.CallID)
+	if callID == "" {
+		callID = strings.TrimSpace(output.ID)
+	}
+	if callID == "" {
 		//nolint:nilnil // No output found.
 		return nil, nil
 	}
@@ -685,7 +725,7 @@ func googleInteractionsWebSearchResultStep(
 	}
 
 	step := interactions.NewStep(interactions.GoogleSearchResultStep{
-		CallID:    output.CallID,
+		CallID:    callID,
 		Result:    result,
 		IsError:   new(output.IsError),
 		Signature: googleInteractionsOptionalString(output.Signature),
@@ -699,21 +739,29 @@ func googleInteractionsFunctionDocumentSubcontent(
 	if file == nil {
 		return interactions.FunctionResultSubcontent{}, false, nil
 	}
-	mimeType := strings.TrimSpace(file.FileMIME)
+
+	data := strings.TrimSpace(file.FileData)
+	uri := strings.TrimSpace(file.FileURL)
+	if data == "" && uri == "" {
+		return interactions.FunctionResultSubcontent{}, false, nil
+	}
+
+	mimeType := strings.ToLower(strings.TrimSpace(file.FileMIME))
 	if !googleInteractionsDocumentMIMESupported(mimeType) {
 		return interactions.FunctionResultSubcontent{}, false, fmt.Errorf(
 			"google interactions: unsupported document MIME type %q",
 			mimeType,
 		)
 	}
+
 	content := interactions.DocumentContent{
 		MimeType: interactions.DocumentContentMimeType(mimeType).ToPointer(),
 	}
-	if data := strings.TrimSpace(file.FileData); data != "" {
+	if data != "" {
 		content.Data = new(data)
 		return interactions.NewFunctionResultSubcontent(content), true, nil
 	}
-	if uri := strings.TrimSpace(file.FileURL); uri != "" {
+	if uri != "" {
 		content.URI = new(uri)
 		return interactions.NewFunctionResultSubcontent(content), true, nil
 	}

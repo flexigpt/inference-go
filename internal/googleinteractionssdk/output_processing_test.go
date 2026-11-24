@@ -130,6 +130,74 @@ func TestResponseFromGoogleInteraction(t *testing.T) {
 	}
 }
 
+func TestResponseFromGoogleInteractionPreservesPayloadWhitespaceAndSignatures(
+	t *testing.T,
+) {
+	response, err := responseFromGoogleInteraction(
+		&interactions.Interaction{
+			ID:     new("interaction_1"),
+			Status: "completed",
+			Steps: []interactions.Step{
+				interactions.NewStep(interactions.ThoughtStep{
+					Signature: new(" opaque signature "),
+					Summary: []interactions.ThoughtSummaryContent{
+						interactions.NewThoughtSummaryContent(
+							interactions.TextContent{Text: "  thought summary  "},
+						),
+					},
+				}),
+				interactions.NewStep(interactions.ModelOutputStep{
+					Content: []interactions.Content{
+						interactions.NewContent(
+							interactions.TextContent{Text: "  answer with spacing  "},
+						),
+					},
+				}),
+			},
+		},
+		nil,
+		"",
+	)
+	if err != nil {
+		t.Fatalf("responseFromGoogleInteraction: %v", err)
+	}
+	if len(response.Outputs) != 2 {
+		t.Fatalf("output count got %d want 2", len(response.Outputs))
+	}
+
+	reasoning := response.Outputs[0].ReasoningMessage
+	if reasoning == nil ||
+		reasoning.Signature != " opaque signature " ||
+		len(reasoning.Summary) != 1 ||
+		reasoning.Summary[0] != "  thought summary  " {
+		t.Fatalf("unexpected reasoning: %#v", reasoning)
+	}
+
+	message := response.Outputs[1].OutputMessage
+	if message == nil ||
+		len(message.Contents) != 1 ||
+		message.Contents[0].TextItem == nil ||
+		message.Contents[0].TextItem.Text != "  answer with spacing  " {
+		t.Fatalf("unexpected output message: %#v", message)
+	}
+
+	fallback, err := responseFromGoogleInteraction(
+		&interactions.Interaction{
+			ID:         new("interaction_2"),
+			Status:     "completed",
+			OutputText: new("  fallback answer  "),
+		},
+		nil,
+		"",
+	)
+	if err != nil {
+		t.Fatalf("responseFromGoogleInteraction fallback: %v", err)
+	}
+	if got := fallback.Outputs[0].OutputMessage.Contents[0].TextItem.Text; got != "  fallback answer  " {
+		t.Fatalf("fallback text got %q", got)
+	}
+}
+
 func TestResponseFromGoogleInteractionRequiresContinuation(t *testing.T) {
 	response, err := responseFromGoogleInteraction(
 		&interactions.Interaction{
@@ -189,5 +257,69 @@ func TestResponseFromGoogleInteractionRequiresActionIsToolRoundTrip(t *testing.T
 		response.Outputs[0].FunctionToolCall == nil ||
 		response.Outputs[0].FunctionToolCall.Status != spec.StatusInProgress {
 		t.Fatalf("unexpected requires_action response %#v", response)
+	}
+}
+
+func TestGoogleInteractionsStatusAndTerminalErrorMapping(t *testing.T) {
+	tests := []struct {
+		name              string
+		rawStatus         string
+		wantStatus        spec.Status
+		wantTerminalError bool
+	}{
+		{
+			name:       "completed",
+			rawStatus:  googleInteractionsRawStatusCompleted,
+			wantStatus: spec.StatusCompleted,
+		},
+		{
+			name:       "requires action",
+			rawStatus:  googleInteractionsRawStatusRequiresAction,
+			wantStatus: spec.StatusInProgress,
+		},
+		{
+			name:              "in progress",
+			rawStatus:         googleInteractionsRawStatusInProgress,
+			wantStatus:        spec.StatusInProgress,
+			wantTerminalError: true,
+		},
+		{
+			name:       "incomplete",
+			rawStatus:  googleInteractionsRawStatusIncomplete,
+			wantStatus: spec.StatusIncomplete,
+		},
+		{
+			name:              "requires continuation",
+			rawStatus:         googleInteractionsRawStatusRequiresContinuation,
+			wantStatus:        spec.StatusIncomplete,
+			wantTerminalError: true,
+		},
+		{
+			name:              "failed",
+			rawStatus:         googleInteractionsRawStatusFailed,
+			wantStatus:        spec.StatusFailed,
+			wantTerminalError: true,
+		},
+		{
+			name:              "cancelled",
+			rawStatus:         googleInteractionsRawStatusCancelled,
+			wantStatus:        spec.StatusCancelled,
+			wantTerminalError: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := googleInteractionsStatus(tc.rawStatus); got != tc.wantStatus {
+				t.Fatalf("status got %q want %q", got, tc.wantStatus)
+			}
+			if gotError := googleInteractionsTerminalError(tc.rawStatus) != nil; gotError != tc.wantTerminalError {
+				t.Fatalf(
+					"terminal error got %v want %v",
+					gotError,
+					tc.wantTerminalError,
+				)
+			}
+		})
 	}
 }

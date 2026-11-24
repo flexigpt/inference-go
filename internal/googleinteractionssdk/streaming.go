@@ -118,13 +118,7 @@ func (api *GoogleInteractionsAPI) doStreaming(
 		}
 
 		if statusUpdate := event.GetDataInteractionStatusUpdate(); statusUpdate != nil {
-			state.setStatus(
-				googleInteractionsStatus(
-					strings.ToLower(
-						googleInteractionsString(statusUpdate.GetStatus()),
-					),
-				),
-			)
+			state.setRawStatus(googleInteractionsString(statusUpdate.GetStatus()))
 			state.recordUsage(statusUpdate.GetUsage())
 		}
 
@@ -157,11 +151,15 @@ func (api *GoogleInteractionsAPI) doStreaming(
 				webSearchChoiceID,
 				true,
 			)
+
 			state.response, state.responseErr = responseFromGoogleInteractionSSE(
 				&interaction,
 				toolChoiceNameMap,
 				webSearchChoiceID,
 			)
+			if interaction.Usage == nil && state.response != nil && state.usage != nil {
+				state.response.Usage = state.responseUsage()
+			}
 			state.terminal = true
 			break
 		}
@@ -182,9 +180,7 @@ func (api *GoogleInteractionsAPI) doStreaming(
 		flushThinking(),
 	)
 	if !state.terminal && streamErr == nil {
-		streamErr = errors.New(
-			"google interactions: stream ended before interaction.completed",
-		)
+		streamErr = state.unfinishedStreamError()
 	}
 
 	response := state.response
@@ -209,6 +205,7 @@ type googleInteractionsStreamState struct {
 	interactionID string
 	status        spec.Status
 	usage         *spec.Usage
+	rawStatus     string
 	terminal      bool
 	eventErr      error
 	response      *spec.FetchCompletionResponse
@@ -258,11 +255,7 @@ func (state *googleInteractionsStreamState) setInteraction(
 	if id := googleInteractionsString(interaction.ID); id != "" {
 		state.interactionID = id
 	}
-	state.setStatus(
-		googleInteractionsStatus(
-			strings.ToLower(googleInteractionsString(interaction.Status)),
-		),
-	)
+	state.setRawStatus(googleInteractionsString(interaction.Status))
 	state.recordUsage(interaction.Usage)
 
 	if len(interaction.Steps) == 0 {
@@ -288,6 +281,16 @@ func (state *googleInteractionsStreamState) setStatus(status spec.Status) {
 	if status != spec.StatusNone {
 		state.status = status
 	}
+}
+
+func (state *googleInteractionsStreamState) setRawStatus(rawStatus string) {
+	rawStatus = strings.ToLower(strings.TrimSpace(rawStatus))
+	if rawStatus == "" {
+		return
+	}
+
+	state.rawStatus = rawStatus
+	state.setStatus(googleInteractionsStatus(rawStatus))
 }
 
 func (state *googleInteractionsStreamState) recordUsage(
@@ -327,7 +330,7 @@ func (state *googleInteractionsStreamState) recordStep(
 
 	case step.ThoughtStep != nil:
 		if replace || entry.thoughtSummary.Len() == 0 {
-			entry.thoughtSignature = googleInteractionsString(
+			entry.thoughtSignature = googleInteractionsRawString(
 				step.ThoughtStep.Signature,
 			)
 			for _, content := range step.ThoughtStep.Summary {
@@ -398,7 +401,7 @@ func (state *googleInteractionsStreamState) applyDelta(
 	entry := state.ensureStep(delta.GetIndex(), false)
 
 	if textDelta := delta.GetDeltaText(); textDelta != nil {
-		text := googleInteractionsString(textDelta.GetText())
+		text := googleInteractionsRawString(textDelta.GetText())
 		entry.text.WriteString(text)
 		if err := writeText(text); err != nil {
 			return err
@@ -414,7 +417,7 @@ func (state *googleInteractionsStreamState) applyDelta(
 	}
 
 	if thoughtSignatureDelta := delta.GetDeltaThoughtSignature(); thoughtSignatureDelta != nil {
-		entry.thoughtSignature = googleInteractionsString(
+		entry.thoughtSignature = googleInteractionsRawString(
 			thoughtSignatureDelta.GetSignature(),
 		)
 	}
@@ -428,7 +431,7 @@ func (state *googleInteractionsStreamState) applyDelta(
 			)
 		} else {
 			entry.functionArgs.WriteString(
-				googleInteractionsString(argumentsDelta.GetArguments()),
+				googleInteractionsRawString(argumentsDelta.GetArguments()),
 			)
 		}
 	}
@@ -467,7 +470,7 @@ func (state *googleInteractionsStreamState) applyGoogleSearchCallDelta(
 		return
 	}
 
-	if signature := googleInteractionsString(delta.GetSignature()); signature != "" {
+	if signature := googleInteractionsRawString(delta.GetSignature()); signature != "" {
 		entry.webSearchCall.Signature = signature
 	}
 	for _, query := range googleInteractionsGoogleSearchQueries(delta.GetArguments()) {
@@ -491,7 +494,7 @@ func (state *googleInteractionsStreamState) applyGoogleSearchResultDelta(
 		return
 	}
 
-	if signature := googleInteractionsString(delta.GetSignature()); signature != "" {
+	if signature := googleInteractionsRawString(delta.GetSignature()); signature != "" {
 		entry.webSearchOutput.Signature = signature
 	}
 	if isError := delta.GetIsError(); isError != nil {
@@ -686,6 +689,23 @@ func (state *googleInteractionsStreamState) streamOutputs() (
 	return outputs, warnings
 }
 
+func (state *googleInteractionsStreamState) unfinishedStreamError() error {
+	if state != nil {
+		switch state.rawStatus {
+		case googleInteractionsRawStatusRequiresContinuation,
+			googleInteractionsRawStatusFailed,
+			googleInteractionsRawStatusCancelled:
+			if err := googleInteractionsTerminalError(state.rawStatus); err != nil {
+				return err
+			}
+		}
+	}
+
+	return errors.New(
+		"google interactions: stream ended before interaction.completed",
+	)
+}
+
 func appendGoogleInteractionsStreamFallback(
 	response *spec.FetchCompletionResponse,
 	state *googleInteractionsStreamState,
@@ -775,11 +795,8 @@ func googleInteractionsResponseContainsText(
 			output.OutputMessage == nil {
 			continue
 		}
-		for _, content := range output.OutputMessage.Contents {
-			if content.TextItem != nil &&
-				strings.Contains(content.TextItem.Text, text) {
-				return true
-			}
+		if strings.Contains(googleInteractionsOutputUnionText(output), text) {
+			return true
 		}
 	}
 	return false

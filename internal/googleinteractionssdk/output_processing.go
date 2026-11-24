@@ -10,6 +10,16 @@ import (
 	"google.golang.org/genai/interactions/models/interactions"
 )
 
+const (
+	googleInteractionsRawStatusCompleted            = "completed"
+	googleInteractionsRawStatusRequiresAction       = "requires_action"
+	googleInteractionsRawStatusInProgress           = "in_progress"
+	googleInteractionsRawStatusIncomplete           = "incomplete"
+	googleInteractionsRawStatusRequiresContinuation = "requires_continuation"
+	googleInteractionsRawStatusFailed               = "failed"
+	googleInteractionsRawStatusCancelled            = "cancelled"
+)
+
 func responseFromGoogleInteraction(
 	interaction *interactions.Interaction,
 	toolChoiceNameMap map[string]spec.ToolChoice,
@@ -25,7 +35,7 @@ func responseFromGoogleInteraction(
 	return responseFromGoogleInteractionParts(
 		googleInteractionsString(interaction.ID),
 		googleInteractionsString(interaction.Status),
-		googleInteractionsString(interaction.OutputText),
+		googleInteractionsRawString(interaction.OutputText),
 		interaction.Steps,
 		interaction.Usage,
 		toolChoiceNameMap,
@@ -78,8 +88,7 @@ func responseFromGoogleInteractionParts(
 		webSearchChoiceID,
 	)
 
-	if !hasGoogleInteractionsTextOutput(outputs) &&
-		strings.TrimSpace(outputText) != "" {
+	if !hasGoogleInteractionsTextOutput(outputs) && outputText != "" {
 		outputs = append(outputs, spec.OutputUnion{
 			Kind: spec.OutputKindOutputMessage,
 			OutputMessage: &spec.InputOutputContent{
@@ -149,7 +158,7 @@ func outputsFromGoogleInteractionSteps(
 				ID:        interactionID,
 				Role:      spec.RoleAssistant,
 				Status:    status,
-				Signature: googleInteractionsString(step.ThoughtStep.Signature),
+				Signature: googleInteractionsRawString(step.ThoughtStep.Signature),
 			}
 			for _, content := range step.ThoughtStep.Summary {
 				if text, ok := googleInteractionsThoughtSummaryText(content); ok {
@@ -268,7 +277,7 @@ func googleInteractionsTextContent(
 		return "", false
 	}
 
-	text := googleInteractionsString(content.TextContent.Text)
+	text := googleInteractionsRawString(content.TextContent.Text)
 	if text == "" {
 		return "", false
 	}
@@ -282,7 +291,7 @@ func googleInteractionsThoughtSummaryText(
 		return "", false
 	}
 
-	text := googleInteractionsString(content.TextContent.Text)
+	text := googleInteractionsRawString(content.TextContent.Text)
 	if text == "" {
 		return "", false
 	}
@@ -360,7 +369,7 @@ func googleInteractionsWebSearchToolCall(
 		Name:      spec.DefaultWebSearchToolName,
 		Role:      spec.RoleAssistant,
 		Status:    status,
-		Signature: googleInteractionsString(searchCall.Signature),
+		Signature: googleInteractionsRawString(searchCall.Signature),
 	}
 
 	for _, query := range searchCall.Arguments.Queries {
@@ -403,14 +412,14 @@ func googleInteractionsWebSearchToolOutput(
 		Name:      spec.DefaultWebSearchToolName,
 		Role:      spec.RoleAssistant,
 		Status:    status,
-		Signature: googleInteractionsString(searchResult.Signature),
+		Signature: googleInteractionsRawString(searchResult.Signature),
 		IsError:   googleInteractionsBool(searchResult.IsError),
 	}
 
 	hasSuggestions := false
 	for _, item := range searchResult.Result {
 		suggestion := strings.TrimSpace(
-			googleInteractionsString(item.SearchSuggestions),
+			googleInteractionsRawString(item.SearchSuggestions),
 		)
 		if suggestion == "" {
 			continue
@@ -467,15 +476,17 @@ func usageFromGoogleInteraction(
 
 func googleInteractionsStatus(status string) spec.Status {
 	switch status {
-	case "completed":
+	case googleInteractionsRawStatusCompleted:
 		return spec.StatusCompleted
-	case "requires_action", "in_progress":
+	case googleInteractionsRawStatusRequiresAction,
+		googleInteractionsRawStatusInProgress:
 		return spec.StatusInProgress
-	case "incomplete", "requires_continuation":
+	case googleInteractionsRawStatusIncomplete,
+		googleInteractionsRawStatusRequiresContinuation:
 		return spec.StatusIncomplete
-	case "failed":
+	case googleInteractionsRawStatusFailed:
 		return spec.StatusFailed
-	case "cancelled":
+	case googleInteractionsRawStatusCancelled:
 		return spec.StatusCancelled
 	default:
 		return spec.StatusNone
@@ -484,13 +495,16 @@ func googleInteractionsStatus(status string) spec.Status {
 
 func googleInteractionsTerminalError(status string) error {
 	switch status {
-	case "completed", "incomplete", "requires_action":
+	case googleInteractionsRawStatusCompleted,
+		googleInteractionsRawStatusIncomplete,
+		googleInteractionsRawStatusRequiresAction:
 		return nil
-	case "requires_continuation":
+	case googleInteractionsRawStatusRequiresContinuation:
 		return errors.New(
 			"google interactions: interaction requires continuation, which is outside the stateless adapter surface",
 		)
-	case "failed", "cancelled":
+	case googleInteractionsRawStatusFailed,
+		googleInteractionsRawStatusCancelled:
 		return fmt.Errorf("google interactions: interaction %s", status)
 	default:
 		return fmt.Errorf(
@@ -517,20 +531,24 @@ func hasGoogleInteractionsTextOutput(outputs []spec.OutputUnion) bool {
 	return false
 }
 
-func googleInteractionsString(value any) string {
+func googleInteractionsRawString(value any) string {
 	switch value := value.(type) {
 	case nil:
 		return ""
 	case string:
-		return strings.TrimSpace(value)
+		return value
 	case *string:
 		if value == nil {
 			return ""
 		}
-		return strings.TrimSpace(*value)
+		return *value
 	default:
-		return strings.TrimSpace(fmt.Sprint(value))
+		return fmt.Sprint(value)
 	}
+}
+
+func googleInteractionsString(value any) string {
+	return strings.TrimSpace(googleInteractionsRawString(value))
 }
 
 func googleInteractionsBool(value any) bool {
