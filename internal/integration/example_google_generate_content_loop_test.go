@@ -40,7 +40,7 @@ func TestGoogleGenerateContent_FunctionToolRoundTripLoop(t *testing.T) {
 		ctx,
 		ps,
 		modelpreset.ProviderGoogleGemini,
-		modelpreset.PresetGemini4Hydrogen,
+		modelpreset.PresetGemini35FlashLite,
 	)
 	if err != nil {
 		t.Fatal(err)

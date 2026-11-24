@@ -41,30 +41,31 @@ A preset is not a promise that an external provider will never change. It is a r
 
 ## Supported provider presets
 
-| Provider            | Constant                  | Adapter family          | Model families represented                                          |
-| ------------------- | ------------------------- | ----------------------- | ------------------------------------------------------------------- |
-| Anthropic           | `ProviderAnthropic`       | Anthropic Messages      | Claude                                                              |
-| DeepSeek            | `ProviderDeepSeek`        | OpenAI Responses        | DeepSeek V4                                                         |
-| Google Gemini       | `ProviderGoogleGemini`    | Google Generate Content | Gemini and related Google models                                    |
-| Hugging Face Router | `ProviderHuggingFace`     | OpenAI Chat Completions | Routed open models and backend variants                             |
-| LocalAI             | `ProviderLocalAI`         | OpenAI Responses        | Local model presets                                                 |
-| LM Studio           | `ProviderLMStudio`        | OpenAI Responses        | Local model presets                                                 |
-| llama.cpp           | `ProviderLlamaCPP`        | OpenAI Chat Completions | Llama and Qwen local models                                         |
-| Meta                | `ProviderMeta`            | OpenAI Responses        | Muse Spark                                                          |
-| MiniMax             | `ProviderMiniMax`         | OpenAI Responses        | MiniMax M2 and M3                                                   |
-| Mistral             | `ProviderMistral`         | OpenAI Chat Completions | Mistral and Devstral                                                |
-| Moonshot            | `ProviderMoonshot`        | Anthropic Messages      | Kimi                                                                |
-| Ollama              | `ProviderOllama`          | Anthropic Messages      | Ollama-tagged local models                                          |
-| OpenAI Chat         | `ProviderOpenAIChat`      | OpenAI Chat Completions | GPT 4.1 and GPT-4o                                                  |
-| OpenAI Responses    | `ProviderOpenAIResponses` | OpenAI Responses        | GPT-5 and GPT-OSS families                                          |
-| OpenRouter          | `ProviderOpenRouter`      | OpenAI Responses        | Routed DeepSeek, Qwen, MiniMax, Kimi, GLM, Xiaomi, and other models |
-| QwenCloud           | `ProviderQwen`            | OpenAI Responses        | Qwen, Qwen Coder, and Qwen Character                                |
-| SGLang              | `ProviderSGLang`          | OpenAI Responses        | Local model presets                                                 |
-| vLLM                | `ProviderVLLM`            | OpenAI Responses        | Local model presets                                                 |
-| xAI                 | `ProviderXAI`             | OpenAI Responses        | Grok                                                                |
-| Xiaomi              | `ProviderXiaomi`          | OpenAI Responses        | MiMo                                                                |
-| Z.AI                | `ProviderZAI`             | OpenAI Chat Completions | GLM                                                                 |
-| Z.AI Coding Plan    | `ProviderZAICodingPlan`   | OpenAI Responses        | GLM Coding Plan models                                              |
+| Provider                   | Constant                           | Adapter family          | Model families represented                                          |
+| -------------------------- | ---------------------------------- | ----------------------- | ------------------------------------------------------------------- |
+| Anthropic                  | `ProviderAnthropic`                | Anthropic Messages      | Claude                                                              |
+| DeepSeek                   | `ProviderDeepSeek`                 | OpenAI Responses        | DeepSeek V4                                                         |
+| Google Gemini              | `ProviderGoogleGemini`             | Google Generate Content | Gemini 2.x and 3.x Google models                                    |
+| Google Gemini Interactions | `ProviderGoogleGeminiInteractions` | Google Interactions     | Gemini 4 and above                                                  |
+| Hugging Face Router        | `ProviderHuggingFace`              | OpenAI Chat Completions | Routed open models and backend variants                             |
+| LocalAI                    | `ProviderLocalAI`                  | OpenAI Responses        | Local model presets                                                 |
+| LM Studio                  | `ProviderLMStudio`                 | OpenAI Responses        | Local model presets                                                 |
+| llama.cpp                  | `ProviderLlamaCPP`                 | OpenAI Chat Completions | Llama and Qwen local models                                         |
+| Meta                       | `ProviderMeta`                     | OpenAI Responses        | Muse Spark                                                          |
+| MiniMax                    | `ProviderMiniMax`                  | OpenAI Responses        | MiniMax M2 and M3                                                   |
+| Mistral                    | `ProviderMistral`                  | OpenAI Chat Completions | Mistral and Devstral                                                |
+| Moonshot                   | `ProviderMoonshot`                 | Anthropic Messages      | Kimi                                                                |
+| Ollama                     | `ProviderOllama`                   | Anthropic Messages      | Ollama-tagged local models                                          |
+| OpenAI Chat                | `ProviderOpenAIChat`               | OpenAI Chat Completions | GPT 4.1 and GPT-4o                                                  |
+| OpenAI Responses           | `ProviderOpenAIResponses`          | OpenAI Responses        | GPT-5 and GPT-OSS families                                          |
+| OpenRouter                 | `ProviderOpenRouter`               | OpenAI Responses        | Routed DeepSeek, Qwen, MiniMax, Kimi, GLM, Xiaomi, and other models |
+| QwenCloud                  | `ProviderQwen`                     | OpenAI Responses        | Qwen, Qwen Coder, and Qwen Character                                |
+| SGLang                     | `ProviderSGLang`                   | OpenAI Responses        | Local model presets                                                 |
+| vLLM                       | `ProviderVLLM`                     | OpenAI Responses        | Local model presets                                                 |
+| xAI                        | `ProviderXAI`                      | OpenAI Responses        | Grok                                                                |
+| Xiaomi                     | `ProviderXiaomi`                   | OpenAI Responses        | MiMo                                                                |
+| Z.AI                       | `ProviderZAI`                      | OpenAI Chat Completions | GLM                                                                 |
+| Z.AI Coding Plan           | `ProviderZAICodingPlan`            | OpenAI Responses        | GLM Coding Plan models                                              |
 
 The exact available model IDs for a provider are available through `ModelPresetIDs`.
 

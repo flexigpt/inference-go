@@ -28,6 +28,10 @@ const (
 	DefaultGoogleGenerateContentPrefix = "/"
 	//nolint:gosec // APIKeyHeaderKey is the key string and not the key itself.
 	DefaultGoogleGenerateContentAPIKeyHeaderKey = "x-goog-api-key"
+
+	DefaultGoogleInteractionsOrigin          = DefaultGoogleGenerateContentOrigin
+	DefaultGoogleInteractionsPrefix          = "/"
+	DefaultGoogleInteractionsAPIKeyHeaderKey = DefaultGoogleGenerateContentAPIKeyHeaderKey
 )
 
 var DefaultBaseHeaders = map[string]string{DefaultContentTypeHeaderKey: DefaultContentTypeHeader}
@@ -42,6 +46,7 @@ const (
 	ProviderSDKTypeOpenAIChatCompletions ProviderSDKType = "providerSDKTypeOpenAIChatCompletions"
 	ProviderSDKTypeOpenAIResponses       ProviderSDKType = "providerSDKTypeOpenAIResponses"
 	ProviderSDKTypeGoogleGenerateContent ProviderSDKType = "providerSDKTypeGoogleGenerateContent"
+	ProviderSDKTypeGoogleInteractions    ProviderSDKType = "providerSDKTypeGoogleInteractions"
 )
 
 // ProviderParam represents information about a provider.

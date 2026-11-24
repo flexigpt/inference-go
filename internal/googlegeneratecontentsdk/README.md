@@ -2,6 +2,10 @@
 
 Use this adapter for Google Gemini through the Google Generate Content API.
 
+Gemini 4 presets use the separate Google Interactions adapter through
+`modelpreset.ProviderGoogleGeminiInteractions`. This adapter remains the
+Generate Content route for Gemini 2.5 and Gemini 3.x presets.
+
 Preset-backed provider:
 
 - Google Gemini

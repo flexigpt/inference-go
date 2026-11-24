@@ -30,7 +30,7 @@ Install with `go get github.com/flexigpt/inference-go`.
 ## What you get
 
 - One completion API through `ProviderSetAPI`
-- Anthropic Messages, OpenAI Responses, OpenAI Chat Completions, and Google Generate Content API format adapters
+- Anthropic Messages, OpenAI Responses, OpenAI Chat Completions, Google Generate Content, and Google Interactions adapters
 - Provider and model presets through `modelpreset`
 - Text, image, and file input where supported by the selected model
 - Text and thinking streaming where the upstream API exposes it
@@ -48,30 +48,31 @@ Install with `go get github.com/flexigpt/inference-go`.
 
 The preset catalog currently includes the following providers.
 
-| Provider preset         | Adapter family          | Typical use                                            |
-| ----------------------- | ----------------------- | ------------------------------------------------------ |
-| Anthropic               | Anthropic Messages      | Claude models and Anthropic-native thinking/tool flows |
-| DeepSeek                | OpenAI Responses        | DeepSeek hosted models                                 |
-| Google Gemini           | Google Generate Content | Gemini models, native thinking, grounding, and files   |
-| Hugging Face Router     | OpenAI Chat Completions | Routed hosted models with backend-specific identities  |
-| LocalAI                 | OpenAI Responses        | Local OpenAI-compatible serving                        |
-| LM Studio               | OpenAI Responses        | Local desktop/server inference                         |
-| llama.cpp               | OpenAI Chat Completions | Local OpenAI-compatible serving                        |
-| Meta                    | OpenAI Responses        | Meta-hosted Muse Spark models                          |
-| MiniMax                 | OpenAI Responses        | MiniMax hosted models                                  |
-| Mistral                 | OpenAI Chat Completions | Mistral-hosted models                                  |
-| Moonshot                | Anthropic Messages      | Kimi and Moonshot models                               |
-| Ollama                  | Anthropic Messages      | Local Anthropic-compatible serving                     |
-| OpenAI Chat Completions | OpenAI Chat Completions | OpenAI Chat models and compatible endpoints            |
-| OpenAI Responses        | OpenAI Responses        | OpenAI Responses models                                |
-| OpenRouter              | OpenAI Responses        | Routed models with model-specific overrides            |
-| QwenCloud               | OpenAI Responses        | Qwen/DashScope compatible-mode models                  |
-| SGLang                  | OpenAI Responses        | Self-hosted OpenAI-compatible serving                  |
-| vLLM                    | OpenAI Responses        | Self-hosted OpenAI-compatible serving                  |
-| xAI                     | OpenAI Responses        | Grok and xAI-hosted models                             |
-| Xiaomi                  | OpenAI Responses        | MiMo hosted models                                     |
-| Z.AI                    | OpenAI Chat Completions | Z.AI pay-as-you-go models                              |
-| Z.AI Coding Plan        | OpenAI Responses        | Z.AI Coding Plan models and credentials                |
+| Provider preset            | Adapter family          | Typical use                                            |
+| -------------------------- | ----------------------- | ------------------------------------------------------ |
+| Anthropic                  | Anthropic Messages      | Claude models and Anthropic-native thinking/tool flows |
+| DeepSeek                   | OpenAI Responses        | DeepSeek hosted models                                 |
+| Google Gemini              | Google Generate Content | Gemini 3 models, native thinking, grounding, and files |
+| Google Gemini Interactions | Google Interactions     | Gemini 4 inference, thinking, tools, and files         |
+| Hugging Face Router        | OpenAI Chat Completions | Routed hosted models with backend-specific identities  |
+| LocalAI                    | OpenAI Responses        | Local OpenAI-compatible serving                        |
+| LM Studio                  | OpenAI Responses        | Local desktop/server inference                         |
+| llama.cpp                  | OpenAI Chat Completions | Local OpenAI-compatible serving                        |
+| Meta                       | OpenAI Responses        | Meta-hosted Muse Spark models                          |
+| MiniMax                    | OpenAI Responses        | MiniMax hosted models                                  |
+| Mistral                    | OpenAI Chat Completions | Mistral-hosted models                                  |
+| Moonshot                   | Anthropic Messages      | Kimi and Moonshot models                               |
+| Ollama                     | Anthropic Messages      | Local Anthropic-compatible serving                     |
+| OpenAI Chat Completions    | OpenAI Chat Completions | OpenAI Chat models and compatible endpoints            |
+| OpenAI Responses           | OpenAI Responses        | OpenAI Responses models                                |
+| OpenRouter                 | OpenAI Responses        | Routed models with model-specific overrides            |
+| QwenCloud                  | OpenAI Responses        | Qwen/DashScope compatible-mode models                  |
+| SGLang                     | OpenAI Responses        | Self-hosted OpenAI-compatible serving                  |
+| vLLM                       | OpenAI Responses        | Self-hosted OpenAI-compatible serving                  |
+| xAI                        | OpenAI Responses        | Grok and xAI-hosted models                             |
+| Xiaomi                     | OpenAI Responses        | MiMo hosted models                                     |
+| Z.AI                       | OpenAI Chat Completions | Z.AI pay-as-you-go models                              |
+| Z.AI Coding Plan           | OpenAI Responses        | Z.AI Coding Plan models and credentials                |
 
 A provider adapter is not a promise that every model supports every adapter feature. The selected model preset and its effective capability resolver determine the actual request surface.
 
@@ -182,6 +183,7 @@ Applications own conversation history. Preserve tool-call IDs and provider-nativ
 | OpenAI Responses behavior         | [`internal/openairesponsessdk/README.md`](./internal/openairesponsessdk/README.md)             |
 | OpenAI Chat Completions behavior  | [`internal/openaichatsdk/README.md`](./internal/openaichatsdk/README.md)                       |
 | Google Generate Content behavior  | [`internal/googlegeneratecontentsdk/README.md`](./internal/googlegeneratecontentsdk/README.md) |
+| Google Interactions behavior      | [`internal/googleinteractionssdk/README.md`](./internal/googleinteractionssdk/README.md)       |
 
 ## Agent skills
 

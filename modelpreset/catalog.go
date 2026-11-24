@@ -59,28 +59,29 @@ type Catalog struct {
 }
 
 var catalogProviders = map[spec.ProviderName]ProviderPreset{
-	ProviderAnthropic:       providerAnthropic,
-	ProviderDeepSeek:        providerDeepSeek,
-	ProviderLocalAI:         providerLocalAI,
-	ProviderLMStudio:        providerLMStudio,
-	ProviderGoogleGemini:    providerGoogleGemini,
-	ProviderHuggingFace:     providerHuggingFace,
-	ProviderLlamaCPP:        providerLlamaCPP,
-	ProviderMeta:            providerMeta,
-	ProviderMiniMax:         providerMiniMax,
-	ProviderMistral:         providerMistral,
-	ProviderMoonshot:        providerMoonshot,
-	ProviderOllama:          providerOllama,
-	ProviderOpenAIChat:      providerOpenAIChat,
-	ProviderOpenAIResponses: providerOpenAIResponses,
-	ProviderOpenRouter:      providerOpenRouter,
-	ProviderQwen:            providerQwen,
-	ProviderSGLang:          providerSGLang,
-	ProviderVLLM:            providerVLLM,
-	ProviderXAI:             providerXAI,
-	ProviderXiaomi:          providerXiaomi,
-	ProviderZAI:             providerZAI,
-	ProviderZAICodingPlan:   providerZAICodingPlan,
+	ProviderAnthropic:                providerAnthropic,
+	ProviderDeepSeek:                 providerDeepSeek,
+	ProviderLocalAI:                  providerLocalAI,
+	ProviderLMStudio:                 providerLMStudio,
+	ProviderGoogleGemini:             providerGoogleGemini,
+	ProviderGoogleGeminiInteractions: providerGoogleGeminiInteractions,
+	ProviderHuggingFace:              providerHuggingFace,
+	ProviderLlamaCPP:                 providerLlamaCPP,
+	ProviderMeta:                     providerMeta,
+	ProviderMiniMax:                  providerMiniMax,
+	ProviderMistral:                  providerMistral,
+	ProviderMoonshot:                 providerMoonshot,
+	ProviderOllama:                   providerOllama,
+	ProviderOpenAIChat:               providerOpenAIChat,
+	ProviderOpenAIResponses:          providerOpenAIResponses,
+	ProviderOpenRouter:               providerOpenRouter,
+	ProviderQwen:                     providerQwen,
+	ProviderSGLang:                   providerSGLang,
+	ProviderVLLM:                     providerVLLM,
+	ProviderXAI:                      providerXAI,
+	ProviderXiaomi:                   providerXiaomi,
+	ProviderZAI:                      providerZAI,
+	ProviderZAICodingPlan:            providerZAICodingPlan,
 }
 
 func DefaultCatalog() Catalog {
@@ -588,7 +589,8 @@ func isCatalogProviderSDKType(sdkType spec.ProviderSDKType) bool {
 	case spec.ProviderSDKTypeAnthropic,
 		spec.ProviderSDKTypeOpenAIChatCompletions,
 		spec.ProviderSDKTypeOpenAIResponses,
-		spec.ProviderSDKTypeGoogleGenerateContent:
+		spec.ProviderSDKTypeGoogleGenerateContent,
+		spec.ProviderSDKTypeGoogleInteractions:
 		return true
 	default:
 		return false

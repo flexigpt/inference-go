@@ -46,6 +46,7 @@ A compatible HTTP endpoint does not automatically support the complete feature s
 - `internal/openairesponsessdk/capability.go`
 - `internal/openaichatsdk/capability.go`
 - `internal/googlegeneratecontentsdk/capability.go`
+- `internal/googleinteractionssdk/capability.go`
 - `capabilityoverride`
 - `modelpreset`
 
@@ -58,6 +59,7 @@ A compatible HTTP endpoint does not automatically support the complete feature s
   - OpenAI Responses
   - OpenAI Chat Completions
   - Google Generate Content
+  - Google Interactions
   - Anthropic-compatible provider presets
   - OpenAI Responses-compatible provider presets
   - OpenAI Chat Completions-compatible provider presets
@@ -390,6 +392,55 @@ Reasoning still executes when `IncludeThoughts=false`; Google simply does not re
 - Multi-candidate response handling
 - Image, audio, and video output
 
+### Google Interactions adapter
+
+Source files:
+
+- `internal/googleinteractionssdk/api_google_interactions.go`
+- `internal/googleinteractionssdk/request_processing.go`
+- `internal/googleinteractionssdk/output_processing.go`
+- `internal/googleinteractionssdk/streaming.go`
+- `internal/googleinteractionssdk/capability.go`
+
+| Capability             | Support                                                        |
+| ---------------------- | -------------------------------------------------------------- |
+| Text input/output      | Supported                                                      |
+| Image input            | Supported for documented image MIME types                      |
+| File input             | Supported for documented document MIME types                   |
+| Text streaming         | Supported                                                      |
+| Thinking streaming     | Supported for thought summaries                                |
+| Reasoning type         | Level-based reasoning                                          |
+| Reasoning history      | Opaque signed thought steps only                               |
+| Summary style          | `omitted` maps to `none`; other supported styles map to `auto` |
+| Reasoning context/mode | Unsupported and dropped with warnings                          |
+| JSON Schema output     | Supported through text response format                         |
+| Output verbosity       | Unsupported and dropped with warning                           |
+| Stop sequences         | Supported                                                      |
+| Function tools         | Supported                                                      |
+| Custom tools           | Supported through function declarations                        |
+| Web search             | Google Search grounding                                        |
+| Tool policies          | `auto`, `any`, `tool`, and `none`                              |
+| Parallel tool control  | `DisableParallel` is not enforceable                           |
+| Cache control          | Unsupported and dropped with warning                           |
+| URL citations          | Unsupported; result steps lack URL/span metadata               |
+| Output modalities      | Text only in the normalized surface                            |
+
+The adapter uses `Interactions.Create` for both non-streaming and streaming
+requests. A request with `stream=true` returns the SDK
+`InteractionSSEStreamEvent` iterator, which emits typed interaction events.
+The adapter explicitly sets `store=false` and `background=false`, and disables SDK
+automatic continuation.
+
+The adapter does not expose managed agents, stored interactions,
+previous-interaction identifiers, continuation-token resumption, background
+execution, safety settings, interaction lifecycle methods, or advanced
+provider-native tool types.
+
+Google Search result steps are represented as normalized web-search outputs.
+The attached Interactions model exposes search suggestions but does not expose
+source URLs, titles, or citation spans. The adapter does not create synthetic
+URL citations.
+
 ## Preset provider catalog reference
 
 The catalog is implemented in `modelpreset`.
@@ -398,57 +449,59 @@ Provider and model presets are static reviewed defaults. They are not runtime di
 
 ### Complete provider matrix
 
-| Provider preset     | Adapter family                     | Catalog model families                         | Notable capability posture                                                                     |
-| ------------------- | ---------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| Anthropic           | Anthropic Messages                 | Claude Fable, Opus, Sonnet, Haiku              | Anthropic-native reasoning, cache controls, tools, and summary translation                     |
-| DeepSeek            | OpenAI Responses-compatible        | DeepSeek V4                                    | Text-focused profile with constrained tools and level-based reasoning                          |
-| Google Gemini       | Google Generate Content            | Gemini 2.5 and Gemini 3.x                      | Native thought signatures, reasoning budgets/levels, grounding, files, and summary translation |
-| Hugging Face Router | OpenAI Chat Completions-compatible | Routed open models                             | Backend-qualified model IDs and model-specific overrides                                       |
-| LocalAI             | OpenAI Responses-compatible        | Local model presets                            | Local deployment behavior is model/server dependent                                            |
-| LM Studio           | OpenAI Responses-compatible        | Local model presets                            | Local deployment behavior is model/server dependent                                            |
-| llama.cpp           | OpenAI Chat Completions-compatible | Llama and Qwen local presets                   | Local deployment behavior is model/server dependent                                            |
-| Meta                | OpenAI Responses-compatible        | Muse Spark 1.1, 1.2, 1.3, Contributor variants | Summary style enabled; context/mode disabled                                                   |
-| MiniMax             | OpenAI Responses-compatible        | MiniMax M2 and M3                              | Model-specific reasoning with text/tool restrictions                                           |
-| Mistral             | OpenAI Chat Completions-compatible | Mistral and Devstral                           | Mistral-specific parameter dialect                                                             |
-| Moonshot            | Anthropic Messages-compatible      | Kimi models                                    | Model-specific Anthropic-compatible reasoning/tool behavior                                    |
-| Ollama              | Anthropic Messages-compatible      | Ollama-tagged local models                     | Local Anthropic-compatible behavior with constrained tool policy                               |
-| OpenAI Chat         | OpenAI Chat Completions            | GPT-4.1 and GPT-4o                             | Chat Completions transport and model-specific no-reasoning overrides                           |
-| OpenAI Responses    | OpenAI Responses                   | GPT-5 and GPT-6 families                       | Summary, context, and mode enabled                                                             |
-| OpenRouter          | OpenAI Responses-compatible        | Routed hosted models                           | Model-specific modalities, output formats, tools, and reasoning levels                         |
-| QwenCloud           | OpenAI Responses-compatible        | Qwen, Qwen Coder, Character models             | DashScope compatible-mode behavior with provider/model restrictions                            |
-| SGLang              | OpenAI Responses-compatible        | Local model presets                            | Self-hosted behavior with model-specific overrides                                             |
-| vLLM                | OpenAI Responses-compatible        | Local model presets                            | Self-hosted behavior with model-specific overrides                                             |
-| xAI                 | OpenAI Responses-compatible        | Grok models                                    | Model-specific reasoning, encrypted reasoning, cache, tool, and output support                 |
-| Xiaomi              | OpenAI Responses-compatible        | MiMo models                                    | Text-focused provider defaults with model-specific image support                               |
-| Z.AI                | OpenAI Chat Completions-compatible | GLM models                                     | Pay-as-you-go Chat Completions endpoint                                                        |
-| Z.AI Coding Plan    | OpenAI Responses-compatible        | GLM Coding Plan models                         | Separate endpoint/credential route with model-specific overrides                               |
+| Provider preset            | Adapter family                     | Catalog model families                         | Notable capability posture                                                                     |
+| -------------------------- | ---------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Anthropic                  | Anthropic Messages                 | Claude Fable, Opus, Sonnet, Haiku              | Anthropic-native reasoning, cache controls, tools, and summary translation                     |
+| DeepSeek                   | OpenAI Responses-compatible        | DeepSeek V4                                    | Text-focused profile with constrained tools and level-based reasoning                          |
+| Google Gemini              | Google Generate Content            | Gemini 2.5 and Gemini 3.x                      | Native thought signatures, reasoning budgets/levels, grounding, files, and summary translation |
+| Google Gemini Interactions | Google Interactions                | Gemini 4 Neon, Carbon, Hydrogen, Argon         | Stateless create, level reasoning, signed thoughts, tools, files, and grounding                |
+| Hugging Face Router        | OpenAI Chat Completions-compatible | Routed open models                             | Backend-qualified model IDs and model-specific overrides                                       |
+| LocalAI                    | OpenAI Responses-compatible        | Local model presets                            | Local deployment behavior is model/server dependent                                            |
+| LM Studio                  | OpenAI Responses-compatible        | Local model presets                            | Local deployment behavior is model/server dependent                                            |
+| llama.cpp                  | OpenAI Chat Completions-compatible | Llama and Qwen local presets                   | Local deployment behavior is model/server dependent                                            |
+| Meta                       | OpenAI Responses-compatible        | Muse Spark 1.1, 1.2, 1.3, Contributor variants | Summary style enabled; context/mode disabled                                                   |
+| MiniMax                    | OpenAI Responses-compatible        | MiniMax M2 and M3                              | Model-specific reasoning with text/tool restrictions                                           |
+| Mistral                    | OpenAI Chat Completions-compatible | Mistral and Devstral                           | Mistral-specific parameter dialect                                                             |
+| Moonshot                   | Anthropic Messages-compatible      | Kimi models                                    | Model-specific Anthropic-compatible reasoning/tool behavior                                    |
+| Ollama                     | Anthropic Messages-compatible      | Ollama-tagged local models                     | Local Anthropic-compatible behavior with constrained tool policy                               |
+| OpenAI Chat                | OpenAI Chat Completions            | GPT-4.1 and GPT-4o                             | Chat Completions transport and model-specific no-reasoning overrides                           |
+| OpenAI Responses           | OpenAI Responses                   | GPT-5 and GPT-6 families                       | Summary, context, and mode enabled                                                             |
+| OpenRouter                 | OpenAI Responses-compatible        | Routed hosted models                           | Model-specific modalities, output formats, tools, and reasoning levels                         |
+| QwenCloud                  | OpenAI Responses-compatible        | Qwen, Qwen Coder, Character models             | DashScope compatible-mode behavior with provider/model restrictions                            |
+| SGLang                     | OpenAI Responses-compatible        | Local model presets                            | Self-hosted behavior with model-specific overrides                                             |
+| vLLM                       | OpenAI Responses-compatible        | Local model presets                            | Self-hosted behavior with model-specific overrides                                             |
+| xAI                        | OpenAI Responses-compatible        | Grok models                                    | Model-specific reasoning, encrypted reasoning, cache, tool, and output support                 |
+| Xiaomi                     | OpenAI Responses-compatible        | MiMo models                                    | Text-focused provider defaults with model-specific image support                               |
+| Z.AI                       | OpenAI Chat Completions-compatible | GLM models                                     | Pay-as-you-go Chat Completions endpoint                                                        |
+| Z.AI Coding Plan           | OpenAI Responses-compatible        | GLM Coding Plan models                         | Separate endpoint/credential route with model-specific overrides                               |
 
 ### Provider reasoning-control matrix
 
-| Provider            | Reasoning configuration                        | Summary style                              | Context/mode |
-| ------------------- | ---------------------------------------------- | ------------------------------------------ | ------------ |
-| Anthropic           | Hybrid-budget and level-based, model-dependent | Anthropic display translation              | Unsupported  |
-| DeepSeek            | Level-based                                    | Unsupported                                | Unsupported  |
-| Google Gemini       | Hybrid-budget and level-based                  | `IncludeThoughts` translation              | Unsupported  |
-| Hugging Face Router | Model-dependent                                | Model-dependent                            | Unsupported  |
-| LocalAI             | Model-dependent                                | Model-dependent                            | Unsupported  |
-| LM Studio           | Model-dependent                                | Model-dependent                            | Unsupported  |
-| llama.cpp           | Model-dependent                                | Model-dependent                            | Unsupported  |
-| Meta                | Level-based                                    | OpenAI Responses summary mapping           | Unsupported  |
-| MiniMax             | Model-dependent level-based                    | Unsupported                                | Unsupported  |
-| Mistral             | Model-dependent level-based                    | Unsupported                                | Unsupported  |
-| Moonshot            | Model-dependent hybrid/level-based             | Unsupported                                | Unsupported  |
-| Ollama              | Model-dependent                                | Unsupported                                | Unsupported  |
-| OpenAI Chat         | Model-dependent level-based                    | Unsupported                                | Unsupported  |
-| OpenAI Responses    | Level-based                                    | Native, with `omitted` mapped to `concise` | Supported    |
-| OpenRouter          | Model-dependent level-based                    | Model-dependent                            | Unsupported  |
-| QwenCloud           | Level-based                                    | Unsupported                                | Unsupported  |
-| SGLang              | Model-dependent                                | Model-dependent                            | Unsupported  |
-| vLLM                | Model-dependent                                | Model-dependent                            | Unsupported  |
-| xAI                 | Model-dependent level-based                    | Model-dependent                            | Unsupported  |
-| Xiaomi              | Level-based                                    | Unsupported                                | Unsupported  |
-| Z.AI                | Provider/model dependent                       | Unsupported                                | Unsupported  |
-| Z.AI Coding Plan    | Model-dependent                                | Model-dependent                            | Unsupported  |
+| Provider                   | Reasoning configuration                        | Summary style                              | Context/mode |
+| -------------------------- | ---------------------------------------------- | ------------------------------------------ | ------------ |
+| Anthropic                  | Hybrid-budget and level-based, model-dependent | Anthropic display translation              | Unsupported  |
+| DeepSeek                   | Level-based                                    | Unsupported                                | Unsupported  |
+| Google Gemini              | Hybrid-budget and level-based                  | `IncludeThoughts` translation              | Unsupported  |
+| Google Gemini Interactions | Level-based, model-dependent                   | `thinking_summaries` auto/none             | Unsupported  |
+| Hugging Face Router        | Model-dependent                                | Model-dependent                            | Unsupported  |
+| LocalAI                    | Model-dependent                                | Model-dependent                            | Unsupported  |
+| LM Studio                  | Model-dependent                                | Model-dependent                            | Unsupported  |
+| llama.cpp                  | Model-dependent                                | Model-dependent                            | Unsupported  |
+| Meta                       | Level-based                                    | OpenAI Responses summary mapping           | Unsupported  |
+| MiniMax                    | Model-dependent level-based                    | Unsupported                                | Unsupported  |
+| Mistral                    | Model-dependent level-based                    | Unsupported                                | Unsupported  |
+| Moonshot                   | Model-dependent hybrid/level-based             | Unsupported                                | Unsupported  |
+| Ollama                     | Model-dependent                                | Unsupported                                | Unsupported  |
+| OpenAI Chat                | Model-dependent level-based                    | Unsupported                                | Unsupported  |
+| OpenAI Responses           | Level-based                                    | Native, with `omitted` mapped to `concise` | Supported    |
+| OpenRouter                 | Model-dependent level-based                    | Model-dependent                            | Unsupported  |
+| QwenCloud                  | Level-based                                    | Unsupported                                | Unsupported  |
+| SGLang                     | Model-dependent                                | Model-dependent                            | Unsupported  |
+| vLLM                       | Model-dependent                                | Model-dependent                            | Unsupported  |
+| xAI                        | Model-dependent level-based                    | Model-dependent                            | Unsupported  |
+| Xiaomi                     | Level-based                                    | Unsupported                                | Unsupported  |
+| Z.AI                       | Provider/model dependent                       | Unsupported                                | Unsupported  |
+| Z.AI Coding Plan           | Model-dependent                                | Model-dependent                            | Unsupported  |
 
 ### Meta Muse Spark capability profile
 

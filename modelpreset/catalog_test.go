@@ -60,6 +60,7 @@ func TestCatalogContainsAllRegisteredProviders(t *testing.T) {
 				ProviderAnthropic,
 				ProviderDeepSeek,
 				ProviderGoogleGemini,
+				ProviderGoogleGeminiInteractions,
 				ProviderHuggingFace,
 				ProviderLlamaCPP,
 				ProviderLMStudio,

@@ -22,6 +22,7 @@ import (
 	"github.com/flexigpt/inference-go/capabilityoverride"
 	"github.com/flexigpt/inference-go/internal/anthropicsdk"
 	"github.com/flexigpt/inference-go/internal/googlegeneratecontentsdk"
+	"github.com/flexigpt/inference-go/internal/googleinteractionssdk"
 	"github.com/flexigpt/inference-go/modelpreset"
 
 	"github.com/flexigpt/inference-go/internal/logutil"
@@ -306,7 +307,8 @@ func isProviderSDKTypeSupported(t spec.ProviderSDKType) bool {
 	if t == spec.ProviderSDKTypeAnthropic ||
 		t == spec.ProviderSDKTypeOpenAIChatCompletions ||
 		t == spec.ProviderSDKTypeOpenAIResponses ||
-		t == spec.ProviderSDKTypeGoogleGenerateContent {
+		t == spec.ProviderSDKTypeGoogleGenerateContent ||
+		t == spec.ProviderSDKTypeGoogleInteractions {
 		return true
 	}
 	return false
@@ -325,6 +327,9 @@ func getProviderAPI(p spec.ProviderParam, dbg spec.CompletionDebugger) (sdkutil.
 
 	case spec.ProviderSDKTypeGoogleGenerateContent:
 		return googlegeneratecontentsdk.NewGoogleGenerateContentAPI(p, dbg)
+
+	case spec.ProviderSDKTypeGoogleInteractions:
+		return googleinteractionssdk.NewGoogleInteractionsAPI(p, dbg)
 	}
 
 	return nil, errors.New("invalid provider api type")
