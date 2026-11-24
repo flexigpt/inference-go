@@ -65,3 +65,47 @@ func TestGoogleInteractionsStreamPartialResponsePreservesTextAndThought(t *testi
 		t.Fatalf("unexpected text output %#v", response.Outputs[1])
 	}
 }
+
+func TestGoogleInteractionsStreamFallbackUsesTerminalMetadata(t *testing.T) {
+	state := &googleInteractionsStreamState{
+		interactionID: "interaction_1",
+		status:        spec.StatusCompleted,
+		usage: &spec.Usage{
+			InputTokensTotal:  12,
+			InputTokensCached: 4,
+			OutputTokens:      5,
+			ReasoningTokens:   3,
+		},
+	}
+	state.text.WriteString("streamed answer")
+	state.thinking.WriteString("streamed thought")
+
+	response := &spec.FetchCompletionResponse{
+		Usage: state.responseUsage(),
+	}
+	appendGoogleInteractionsStreamFallback(response, state)
+
+	if response.Usage.InputTokensTotal != 12 ||
+		response.Usage.OutputTokens != 5 {
+		t.Fatalf("unexpected usage %#v", response.Usage)
+	}
+	if len(response.Outputs) != 2 {
+		t.Fatalf("output count got %d want 2", len(response.Outputs))
+	}
+
+	reasoning := response.Outputs[0].ReasoningMessage
+	if reasoning == nil ||
+		reasoning.ID != "interaction_1" ||
+		reasoning.Status != spec.StatusCompleted {
+		t.Fatalf("unexpected reasoning output %#v", reasoning)
+	}
+
+	message := response.Outputs[1].OutputMessage
+	if message == nil ||
+		message.ID != "interaction_1" ||
+		message.Status != spec.StatusCompleted ||
+		message.Contents[0].TextItem == nil ||
+		message.Contents[0].TextItem.Text != "streamed answer" {
+		t.Fatalf("unexpected output message %#v", message)
+	}
+}

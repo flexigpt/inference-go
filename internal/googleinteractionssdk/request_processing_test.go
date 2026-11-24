@@ -252,6 +252,13 @@ func TestGoogleInteractionsFunctionResultSupportsRichContentList(t *testing.T) {
 					ImageMIME: "image/png",
 				},
 			},
+			{
+				Kind: spec.ContentItemKindFile,
+				FileItem: &spec.ContentItemFile{
+					FileData: "Y3N2",
+					FileMIME: "text/csv",
+				},
+			},
 		},
 	}
 
@@ -263,11 +270,20 @@ func TestGoogleInteractionsFunctionResultSupportsRichContentList(t *testing.T) {
 		t.Fatalf("missing function result step %#v", step)
 	}
 	union := step.FunctionResultStep.Result
-	if len(union.ArrayOfFunctionResultSubcontent) != 2 {
+	if len(union.ArrayOfFunctionResultSubcontent) != 3 {
 		t.Fatalf(
-			"expected text plus image subcontents, got %#v",
+			"expected text, image, and document subcontents, got %#v",
 			union,
 		)
+	}
+	if union.ArrayOfFunctionResultSubcontent[0].TextContent == nil {
+		t.Fatalf("missing text subcontent %#v", union)
+	}
+	if union.ArrayOfFunctionResultSubcontent[1].ImageContent == nil {
+		t.Fatalf("missing image subcontent %#v", union)
+	}
+	if union.ArrayOfFunctionResultSubcontent[2].DocumentContent == nil {
+		t.Fatalf("missing document subcontent %#v", union)
 	}
 }
 

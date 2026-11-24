@@ -140,6 +140,11 @@ func (api *GoogleInteractionsAPI) doStreaming(
 
 		if completed := event.GetDataInteractionCompleted(); completed != nil {
 			in := completed.GetInteraction()
+			state.interactionID = googleInteractionsString(in.ID)
+			state.status = googleInteractionsStatus(
+				strings.ToLower(googleInteractionsString(in.Status)),
+			)
+			state.usage = usageFromGoogleInteraction(in.Usage)
 			state.response, state.responseErr = responseFromGoogleInteractionSSE(
 				&in,
 				toolChoiceNameMap,
@@ -154,7 +159,6 @@ func (api *GoogleInteractionsAPI) doStreaming(
 				"google interactions: stream emitted an error event",
 			)
 			state.terminal = true
-			streamErr = state.eventErr
 			break
 		}
 	}
@@ -193,6 +197,9 @@ type googleInteractionsStreamState struct {
 	text             strings.Builder
 	thinking         strings.Builder
 	thoughtSignature string
+	interactionID    string
+	status           spec.Status
+	usage            *spec.Usage
 	terminal         bool
 	eventErr         error
 	response         *spec.FetchCompletionResponse
@@ -201,13 +208,15 @@ type googleInteractionsStreamState struct {
 
 func (state *googleInteractionsStreamState) partialResponse() *spec.FetchCompletionResponse {
 	response := &spec.FetchCompletionResponse{
-		Usage: &spec.Usage{},
+		Usage: state.responseUsage(),
 	}
+	status := state.responseStatus()
 
 	if state.thoughtSignature != "" || state.thinking.Len() > 0 {
 		reasoning := &spec.ReasoningContent{
+			ID:        state.interactionID,
 			Role:      spec.RoleAssistant,
-			Status:    spec.StatusIncomplete,
+			Status:    status,
 			Signature: state.thoughtSignature,
 		}
 		if thought := state.thinking.String(); thought != "" {
@@ -223,8 +232,9 @@ func (state *googleInteractionsStreamState) partialResponse() *spec.FetchComplet
 		response.Outputs = append(response.Outputs, spec.OutputUnion{
 			Kind: spec.OutputKindOutputMessage,
 			OutputMessage: &spec.InputOutputContent{
+				ID:     state.interactionID,
 				Role:   spec.RoleAssistant,
-				Status: spec.StatusIncomplete,
+				Status: status,
 				Contents: []spec.InputOutputContentItemUnion{{
 					Kind:     spec.ContentItemKindText,
 					TextItem: &spec.ContentItemText{Text: text},
@@ -247,8 +257,9 @@ func appendGoogleInteractionsStreamFallback(
 	if !hasGoogleInteractionsReasoningOutput(response.Outputs) &&
 		(state.thoughtSignature != "" || state.thinking.Len() > 0) {
 		reasoning := &spec.ReasoningContent{
+			ID:        state.interactionID,
 			Role:      spec.RoleAssistant,
-			Status:    spec.StatusIncomplete,
+			Status:    state.responseStatus(),
 			Signature: state.thoughtSignature,
 		}
 		if thought := state.thinking.String(); thought != "" {
@@ -265,8 +276,9 @@ func appendGoogleInteractionsStreamFallback(
 		response.Outputs = append(response.Outputs, spec.OutputUnion{
 			Kind: spec.OutputKindOutputMessage,
 			OutputMessage: &spec.InputOutputContent{
+				ID:     state.interactionID,
 				Role:   spec.RoleAssistant,
-				Status: spec.StatusIncomplete,
+				Status: state.responseStatus(),
 				Contents: []spec.InputOutputContentItemUnion{{
 					Kind:     spec.ContentItemKindText,
 					TextItem: &spec.ContentItemText{Text: state.text.String()},
@@ -274,6 +286,20 @@ func appendGoogleInteractionsStreamFallback(
 			},
 		})
 	}
+}
+
+func (state *googleInteractionsStreamState) responseStatus() spec.Status {
+	if state != nil && state.status != spec.StatusNone {
+		return state.status
+	}
+	return spec.StatusIncomplete
+}
+
+func (state *googleInteractionsStreamState) responseUsage() *spec.Usage {
+	if state != nil && state.usage != nil {
+		return state.usage
+	}
+	return &spec.Usage{}
 }
 
 func googleInteractionsStreamText(content any) string {

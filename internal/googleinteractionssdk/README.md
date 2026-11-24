@@ -35,23 +35,23 @@ error because continuation requires stateful provider behavior.
 
 ## Supported normalized capabilities
 
-| Capability | Support |
-| --- | --- |
-| Text input and output | Supported |
-| Image input | Supported for documented image MIME types |
-| Document input | Supported for documented document MIME types |
-| Text streaming | Supported |
-| Thinking-summary streaming | Supported |
-| Reasoning | `minimal`, `low`, `medium`, `high`, and `xhigh` |
-| Reasoning continuation | Same-route signed thought steps only |
-| JSON Schema output | Supported through text response format |
-| Stop sequences | Supported |
-| Function tools | Supported |
-| Custom tools | Supported through function declarations |
-| Function-tool result content | String or text/image/document content list |
-| Google Search grounding | Supported |
-| Usage | Input, cached input, output, and thought tokens |
-| HTTP debugging | Supported |
+| Capability                   | Support                                         |
+| ---------------------------- | ----------------------------------------------- |
+| Text input and output        | Supported                                       |
+| Image input                  | Supported for documented image MIME types       |
+| Document input               | Supported for documented document MIME types    |
+| Text streaming               | Supported                                       |
+| Thinking-summary streaming   | Supported                                       |
+| Reasoning                    | `minimal`, `low`, `medium`, `high`, and `xhigh` |
+| Reasoning continuation       | Same-route signed thought steps only            |
+| JSON Schema output           | Supported through text response format          |
+| Stop sequences               | Supported                                       |
+| Function tools               | Supported                                       |
+| Custom tools                 | Supported through function declarations         |
+| Function-tool result content | String or text/image/document content list      |
+| Google Search grounding      | Supported                                       |
+| Usage                        | Input, cached input, output, and thought tokens |
+| HTTP debugging               | Supported                                       |
 
 ## Reasoning
 
