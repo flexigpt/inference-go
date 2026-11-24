@@ -517,22 +517,6 @@ func hasGoogleInteractionsTextOutput(outputs []spec.OutputUnion) bool {
 	return false
 }
 
-func hasGoogleInteractionsReasoningOutput(
-	outputs []spec.OutputUnion,
-) bool {
-	for _, output := range outputs {
-		if output.Kind != spec.OutputKindReasoningMessage ||
-			output.ReasoningMessage == nil {
-			continue
-		}
-		if output.ReasoningMessage.Signature != "" ||
-			len(output.ReasoningMessage.Summary) > 0 {
-			return true
-		}
-	}
-	return false
-}
-
 func googleInteractionsString(value any) string {
 	switch value := value.(type) {
 	case nil:

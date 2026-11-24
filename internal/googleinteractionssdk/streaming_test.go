@@ -34,10 +34,13 @@ func TestGoogleInteractionsStreamTextAcceptsContentValueAndPointer(t *testing.T)
 }
 
 func TestGoogleInteractionsStreamPartialResponsePreservesTextAndThought(t *testing.T) {
-	state := &googleInteractionsStreamState{}
-	state.text.WriteString("partial answer")
-	state.thinking.WriteString("partial thought summary")
-	state.thoughtSignature = "opaque-thought-signature"
+	state := newGoogleInteractionsStreamState()
+	state.interactionID = "interaction_1"
+	state.status = spec.StatusIncomplete
+	entry := state.ensureStep(0, false)
+	entry.text.WriteString("partial answer")
+	entry.thoughtSummary.WriteString("partial thought summary")
+	entry.thoughtSignature = "opaque-thought-signature"
 
 	response := state.partialResponse()
 	if response == nil || response.Usage == nil {
@@ -59,6 +62,7 @@ func TestGoogleInteractionsStreamPartialResponsePreservesTextAndThought(t *testi
 	message := response.Outputs[1].OutputMessage
 	if response.Outputs[1].Kind != spec.OutputKindOutputMessage ||
 		message == nil ||
+		message.ID != "interaction_1" ||
 		len(message.Contents) != 1 ||
 		message.Contents[0].TextItem == nil ||
 		message.Contents[0].TextItem.Text != "partial answer" {
@@ -67,18 +71,18 @@ func TestGoogleInteractionsStreamPartialResponsePreservesTextAndThought(t *testi
 }
 
 func TestGoogleInteractionsStreamFallbackUsesTerminalMetadata(t *testing.T) {
-	state := &googleInteractionsStreamState{
-		interactionID: "interaction_1",
-		status:        spec.StatusCompleted,
-		usage: &spec.Usage{
-			InputTokensTotal:  12,
-			InputTokensCached: 4,
-			OutputTokens:      5,
-			ReasoningTokens:   3,
-		},
+	state := newGoogleInteractionsStreamState()
+	state.interactionID = "interaction_1"
+	state.status = spec.StatusCompleted
+	state.usage = &spec.Usage{
+		InputTokensTotal:  12,
+		InputTokensCached: 4,
+		OutputTokens:      5,
+		ReasoningTokens:   3,
 	}
-	state.text.WriteString("streamed answer")
-	state.thinking.WriteString("streamed thought")
+	entry := state.ensureStep(0, false)
+	entry.text.WriteString("streamed answer")
+	entry.thoughtSummary.WriteString("streamed thought")
 
 	response := &spec.FetchCompletionResponse{
 		Usage: state.responseUsage(),
@@ -107,5 +111,60 @@ func TestGoogleInteractionsStreamFallbackUsesTerminalMetadata(t *testing.T) {
 		message.Contents[0].TextItem == nil ||
 		message.Contents[0].TextItem.Text != "streamed answer" {
 		t.Fatalf("unexpected output message %#v", message)
+	}
+}
+
+func TestGoogleInteractionsStreamOutputsPreserveToolAndGroundingSteps(t *testing.T) {
+	state := newGoogleInteractionsStreamState()
+	state.interactionID = "interaction_1"
+	state.status = spec.StatusInProgress
+
+	toolChoiceNameMap := map[string]spec.ToolChoice{
+		"echo": {
+			ID:   "echo-tool",
+			Name: "echo",
+			Type: spec.ToolTypeFunction,
+		},
+	}
+
+	state.recordStep(
+		0,
+		interactions.NewStep(interactions.FunctionCallStep{
+			ID:        "call_1",
+			Name:      "echo",
+			Arguments: map[string]any{},
+		}),
+		toolChoiceNameMap,
+		"search",
+		false,
+	)
+	state.steps[0].functionArgs.WriteString(`{"text":"streamed"}`)
+
+	state.recordStep(
+		1,
+		interactions.NewStep(interactions.GoogleSearchCallStep{
+			ID: "search_1",
+			Arguments: interactions.GoogleSearchCallArguments{
+				Queries: []string{"latest Go release"},
+			},
+		}),
+		toolChoiceNameMap,
+		"search",
+		false,
+	)
+
+	outputs, _ := state.streamOutputs()
+	if len(outputs) != 2 {
+		t.Fatalf("output count got %d want 2", len(outputs))
+	}
+	if outputs[0].FunctionToolCall == nil ||
+		outputs[0].FunctionToolCall.CallID != "call_1" ||
+		outputs[0].FunctionToolCall.Arguments != `{"text":"streamed"}` {
+		t.Fatalf("unexpected function call %#v", outputs[0])
+	}
+	if outputs[1].WebSearchToolCall == nil ||
+		outputs[1].WebSearchToolCall.CallID != "search_1" ||
+		len(outputs[1].WebSearchToolCall.WebSearchToolCallItems) != 1 {
+		t.Fatalf("unexpected Google Search call %#v", outputs[1])
 	}
 }
